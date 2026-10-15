@@ -16,7 +16,7 @@ Pick the option that matches your Claude plan.
 
 1. In Claude, go to **Settings → Connectors** and connect **GitHub**.
 2. Create a project called **Job Search**.
-3. In the project's files area, click **+ → GitHub**, paste this repository's link and select **JOB-SEARCH-SYSTEM.md**.
+3. In the project's files area, click **+ → GitHub**, paste `https://github.com/EmilyBoer/App-Wizard` and select **JOB-SEARCH-SYSTEM.md**.
 4. Start a new chat in the project and type **run job setup**.
 
 To get updates, click **Sync** on the GitHub item in your project.
@@ -24,7 +24,7 @@ To get updates, click **Sync** on the GitHub item in your project.
 ### Paid plans (Pro, Max, Team, Enterprise): install the plugin
 
 1. In Claude, open **Customize → Plugins → Add → Add marketplace → Add from a repository**.
-2. Enter this repository (`owner/repo`) and install **job-search**.
+2. Enter `EmilyBoer/App-Wizard` and install **job-search**.
 3. Create a project called **Job Search**, start a chat and type **run job setup**.
 
 ### Backup: upload the skill
