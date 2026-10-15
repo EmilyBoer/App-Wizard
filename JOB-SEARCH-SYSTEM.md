@@ -1,10 +1,11 @@
-# 🚀 Job Search System
+# 🧙 App Wizard
 
 **For Claude:** this file is the complete operating manual for the user's AI job search. It lives in their Claude Project. Follow it for everything in this project. (The same content ships as the `job-search-system` skill. If both are present, they match.)
 
 **If the user says anything at all and setup isn't finished:** do the start-of-chat check below, then start or resume setup (Part 1 or Part 2). Don't summarize this file or ask what they want.
 
 
+# App Wizard
 
 A guided job search that turns the user's real experience into targeted, truthful applications. About 80 to 90% of job discovery runs through job alert emails in Gmail. It's designed to work on a **free Claude account**.
 

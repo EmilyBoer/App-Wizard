@@ -3,7 +3,7 @@ name: job-search-system
 description: A complete, guided job search system that runs mostly from Gmail job alerts. Use whenever the user says "run job setup," "set me up," "continue setup," "what's next," "run my job search," "find me jobs," shares a job posting or any file, asks if a role fits, wants a tailored resume or cover letter, needs application answers, a recruiter reply, a follow-up, or wants to update their tracker, even if they just paste a link or drop in a screenshot.
 ---
 
-# Job Search System
+# App Wizard
 
 A guided job search that turns the user's real experience into targeted, truthful applications. About 80 to 90% of job discovery runs through job alert emails in Gmail. It's designed to work on a **free Claude account**.
 

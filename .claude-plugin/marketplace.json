@@ -1,10 +1,10 @@
 {
-  "name": "job-search-kit",
+  "name": "app-wizard",
   "owner": { "name": "Emily Boerner" },
   "plugins": [
     {
-      "name": "job-search",
-      "source": "./plugins/job-search",
+      "name": "app-wizard",
+      "source": "./plugins/app-wizard",
       "description": "A guided, truthful AI job search: setup, finding jobs from your email alerts, fit checks, tailored resumes and cover letters, and tracking."
     }
   ]

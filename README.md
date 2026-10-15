@@ -1,4 +1,4 @@
-# Job Search Kit
+# App Wizard
 
 A guided, truthful AI job search that runs on Claude. It reads the job alerts in your email, tells you honestly which jobs fit and why, tailors your resume, writes cover letters in your voice and keeps track of everything. It never invents experience and never submits anything for you.
 
@@ -24,7 +24,7 @@ To get updates, click **Sync** on the GitHub item in your project.
 ### Paid plans (Pro, Max, Team, Enterprise): install the plugin
 
 1. In Claude, open **Customize → Plugins → Add → Add marketplace → Add from a repository**.
-2. Enter `EmilyBoer/App-Wizard` and install **job-search**.
+2. Enter `EmilyBoer/App-Wizard` and install **app-wizard**.
 3. Create a project called **Job Search**, start a chat and type **run job setup**.
 
 ### Backup: upload the skill
@@ -35,7 +35,7 @@ Download `downloads/job-search-system.zip`, then in Claude go to **Customize →
 
 | Path | What it is |
 |---|---|
-| `JOB-SEARCH-SYSTEM.md` | The whole kit in one file, for free-plan projects |
-| `plugins/job-search/` | The kit as a plugin, for paid plans |
+| `JOB-SEARCH-SYSTEM.md` | All of App Wizard in one file, for free-plan projects |
+| `plugins/app-wizard/` | App Wizard as a plugin, for paid plans |
 | `.claude-plugin/marketplace.json` | Lets Claude add this repo as a plugin marketplace |
-| `downloads/job-search-system.zip` | The kit as an uploadable skill |
+| `downloads/job-search-system.zip` | App Wizard as an uploadable skill |
