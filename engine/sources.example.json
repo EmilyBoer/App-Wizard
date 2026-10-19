@@ -1,0 +1,9 @@
+{
+  "_comment": "Paste any mix of careers links and hiring-system boards. Links are identified automatically.",
+  "sources": [
+    "https://job-boards.greenhouse.io/anthropic",
+    "https://jobs.lever.co/palantir",
+    "https://jobs.ashbyhq.com/ashby",
+    { "source": "greenhouse", "board": "airbnb" }
+  ]
+}

@@ -39,3 +39,4 @@ Download `downloads/job-search-system.zip`, then in Claude go to **Customize →
 | `plugins/app-wizard/` | App Wizard as a plugin, for paid plans |
 | `.claude-plugin/marketplace.json` | Lets Claude add this repo as a plugin marketplace |
 | `downloads/job-search-system.zip` | App Wizard as an uploadable skill |
+| `engine/` | **The standalone app's first piece:** the job sources engine (live jobs from company hiring systems, freshness, duplicates, open/closed checks). See `engine/README.md`. |

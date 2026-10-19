@@ -1,0 +1,15 @@
+{
+  "name": "@app-wizard/job-sources",
+  "version": "0.1.0",
+  "description": "App Wizard's job sources engine: live jobs from company hiring systems and job pages, with freshness, de-duplication and open/closed checks.",
+  "type": "module",
+  "private": true,
+  "engines": { "node": ">=20" },
+  "main": "src/index.mjs",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "add": "node src/cli.mjs add",
+    "jobs": "node src/cli.mjs jobs",
+    "check": "node src/cli.mjs check"
+  }
+}

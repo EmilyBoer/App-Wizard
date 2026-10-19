@@ -1,0 +1,17 @@
+{
+  "question": "What other websites do you look at for jobs?",
+  "help": "Pick any you use, and paste links to others: company careers pages, job boards, anything. We'll check what we can read directly and tell you what to do for the rest.",
+  "fieldLabel": "Add a website",
+  "fieldPlaceholder": "e.g. jobs.lever.co/acme or acme.com/careers",
+  "options": [
+    { "name": "LinkedIn", "url": "https://www.linkedin.com/jobs/", "category": "Big job sites", "note": "Read through LinkedIn's own email alerts." },
+    { "name": "Indeed", "url": "https://www.indeed.com/", "category": "Big job sites", "note": "Read through Indeed's own email alerts." },
+    { "name": "Andreessen Horowitz portfolio jobs", "url": "https://jobs.a16z.com/", "category": "Startups and venture-backed companies" },
+    { "name": "Y Combinator: Work at a Startup", "url": "https://www.workatastartup.com/", "category": "Startups and venture-backed companies" },
+    { "name": "Wellfound", "url": "https://wellfound.com/jobs", "category": "Startups and venture-backed companies" },
+    { "name": "Built In", "url": "https://builtin.com/jobs", "category": "Tech" },
+    { "name": "Idealist", "url": "https://www.idealist.org/", "category": "Nonprofit and mission-driven" },
+    { "name": "USAJOBS", "url": "https://www.usajobs.gov/", "category": "Government" }
+  ],
+  "_comment": "Presets are a starting list, not a promise of support. Each one goes through identifyWebsite() like a pasted link, so the app reports honestly whether it can read the site directly, needs email alerts or isn't supported yet."
+}
