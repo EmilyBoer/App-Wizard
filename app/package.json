@@ -1,0 +1,41 @@
+{
+  "name": "app-wizard",
+  "version": "0.1.0",
+  "description": "App Wizard: set up once, then get matched jobs and ready-to-send applications every morning.",
+  "type": "module",
+  "main": "main/main.mjs",
+  "scripts": {
+    "start": "electron .",
+    "web": "node server/web.mjs",
+    "test": "node --test test/*.test.mjs",
+    "build": "electron-builder"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.appwizard.desktop",
+    "productName": "App Wizard",
+    "files": [
+      "main/**",
+      "core/**",
+      "server/**",
+      "renderer/**"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "extraMetadata": {
+      "note": "Packaging needs the engine folder copied in; see README."
+    }
+  },
+  "license": "UNLICENSED",
+  "private": true
+}

@@ -4,6 +4,8 @@ A guided, truthful AI job search that runs on Claude. It reads the job alerts in
 
 **Status:** testing with early users. Expect changes.
 
+> **New: the App Wizard desktop app** lives in [`app/`](app/README.md). It runs on its own (with Claude inside), reads live job lists straight from company hiring systems, and needs no job-search Gmail. The Claude kit below still works for people who want to use App Wizard inside Claude.
+
 ## Before you start
 
 This kit needs about an hour of setup outside Claude first: a job-search Gmail, LinkedIn and job alerts. Follow the **Before You Start** guide (link coming soon).
@@ -35,6 +37,8 @@ Download `downloads/job-search-system.zip`, then in Claude go to **Customize →
 
 | Path | What it is |
 |---|---|
+| `app/` | The App Wizard desktop app (Electron), its browser extension and tests |
+| `engine/` | Job sources engine: live jobs from company hiring systems |
 | `JOB-SEARCH-SYSTEM.md` | All of App Wizard in one file, for free-plan projects |
 | `plugins/app-wizard/` | App Wizard as a plugin, for paid plans |
 | `.claude-plugin/marketplace.json` | Lets Claude add this repo as a plugin marketplace |
