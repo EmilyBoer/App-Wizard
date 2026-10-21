@@ -16,12 +16,12 @@ ${st.materials.length ? `<p class="small"><b>${st.materials.length} file${st.mat
     mount(el, st, ui) {
       dropZone(el.querySelector('#drop'), el.querySelector('#files'), async (files) => {
         el.querySelector('[data-progress]').innerHTML = `<span class="spin"></span> Reading ${files.length} file${files.length > 1 ? 's' : ''}…`;
-        try { const added = await call('materials.add', { files: await readFiles(files) }); const moved = added.filter((m) => m.kind === 'job_posting').length; if (moved) toast(`${moved} file${moved > 1 ? 's' : ''} looked like a job posting, so we saved it as a job you want.`); } catch (e) { toast(e.message, true); }
+        try { const added = await call('materials.add', { files: await readFiles(files), defer: true }); const moved = added.filter((m) => m.kind === 'job_posting').length; if (moved) toast(`${moved} file${moved > 1 ? 's' : ''} looked like a job posting, so we saved it as a job you want.`); } catch (e) { toast(e.message, true); }
         ui.repaint();
       });
       on(el, { rmfile: async (b) => { await call('materials.remove', { id: b.dataset.id }); ui.repaint(); } });
     },
-    next(el, st) { if (!st.hasResume) { toast('Add at least one resume or your LinkedIn PDF to continue.', true); return false; } } },
+    next(el, st) { if (!st.hasResume) { toast('Add at least one resume or your LinkedIn PDF to continue.', true); return false; } call('builder.prepareProfile').catch(() => {}); } },
 
   { id: 'interviewed', ask: 'Which jobs got you interviews lately?', help: 'Even if they didn’t work out. These are the strongest sign of where you fit, because an employer already said yes.', skip: 'I haven’t had interviews lately',
     body: (st) => jobAdder(st.interviewed, 'interviewed'), mount: (el, st, ui) => wireAdder(el, 'interviewed', ui) },
@@ -31,7 +31,7 @@ ${st.materials.length ? `<p class="small"><b>${st.materials.length} file${st.mat
     next(el, st) { if (st.fit.length + st.interviewed.length < 2) { toast('Add at least 2 jobs so we can tell what fits.', true); return false; } } },
 
   { id: 'reach', ask: 'Now add one reach.', help: 'A job you’d love that’s a stretch: more senior, a new field, a dream company. We’ll show you a few like it, not a flood.', skip: 'Skip the reach',
-    body: (st) => jobAdder(st.reach, 'reach', 1), mount: (el, st, ui) => wireAdder(el, 'reach', ui) },
+    body: (st) => jobAdder(st.reach, 'reach', 1), mount: (el, st, ui) => wireAdder(el, 'reach', ui), leave: () => call('builder.prepareWants').catch(() => {}) },
 
   { id: 'pay', ask: 'What’s the lowest salary you’d take?', help: 'Per year. Jobs that pay less get hidden. Jobs that don’t list pay still show up, marked “pay not listed.”', skip: 'I’d rather not say',
     body: (st) => `<div class="row" style="font-size:22px"><span>$</span><input type="number" id="pay" min="0" step="1000" value="${st.want.payFloor || ''}" placeholder="85000" style="font-size:22px;max-width:260px"><span class="muted" style="font-size:16px">a year</span></div>`,
@@ -90,16 +90,16 @@ ${st.voice.samples.length ? `<div class="list">${st.voice.samples.map((x) => `<d
     body: () => `<div class="stack"><a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" class="btn secondary" style="align-self:flex-start">Sign in to Claude Console to get a key</a>
 <ol class="small muted" style="margin:0;padding-left:20px"><li>Sign in, and add $5 of credit under Settings, Billing.</li><li>Press Create Key, name it Job Wizard, and copy it.</li><li>Paste it here.</li></ol>
 <input type="password" id="key" placeholder="sk-ant-…" autocomplete="off"><div class="note alert hidden" id="err" role="alert"></div></div>`,
-    async next(el) { const err = el.querySelector('#err'); err.classList.add('hidden'); try { await call('settings.save', { claudeKey: el.querySelector('#key').value }); await call('settings.testKey'); toast('Claude is connected.'); } catch (e) { err.textContent = e.message; err.classList.remove('hidden'); return false; } } },
+    async next(el) { const err = el.querySelector('#err'); err.classList.add('hidden'); try { await call('settings.save', { claudeKey: el.querySelector('#key').value }); await call('settings.testKey'); toast('Claude is connected. Reading your files now.'); call('builder.prepareProfile').then(() => call('builder.prepareWants')).catch(() => {}); } catch (e) { err.textContent = e.message; err.classList.remove('hidden'); return false; } } },
 
-  { id: 'found', enter: () => call('builder.analyze'), ask: 'Here’s what we pulled from your resume.', help: 'Fix anything that’s off. Everything Job Wizard writes for you comes from this, and we never make anything up.',
+  { id: 'found', enter: () => call('builder.analyze'), ask: 'Here’s what we pulled from your resumes.', help: 'Fill in anything that’s missing, like your LinkedIn link, website or portfolio, and city and state. Everything Job Wizard writes for you comes from this, and we never make anything up.',
     body: (st) => { const c = st.profile.contact || {}; return `<div class="grid">${[['name', 'Name'], ['email', 'Email'], ['phone', 'Phone'], ['location', 'City, State'], ['linkedin', 'LinkedIn link'], ['website', 'Website or portfolio']].map(([k, l]) => `<label class="field">${l}<input type="text" data-contact="${k}" value="${esc(c[k] || '')}"></label>`).join('')}</div>
-<div class="list"><div class="list-head">${st.profile.roles.length} role${st.profile.roles.length === 1 ? '' : 's'} · ${st.profile.years} years</div>${st.profile.roles.map((r) => `<div class="item"><div class="grow"><div>${esc(r.title)} · ${esc(r.company)}</div><div class="small muted">${esc(r.start || '')} – ${esc(r.end || '')} · ${r.results} results</div></div></div>`).join('')}</div>
+<div class="list"><div class="list-head row between"><span>${st.profile.roles.length} role${st.profile.roles.length === 1 ? '' : 's'} · ${st.profile.years} years</span><span class="tiny muted" style="font-weight:400">You can edit roles and results any time in Profile.</span></div>${st.profile.roles.map((r) => `<div class="item"><div class="grow"><div>${esc(r.title)} · ${esc(r.company)}</div><div class="small muted">${esc(r.start || '')} – ${esc(r.end || '')} · ${r.results} results</div></div></div>`).join('')}</div>
 <div class="row">${st.profile.skills.slice(0, 16).map((x) => `<span class="tag muted">${esc(x)}</span>`).join('')}</div>
 ${st.profile.checks ? `<div class="note info">${st.profile.checks} thing${st.profile.checks > 1 ? 's' : ''} to double-check, like dates that don’t match between files. <a href="#/setup/3">Check now</a> or later in Profile.</div>` : ''}`; },
     mount(el) { el.querySelectorAll('[data-contact]').forEach((i) => (i.onchange = () => call('profile.setContact', { [i.dataset.contact]: i.value }))); } },
 
-  { id: 'sweetspot', ask: 'Here’s your sweet spot.', help: 'From your resume and the jobs you added. Keep the titles that sound right.', enter: async () => { const st = await call('builder.status'); return st.want.summary ? st : call('builder.analyze'); },
+  { id: 'sweetspot', ask: 'Here’s your sweet spot.', help: 'From your resume and the jobs you added. Keep the titles that sound right.', enter: () => call('builder.analyze'),
     body: (st) => `${st.want.summary ? `<div class="note info"><b>${esc(st.want.summary)}</b></div>` : ''}${st.want.reachNote ? `<div class="note muted"><b>Your reach:</b> ${esc(st.want.reachNote)}</div>` : ''}
 <b class="small">Job titles we’ll look for</b><div class="row">${st.want.titles.map((t) => `<button class="chip" aria-pressed="true" data-act="deltitle" data-t="${esc(t)}">${esc(t)} ×</button>`).join('')}<input type="text" id="title" placeholder="Add a title, press Enter" style="width:240px"></div>
 ${(st.want.suggestedTitles || []).filter((x) => x.accepted == null).length ? `<b class="small">You might also fit:</b><div class="row">${st.want.suggestedTitles.filter((x) => x.accepted == null).map((x) => `<span class="chip suggest">${esc(x.title)} <button class="btn small" data-act="sugg" data-t="${esc(x.title)}" data-v="1" style="color:var(--good)">Yes</button><button class="btn small" data-act="sugg" data-t="${esc(x.title)}" data-v="0">No</button></span>`).join('')}</div>` : ''}`,
@@ -151,7 +151,7 @@ export async function render(root, params, app) {
 <div class="foot" id="qfoot"></div></div>`;
     const body = root.querySelector('#qbody'), foot = root.querySelector('#qfoot');
     if (q.enter && !q._entered) {
-      body.innerHTML = working('One moment…') + '<span data-progress="builder" class="small muted"></span>';
+      body.innerHTML = working('Almost there: finishing reading your files…') + '<span data-progress="builder" class="small muted"></span>';
       try { st = await q.enter(); q._entered = true; } catch (e) { body.innerHTML = `<div class="note alert">${esc(e.message)}</div>`; foot.innerHTML = navButtons(q, idx); return; }
     }
     if (q.id === 'rate') return rateScreen(body, foot);
@@ -168,12 +168,13 @@ export async function render(root, params, app) {
 
   on(root, {
     prev: () => go(idx - 1),
-    skip: async () => app.go(`#/build/${await nextAfter(list[idx].id)}`),
+    skip: async () => { list[idx].leave?.(); app.go(`#/build/${await nextAfter(list[idx].id)}`); },
     later: () => { document.body.classList.remove('building'); app.go('#/profile'); },
     next: (b) => act(b, async () => {
       const q = list[idx];
       const r = q.next ? await q.next(root.querySelector('#qbody'), st, ui) : undefined;
       if (r === false) return;
+      q.leave?.();
       if (back) { document.body.classList.remove('building'); app.go('#/profile'); return; }
       // Answers can add or remove questions (e.g. words that mean two things), so work out the next one fresh.
       app.go(`#/build/${await nextAfter(q.id)}`);

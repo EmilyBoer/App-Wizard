@@ -88,29 +88,26 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
       if (text) files = [...files, { name: name || 'Pasted text.txt', data: Buffer.from(text).toString('base64') }];
       const hasKey = claudeReady();
       const added = [];
-      for (const f of files) {
+      const recs = files.map((f) => {
         const prepared = prepareFile(f);
-        const rec = { id: id('m_'), name: f.name, mime: prepared.mime, added: now().toISOString(), kind: 'other', summary: '', text: prepared.text || '', problem: prepared.problem || null };
-        if (!prepared.problem) {
-          if (!hasKey || defer) {
-            // Claude isn't connected yet: keep the file and read it later.
-            Object.assign(rec, { waiting: true, raw: prepared.base64 || null, kind: /linkedin|profile/i.test(f.name) ? 'linkedin' : 'resume', summary: 'We’ll read this once Claude is connected.' });
-          } else await readInto(rec, prepared);
-        }
-        store().update('materials', (m) => { m.list.push(rec); });
-        added.push(rec);
-      }
+        const rec = { id: id('m_'), name: f.name, mime: prepared.mime, added: now().toISOString(), kind: 'other', summary: '', text: prepared.text || '', raw: prepared.base64 || null, problem: prepared.problem || null };
+        if (!prepared.problem && (!hasKey || defer)) Object.assign(rec, { waiting: true, kind: /linkedin|profile/i.test(f.name) ? 'linkedin' : 'resume', summary: 'We’ll read this once Claude is connected.' });
+        return { rec, prepared };
+      });
+      progress('materials', `Reading ${recs.length} file${recs.length === 1 ? '' : 's'}…`);
+      await inBatches(recs.filter(({ rec }) => !rec.problem && !rec.waiting), 4, ({ rec, prepared }) => readInto(rec, prepared));
+      for (const { rec } of recs) { store().update('materials', (m) => { m.list.push(rec); }); added.push(rec); }
       return added.map(({ text, raw, ...m }) => m);
     },
     'materials.readWaiting': async () => {
       const waiting = store().get('materials').list.filter((m) => m.waiting);
-      for (const rec of waiting) {
-        progress('builder', `Reading ${rec.name}…`);
+      if (waiting.length) progress('builder', `Reading ${waiting.length} file${waiting.length === 1 ? '' : 's'}…`);
+      await inBatches(waiting, 4, async (rec) => {
         const prepared = rec.raw ? { name: rec.name, mime: rec.mime, base64: rec.raw } : { name: rec.name, mime: rec.mime, text: rec.text };
-        delete rec.waiting; delete rec.raw; rec.summary = '';
+        delete rec.waiting; rec.summary = '';
         await readInto(rec, prepared);
         store().update('materials', (m) => { const i = m.list.findIndex((x) => x.id === rec.id); if (i >= 0) m.list[i] = rec; });
-      }
+      });
       const ex = store().get('want').examples.filter((e) => e.waiting);
       for (const e of ex) {
         progress('builder', `Reading ${e.title}…`);
@@ -293,13 +290,30 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
       store().update('materials', (m) => { for (const x of m.list) x.inProfile = true; });
       return r;
     },
+    // Background work, started early so setup never waits: read files + build the profile, then the job analysis.
+    'builder.prepareProfile': () => once('builder.prepareProfile', async () => {
+      if (!claudeReady()) return { skipped: true };
+      await methods['materials.readWaiting']();
+      const st = methods['builder.status']();
+      if (st.hasResume && (st.profileStale || !st.profileBuilt)) { progress('builder', 'Putting your work history together…'); await methods['builder.buildProfile'](); }
+      return { ok: true };
+    }),
+    'builder.prepareWants': () => once('builder.prepareWants', async () => {
+      if (!claudeReady()) return { skipped: true };
+      const w = store().get('want');
+      if (!w.examples.length || (w.summary && w.analyzedCount === w.examples.length)) return { ok: true };
+      progress('builder', 'Working out your sweet spot…');
+      await methods['want.analyze']();
+      store().update('want', (x) => { x.analyzedCount = x.examples.length; });
+      return { ok: true };
+    }),
     'builder.analyze': () => once('builder.analyze', async () => {
       const st = methods['builder.status']();
       if (!st.hasResume) throw new UserError('Add your resume first.');
-      await methods['materials.readWaiting']();
+      await methods['builder.prepareProfile']();
       if (!methods['builder.status']().hasResume) throw new UserError('We couldn’t find a resume in your files. Go back and add it.');
-      if (methods['builder.status']().profileStale || !st.profileBuilt) { progress('builder', 'Reading your resume…'); await methods['builder.buildProfile'](); }
-      if (store().get('want').examples.length) { progress('builder', 'Working out your sweet spot…'); await methods['want.analyze'](); }
+      if (!methods['builder.status']().profileBuilt) await methods['builder.buildProfile']();
+      await methods['builder.prepareWants']();
       return methods['builder.status']();
     }),
     'builder.findJobs': () => once('builder.findJobs', async () => {
@@ -591,7 +605,6 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
   };
 
   async function readInto(rec, prepared) {
-    progress('materials', `Reading ${rec.name}…`);
     try {
       const read = await ai.readMaterial(claude(), prepared);
       Object.assign(rec, { kind: read.kind, summary: read.summary, text: read.text || rec.text });
@@ -633,6 +646,11 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
     return fn(args || {});
   }
   return { call, methods, get session() { return session; }, store };
+}
+
+async function inBatches(items, size, fn) {
+  let next = 0;
+  await Promise.all(Array.from({ length: Math.min(size, items.length) }, async () => { while (next < items.length) await fn(items[next++]); }));
 }
 
 export class UserError extends Error { constructor(m) { super(m); this.name = 'UserError'; } }

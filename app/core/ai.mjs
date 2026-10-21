@@ -16,7 +16,7 @@ const STYLE = `Writing style: plain, warm, specific. Short sentences. No buzzwor
 // ---------- Materials ----------
 
 export async function readMaterial(claude, file) {
-  const system = `You sort and read files someone uploaded to set up their job search.
+  const system = `You sort files someone uploaded to set up their job search. Be quick: look, decide, summarize.
 ${TRUTH}
 Decide what the file is:
 - "resume": a resume or CV (any age)
@@ -27,20 +27,26 @@ Decide what the file is:
 - "personality": a personality or strengths test (CliftonStrengths, Myers-Briggs, DISC, Enneagram...)
 - "job_posting": a job description for a role they might want (NOT their experience)
 - "other"
-Then copy out all the text, faithfully, keeping line breaks and bullets. For screenshots, read the words in the image.
-Shape: {"kind": string, "summary": "one short sentence for the person, e.g. 'Your 2024 resume, 3 roles'", "text": "full text", "jobPosting": {"title": string, "company": string} | null}`;
-  const content = [fileBlock(file), { type: 'text', text: `File name: ${file.name}` }];
-  const out = await claude.json({ system, content, maxTokens: 8000, temperature: 0 });
+Only for "job_posting" or "writing", also copy out the full text faithfully in "text". For every other kind, leave "text" empty: the file itself is read later.
+Shape: {"kind": string, "summary": "one short sentence for the person, e.g. 'Your 2024 resume, 3 roles'", "text": "", "jobPosting": {"title": string, "company": string} | null}`;
+  // Text we already have only needs its start to be sorted.
+  const block = file.text != null && !file.base64 ? { type: 'text', text: `File: ${file.name}\n\n${String(file.text).slice(0, 4000)}` } : fileBlock(file);
+  let out = await claude.json({ system, content: [block, { type: 'text', text: `File name: ${file.name}` }], maxTokens: 300, fast: true });
   const kinds = ['resume', 'linkedin', 'review', 'portfolio', 'writing', 'personality', 'job_posting', 'other'];
   if (!kinds.includes(out.kind)) out.kind = 'other';
-  out.text = String(out.text || file.text || '');
+  if ((out.kind === 'job_posting' || out.kind === 'writing') && file.text == null) {
+    // Need the words for these two: copy them out (only these).
+    const full = await claude.json({ system: `Copy out all the text of this file faithfully, keeping line breaks.\nShape: {"text": string}`, content: [fileBlock(file)], maxTokens: 6000, fast: true });
+    out.text = full.text || '';
+  }
+  out.text = String(file.text ?? out.text ?? '');
   return out;
 }
 
 // ---------- Profile ----------
 
 export async function buildProfile(claude, materials, current) {
-  const usable = materials.filter((m) => ['resume', 'linkedin', 'review', 'portfolio', 'other'].includes(m.kind) && m.text);
+  const usable = materials.filter((m) => ['resume', 'linkedin', 'review', 'portfolio', 'other'].includes(m.kind) && (m.text || m.raw));
   const system = `You combine someone's resumes, LinkedIn and other files into one accurate work history.
 ${TRUTH}
 Rules:
@@ -59,9 +65,13 @@ Shape: {
  "conflicts": [{"label":"e.g. Start date at Meridian Parks Foundation","company","field":"start|end|title|company","options":[{"value","source"}]}],
  "underselling": [{"text","company","source"}]
 }`;
-  const docs = usable.map((m) => `[${m.id}] ${m.name} (${m.kind})\n${m.text}`).join('\n\n-----\n\n');
-  const note = current?.roles?.length ? `\n\nThe person already approved this profile; keep their approved wording and choices unless a new file adds to it:\n${JSON.stringify(slimProfile(current))}` : '';
-  return claude.json({ system, content: docs + note, maxTokens: 12000, temperature: 0 });
+  // Each file goes in as itself: PDFs and screenshots as documents, the rest as text.
+  const content = usable.flatMap((m) => [
+    { type: 'text', text: `----- [${m.id}] ${m.name} (${m.kind}) -----` },
+    m.raw ? fileBlock({ name: m.name, mime: m.mime, base64: m.raw }) : { type: 'text', text: m.text },
+  ]);
+  if (current?.roles?.length) content.push({ type: 'text', text: `The person already approved this profile; keep their approved wording and choices unless a new file adds to it:\n${JSON.stringify(slimProfile(current))}` });
+  return claude.json({ system, content, maxTokens: 12000, temperature: 0 });
 }
 
 export function slimProfile(p) {

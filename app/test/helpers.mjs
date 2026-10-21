@@ -20,7 +20,7 @@ export function fakeClaude(overrides = {}) {
   const answer = (system, content) => {
     const text = typeof content === 'string' ? content : JSON.stringify(content);
     for (const [k, fn] of Object.entries(overrides)) if (system.includes(k)) return fn(system, content);
-    if (system.includes('You sort and read files')) {
+    if (system.includes('You sort files someone uploaded')) {
       if (text.includes('JOB POSTING')) return { kind: 'job_posting', summary: 'A job you want', text: 'Content Strategist at Lumen Public Radio. Own the website and CMS.', jobPosting: { title: 'Content Strategist', company: 'Lumen Public Radio' } };
       if (text.includes('LINKEDIN')) return { kind: 'linkedin', summary: 'Your LinkedIn profile', text: 'Jordan Lee LinkedIn. Content Strategist Meridian Parks Foundation Jan 2021 - Present. Trained 12 coworkers to publish their own pages.' };
       return { kind: 'resume', summary: 'Your 2026 resume, 2 roles', text: RESUME_TEXT };
