@@ -1,15 +1,37 @@
-import { call, esc, tag, act, toast, on, modal, aw, working } from '../lib.js';
+import { call, esc, tag, act, toast, on, modal, aw, working, readFiles, dropZone } from '../lib.js';
+
+const KIND = { resume: ['Resume', 'good', 'Used for your experience.'], linkedin: ['LinkedIn', 'good', 'Cross-checked with your resumes.'], review: ['Review', 'good', 'Used to find results you may be underselling.'], portfolio: ['Work sample', 'good', 'Used for results and skills.'], writing: ['Your writing', 'info', 'Used to learn how you write.'], personality: ['Personality', 'muted', 'Shapes your style and interview prep. Never listed as experience.'], job_posting: ['Job you want', 'att', 'Teaches us what jobs to find. Never treated as your experience.'], other: ['Other', 'muted', 'Kept for reference.'] };
 
 export async function render(root, params, app, name) {
   if (name === 'doc' && params[0]) return viewer(root, params[0], app);
-  const docs = await call('docs.list');
-  const byJob = new Map();
-  for (const d of docs) { const k = d.jobId; if (!byJob.has(k)) byJob.set(k, []); byJob.get(k).push(d); }
-  root.innerHTML = `<div class="page">
-<div class="head"><div><h1>Documents</h1><p class="muted">Every resume and cover letter App Wizard made for you, newest first. Each one is built only from your profile.</p></div><a class="btn" href="#/setup/5">Change resume design</a></div>
-${!docs.length ? '<div class="empty"><b>No documents yet.</b><span class="muted small">Open a job and press Make my resume and letter, or let the morning batch do it.</span></div>' : `
+  const paint = async () => {
+    const [docs, st] = await Promise.all([call('docs.list'), call('builder.status')]);
+    const byJob = new Map();
+    for (const d of docs) { if (!byJob.has(d.jobId)) byJob.set(d.jobId, []); byJob.get(d.jobId).push(d); }
+    root.innerHTML = `<div class="page">
+<div class="head"><div><h1>Documents</h1><p class="muted">Every resume and cover letter Job Wizard made for you, and every file you’ve given it.</p></div></div>
+<section class="stack"><h2>Made by Job Wizard</h2>
+${!docs.length ? '<div class="empty"><b>Nothing yet.</b><span class="muted small">Open a job and press Make my resume and letter, or let the morning batch do it.</span></div>' : `
 <div class="list">${[...byJob.entries()].map(([jobId, ds]) => `<div class="item"><div class="grow"><div>${esc(ds[0].title)} · ${esc(ds[0].company)}</div><div class="small muted">${ds.map((d) => `<a href="#/doc/${d.id}">${d.kind === 'resume' ? 'Resume' : 'Cover letter'} v${d.version}</a> ${d.status === 'final' ? tag('Final', 'good') : tag('Draft', 'att')}`).join(' · ')}</div></div><a class="btn small" href="#/job/${encodeURIComponent(jobId)}">Job</a></div>`).join('')}</div>`}
-</div>`;
+</section>
+<section class="stack"><div class="row between"><h2>Your files</h2>${st.profileStale ? '<button class="btn primary" data-act="rebuild" data-busy="Reading your new files…">Update my profile from new files</button>' : ''}</div>
+<p class="muted small">Add anything that helps Job Wizard know you better: newer resumes, reviews, work samples, things you’ve written. The more it knows, the better your matches and documents.</p>
+<section class="drop" id="drop" style="padding:20px"><div class="row"><b>Drop files here</b><label class="btn secondary">Choose files<input type="file" multiple class="sr" id="files" accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg,.webp"></label><button class="btn" data-act="paste">Paste text</button></div><div data-progress="materials" class="small muted" aria-live="polite"></div></section>
+${st.materials.length ? `<div class="list">${st.materials.map((m) => { const [l, k, note] = KIND[m.kind] || KIND.other; return `<div class="item">${m.problem ? tag('Can’t read', 'alert') : tag(l, k)}<div class="grow"><div>${esc(m.name)}</div><div class="small muted">${esc(m.problem || [m.summary, note].filter(Boolean).join('. ').replace(/\.\./g, '.'))}</div></div>${m.problem ? '' : `<label class="small">This is <select data-kind="${m.id}" style="width:auto;padding:4px 8px">${Object.entries(KIND).map(([kk, [ll]]) => `<option value="${kk}" ${kk === m.kind ? 'selected' : ''}>${ll}</option>`).join('')}</select></label>`}<button class="btn small" data-act="rm" data-id="${m.id}">Remove</button></div>`; }).join('')}</div>` : ''}
+</section></div>`;
+    dropZone(root.querySelector('#drop'), root.querySelector('#files'), async (files) => {
+      root.querySelector('[data-progress]').innerHTML = `<span class="spin"></span> Reading ${files.length} file${files.length > 1 ? 's' : ''}…`;
+      try { await call('materials.add', { files: await readFiles(files) }); } catch (e) { toast(e.message, true); }
+      paint();
+    });
+    root.querySelectorAll('[data-kind]').forEach((x) => (x.onchange = async () => { await call('materials.setKind', { id: x.dataset.kind, kind: x.value }); paint(); }));
+  };
+  on(root, {
+    rm: async (b) => { await call('materials.remove', { id: b.dataset.id }); paint(); },
+    rebuild: (b) => act(b, async () => { await call('builder.buildProfile'); toast('Your profile is updated.'); paint(); app.refresh(); }),
+    paste: () => modal(`<h2>Paste text</h2><label class="field">Name it (optional)<input type="text" id="pn"></label><textarea id="pt" style="min-height:220px"></textarea><div class="row"><button class="btn primary" id="pa">Add</button><button class="btn" data-close>Cancel</button></div>`, { onMount: (m, close) => { m.querySelector('#pa').onclick = (e) => act(e.target, async () => { const text = m.querySelector('#pt').value.trim(); if (!text) throw new Error('Paste something first.'); await call('materials.add', { text, name: (m.querySelector('#pn').value.trim() || 'Pasted text') + '.txt' }); close(); paint(); }); } }),
+  });
+  await paint();
 }
 
 async function viewer(root, docId, app) {
@@ -27,7 +49,7 @@ async function viewer(root, docId, app) {
   <div class="paper-wrap"><iframe class="docframe" id="frame" title="${isResume ? 'Resume' : 'Cover letter'}" style="max-width:${limits.page.w};margin:0 auto;display:block"></iframe></div>
 </section>
 <aside class="side stack">
-  <section class="card quiet tight"><h3>Edit a line</h3><p class="small muted">Click any line in the ${isResume ? 'resume' : 'letter'} to change it. Your edits teach App Wizard how you like things written.</p></section>
+  <section class="card quiet tight"><h3>Edit a line</h3><p class="small muted">Click any line in the ${isResume ? 'resume' : 'letter'} to change it. Your edits teach Job Wizard how you like things written.</p></section>
   ${(doc.checks || []).length ? `<section class="card tight"><h3>We checked it</h3><ul class="small" style="margin:0;padding-left:18px">${doc.checks.map((c) => `<li>${esc(c)}</li>`).join('')}</ul></section>` : `<section class="card tight"><h3>We checked it</h3><p class="small">Every ${isResume ? 'line' : 'fact'} comes from your profile. Numbers match.</p></section>`}
   ${isResume && (doc.cuts || []).length ? `<section class="card tight"><h3>To fit ${limits.maxPages === 1 ? 'one page' : '1½ pages'}, we cut</h3><ul class="small" style="margin:0;padding-left:18px">${doc.cuts.map((c) => `<li>${esc(c)}</li>`).join('')}</ul><button class="btn small" data-act="uncut">Put everything back</button></section>` : ''}
   ${!aw.pdf ? '<p class="tiny muted">In the browser version, Download PDF opens the print window: choose “Save as PDF”.</p>' : ''}

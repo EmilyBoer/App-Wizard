@@ -73,7 +73,7 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
         pending: pendingCount(profile), learning: learningSummary(s.get('learning')), lastBatch: settings.lastBatch || null,
       };
     },
-    'setup.go': ({ step }) => store().update('setup', (s) => { s.step = step; }),
+    'setup.go': ({ step, at }) => store().update('setup', (s) => { if (step) s.step = step; if (at) s.at = at; }),
     'setup.done': ({ step }) => store().update('setup', (s) => { s.done = [...new Set([...s.done, step])]; s.step = Math.max(s.step, Math.min(step + 1, 10)); }),
 
     // ----- settings -----
@@ -191,25 +191,37 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
     // ----- what you want -----
     'want.get': () => store().get('want'),
     'want.save': (patch) => store().update('want', (w) => { for (const k of ['titles', 'work', 'places', 'payFloor', 'where', 'level', 'jobType', 'dealBreakers', 'ambiguous', 'keywords', 'suggestedTitles']) if (k in patch) w[k] = patch[k]; }),
-    'want.addExample': async ({ input }) => {
-      input = String(input || '').trim();
-      if (!input) throw new UserError('Paste a job link or the job text.');
+    'want.addExample': async ({ input, kind = 'fit', file }) => {
+      if (!['interviewed', 'fit', 'reach'].includes(kind)) kind = 'fit';
       let ex;
-      if (/^https?:\/\/\S+$/.test(input)) {
-        const parsed = parseJobUrl(input);
-        if (parsed) {
-          const r = await checkJobLink(input, { fetchImpl });
-          if (r.job) ex = { title: r.job.title, company: r.job.company, text: r.job.description, url: input };
-        }
-        if (!ex) {
-          try { const res = await fetchImpl(input, { headers: { 'user-agent': 'AppWizard/0.1' } }); const html = await res.text(); const { htmlText } = await import('./files.mjs'); ex = { title: (html.match(/<title>([^<]*)/i)?.[1] || '').trim(), company: '', text: htmlText(html).slice(0, 12000), url: input }; } catch { throw new UserError("We couldn't open that link. Paste the job's text instead."); }
-          if (/linkedin\.com|indeed\.com/.test(input) || ex.text.length < 400) throw new UserError("That site doesn't let us read the job. Open it, copy the job description, and paste the text here instead.");
-        }
-      } else ex = { title: input.split('\n')[0].slice(0, 100), company: '', text: input };
-      const rec = { id: id('x_'), ...ex };
+      if (file) {
+        const prepared = prepareFile(file);
+        if (prepared.problem) throw new UserError(prepared.problem);
+        if (prepared.text) ex = { title: prepared.text.split('\n').find((l) => l.trim())?.slice(0, 100) || file.name, company: '', text: prepared.text };
+        else { const read = await ai.readMaterial(claude(), prepared); ex = { title: read.jobPosting?.title || file.name, company: read.jobPosting?.company || '', text: read.text }; }
+      } else {
+        input = String(input || '').trim();
+        if (!input) throw new UserError('Paste a job link or the job text.');
+        if (/^https?:\/\/\S+$/.test(input)) {
+          const parsed = parseJobUrl(input);
+          if (parsed) {
+            const r = await checkJobLink(input, { fetchImpl });
+            if (r.job) ex = { title: r.job.title, company: r.job.company, text: r.job.description, url: input };
+          }
+          if (!ex) {
+            if (/linkedin\.com|indeed\.com|glassdoor\.com|ziprecruiter\.com/.test(input)) throw new UserError("That site doesn't let us read the job. Open it, copy the job description, and paste the text here instead.");
+            try { const res = await fetchImpl(input, { headers: { 'user-agent': 'AppWizard/0.1' } }); const html = await res.text(); const { htmlText } = await import('./files.mjs'); ex = { title: (html.match(/<title>([^<]*)/i)?.[1] || '').trim(), company: '', text: htmlText(html).slice(0, 12000), url: input }; } catch { throw new UserError("We couldn't open that link. Paste the job's text instead."); }
+            if (ex.text.length < 400) throw new UserError("We couldn't read the job on that page. Copy the job description and paste the text here instead.");
+          }
+          // Watch this company's live job list from now on.
+          if (parsed) store().update('sites', (st) => { if (!st.list.some((x) => x.kind === 'board' && x.source === parsed.source && x.board === parsed.board)) st.list.push({ id: id('site_'), input: input, name: ex.company || parsed.board, label: ex.company || parsed.board, kind: 'board', source: parsed.source, board: parsed.board, auto: true, added: now().toISOString() }); });
+        } else ex = { title: input.split('\n').find((l) => l.trim())?.slice(0, 100) || 'Job', company: '', text: input };
+      }
+      const rec = { id: id('x_'), kind, ...ex };
       store().update('want', (w) => { w.examples.push(rec); });
       return rec;
     },
+    'want.setExample': ({ id: xid, ...patch }) => store().update('want', (w) => { const x = w.examples.find((e) => e.id === xid); if (x) for (const k of ['kind', 'title', 'company']) if (k in patch) x[k] = patch[k]; }),
     'want.removeExample': ({ id: xid }) => store().update('want', (w) => { w.examples = w.examples.filter((x) => x.id !== xid); }),
     'want.analyze': async () => {
       const w = store().get('want');
@@ -217,7 +229,10 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
       const out = await ai.understandWants(claude(), { examples: w.examples, profile: store().get('profile'), titles: w.titles });
       return store().update('want', (x) => {
         x.summary = out.summary;
+        x.reachNote = out.reach || '';
         x.keywords = out.keywords || [];
+        if (!x.titles.length) x.titles = [...new Set((out.titles || []).length ? out.titles : x.examples.filter((e) => e.kind !== 'reach').map((e) => String(e.title || '').split(/\s+(?:at|·|-|–|\|)\s+/)[0].trim()).filter((t) => t && t.length < 60))].slice(0, 6);
+        for (const t of out.employerTypes || []) if (EMPLOYER_TYPES[t] && !x.places[t]) x.places[t] = 'Love';
         const prev = new Map((x.suggestedTitles || []).map((t) => [t.title, t]));
         x.suggestedTitles = (out.suggestedTitles || []).filter((t) => !x.titles.includes(t)).map((t) => prev.get(t) || { title: t, accepted: null });
         const choices = new Map((x.ambiguous || []).map((a) => [a.word.toLowerCase(), a.choice]));
@@ -227,6 +242,51 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
       });
     },
     'want.options': () => ({ employerTypes: Object.keys(EMPLOYER_TYPES), workTypes: Object.keys(WORK_TYPES), dealBreakers: ['Sales targets', 'Night or weekend shifts', 'Relocation', 'Unpaid trial work', 'On-call'] }),
+
+    // ----- builder (first-run setup on one screen) -----
+    'builder.status': () => {
+      const s = store();
+      const mats = s.get('materials').list, p = s.get('profile'), w = s.get('want'), settings = s.get('settings');
+      const by = (k) => w.examples.filter((e) => (e.kind || 'fit') === k).map(({ text, ...e }) => e);
+      const hasResume = mats.some((m) => ['resume', 'linkedin'].includes(m.kind));
+      return {
+        hasKey: Boolean(settings.claudeKey || process.env.ANTHROPIC_API_KEY),
+        materials: mats.map(({ text, ...m }) => m),
+        hasResume, profileBuilt: p.roles.length > 0,
+        profileStale: hasResume && mats.some((m) => ['resume', 'linkedin', 'review', 'portfolio'].includes(m.kind) && !m.inProfile),
+        profile: { contact: p.contact, roles: p.roles.map((r) => ({ title: r.title, company: r.company, start: r.start, end: r.end, results: r.bullets.length })), skills: p.skills.map((x) => x.name), years: yearsOfExperience(p), checks: pendingCount(p) },
+        interviewed: by('interviewed'), fit: by('fit'), reach: by('reach'),
+        want: { summary: w.summary, reachNote: w.reachNote || '', titles: w.titles, suggestedTitles: w.suggestedTitles, ambiguous: w.ambiguous, payFloor: w.payFloor, where: w.where, dealBreakers: w.dealBreakers },
+        sites: s.get('sites').list,
+        ready: hasResume && w.examples.filter((e) => e.kind !== 'reach').length >= 2,
+        done: s.get('setup').done.includes(10),
+      };
+    },
+    'builder.buildProfile': async () => {
+      const r = await methods['profile.build']();
+      store().update('materials', (m) => { for (const x of m.list) x.inProfile = true; });
+      return r;
+    },
+    'builder.analyze': () => once('builder.analyze', async () => {
+      const st = methods['builder.status']();
+      if (!st.hasResume) throw new UserError('Add your resume first.');
+      if (st.profileStale || !st.profileBuilt) { progress('builder', 'Reading your resume…'); await methods['builder.buildProfile'](); }
+      if (store().get('want').examples.length) { progress('builder', 'Working out your sweet spot…'); await methods['want.analyze'](); }
+      return methods['builder.status']();
+    }),
+    'builder.findJobs': () => once('builder.findJobs', async () => {
+      const sites = store().get('sites').list.filter((x) => x.kind === 'board' || x.kind === 'webpage');
+      if (!sites.length) return { found: 0, noSites: true };
+      progress('builder', 'Finding live jobs…');
+      const r = await methods['jobs.refresh']();
+      return { found: r.kept, hidden: r.hidden, report: r.report };
+    }),
+    'builder.complete': async () => {
+      store().update('setup', (x) => { x.done = [...new Set([...x.done, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])]; x.step = 10; });
+      try { await methods['voice.generate'](); } catch {}
+      return true;
+    },
+    'builder.answers': () => { const a = store().get('answers').list; const get = (k) => a.find((x) => x.key === k)?.answer || ''; return { salary: get('salary'), relocate: get('relocate'), relocateCities: get('relocateCities'), start: get('start') }; },
 
     // ----- job sites -----
     'sites.list': () => store().get('sites').list,

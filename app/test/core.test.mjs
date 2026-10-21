@@ -264,3 +264,33 @@ test('resume HTML keeps minimum sizes', () => {
   assert.ok(Math.min(...sizes) >= 10);
   assert.match(html, /size:210mm 297mm/);
 });
+
+test('builder: one-question setup builds profile, wants and answers', async () => {
+  const { api } = newApi();
+  await api.call('auth.create', { name: 'Jordan Lee', email: 'j@example.com', password: 'longenough' });
+  let st = await api.call('builder.status');
+  assert.equal(st.hasResume, false);
+  await api.call('materials.add', { files: [{ name: 'resume.txt', data: b64('RESUME Jordan') }] });
+  st = await api.call('builder.status');
+  assert.equal(st.profileStale, true);
+  await api.call('builder.buildProfile');
+  st = await api.call('builder.status');
+  assert.equal(st.profileStale, false); assert.ok(st.profile.roles.length);
+  await api.call('want.addExample', { input: 'https://boards.greenhouse.io/lumen/jobs/101', kind: 'interviewed' });
+  await api.call('want.addExample', { input: 'Senior Web Producer\nOwn the CMS and the website.', kind: 'fit' });
+  await api.call('want.addExample', { input: 'Director of Digital\nLead a team of 8.', kind: 'reach' });
+  st = await api.call('builder.status');
+  assert.equal(st.interviewed.length, 1); assert.equal(st.fit.length, 1); assert.equal(st.reach.length, 1);
+  assert.equal(st.ready, true);
+  assert.ok(st.sites.some((x) => x.board === 'lumen' && x.auto), 'company from a pasted job is watched automatically');
+  await api.call('builder.analyze');
+  await api.call('answers.save', { key: 'salary', question: 'What are your salary expectations?', answer: '$95k to $110k' });
+  await api.call('answers.save', { key: 'relocate', question: 'Are you willing to relocate?', answer: 'Yes: Seattle' });
+  const found = await api.call('builder.findJobs');
+  assert.ok(found.found >= 1);
+  await api.call('builder.complete');
+  const o = await api.call('app.overview');
+  assert.ok(o.setup.done.includes(10));
+  const a = await api.call('builder.answers');
+  assert.equal(a.salary, '$95k to $110k'); assert.equal(a.relocate, 'Yes: Seattle');
+});

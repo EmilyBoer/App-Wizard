@@ -9,10 +9,11 @@ import * as documents from './screens/documents.js';
 import * as profile from './screens/profile.js';
 import * as help from './screens/help.js';
 import * as chat from './screens/chat.js';
+import * as builder from './screens/builder.js';
 
 const root = document.getElementById('app');
-const NAV = [['Setup', '#/setup'], ['Dashboard', '#/dashboard'], ['Tracker', '#/tracker'], ['Interviews', '#/interviews'], ['Documents', '#/documents'], ['Profile', '#/profile'], ['Help', '#/help']];
-const ROUTES = { login, setup, dashboard, job, tracker, interviews, interview: interviews, documents, doc: documents, profile, help };
+const NAV = [['Journey', '#/journey'], ['Interviews', '#/interviews'], ['Documents', '#/documents'], ['Profile', '#/profile'], ['Help', '#/help']];
+const ROUTES = { login, setup, build: builder, journey: dashboard, dashboard, tracker: dashboard, job, interviews, interview: interviews, documents, doc: documents, profile, help };
 
 export const app = {
   overview: null,
@@ -25,7 +26,7 @@ window.appWizard = app;
 function shell() {
   root.innerHTML = `
 <header class="top"><div class="top-in">
-  <a class="brand" href="#/dashboard">${sparkle(18)}App Wizard</a>
+  <a class="brand" href="#/journey">${sparkle(18)}Job Wizard</a>
   <nav class="nav" aria-label="Main"></nav>
   <button class="ask" data-act="chat">${sparkle(12)}Ask the wizard</button>
   <button class="avatar" data-act="me" aria-label="Account"></button>
@@ -33,7 +34,7 @@ function shell() {
 <main id="screen"></main>`;
   on(root.querySelector('.top'), {
     chat: () => app.openChat(currentJobId()),
-    me: () => { if (confirm('Log out of App Wizard?')) call('auth.logout').then(() => app.go('#/login')); },
+    me: () => { if (confirm('Log out of Job Wizard?')) call('auth.logout').then(() => app.go('#/login')); },
   });
 }
 
@@ -44,12 +45,11 @@ function paintNav() {
   if (!nav || !app.overview) return;
   const o = app.overview;
   const here = location.hash.split('/')[1] || 'dashboard';
-  const map = { job: 'dashboard', interview: 'interviews', doc: 'documents' };
+  const map = { job: 'journey', dashboard: 'journey', tracker: 'journey', interview: 'interviews', doc: 'documents', setup: 'profile' };
   const active = map[here] || here;
-  const badge = { Dashboard: o.newJobs, Profile: o.pending };
+  const badge = { Journey: o.newJobs, Profile: o.pending };
   nav.innerHTML = NAV.map(([n, h]) => {
     const isOn = h.slice(2) === active;
-    if (n === 'Setup' && o.setup.done.includes(10)) return '';
     return `<a href="${h}" class="${isOn ? 'on' : ''}" ${isOn ? 'aria-current="page"' : ''}>${n}${badge[n] ? `<span class="count">${badge[n]}</span>` : ''}</a>`;
   }).join('');
   const initials = String(o.account?.name || '?').split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
@@ -66,13 +66,16 @@ async function route() {
   }
   if (!root.querySelector('#screen')) shell();
   await app.refresh();
+  const done = app.overview.setup.done.includes(10);
   let screen = ROUTES[name];
-  if (!screen || name === 'login') {
-    const done = app.overview.setup.done.includes(10);
-    return app.go(done ? '#/dashboard' : `#/setup/${Math.max(2, app.overview.setup.step)}`);
+  if (!screen || name === 'login' || (!done && !['build', 'help', 'setup', 'profile', 'documents'].includes(name))) {
+    return app.go(done ? '#/journey' : '#/build');
   }
-  const el = root.querySelector('#screen');
-  el.innerHTML = '';
+  document.body.classList.toggle('building', name === 'build');
+  // A fresh container per screen, so click handlers from earlier screens never pile up.
+  const el = document.createElement('main');
+  el.id = 'screen';
+  root.querySelector('#screen').replaceWith(el);
   window.scrollTo(0, 0);
   try { await screen.render(el, params.map(decodeURIComponent), app, name); }
   catch (e) { el.innerHTML = `<div class="page"><div class="note alert">${esc(e.message)}</div></div>`; console.error(e); }

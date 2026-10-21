@@ -1,4 +1,4 @@
-// Every job Claude does inside App Wizard. Each one:
+// Every job Claude does inside Job Wizard. Each one:
 //  - gets only the facts it needs,
 //  - must answer in a fixed JSON shape,
 //  - is checked afterwards in code (see verify* functions) before anything is saved or shown.
@@ -94,17 +94,21 @@ ${(profile.roles || []).flatMap((r) => (r.bullets || []).map((b) => `[${b.id}] $
 // ---------- What you want ----------
 
 export async function understandWants(claude, { examples, profile, titles }) {
-  const system = `You help someone describe the job they want, starting from real postings they said they'd apply to.
-These postings are what they WANT, not their experience.
-Find what the postings have in common: the actual day-to-day work, the kind of employer, the level, pay, location.
+  const system = `You help someone describe the jobs they should go after, from three kinds of real postings:
+- "interviewed": jobs that recently got them an interview. Strongest signal: employers already said yes to this match.
+- "fit": jobs they feel suit their background.
+- "reach": a stretch they'd love. It shows direction, not the center of the search.
+These postings are what they WANT or were considered for, never their experience.
+Find what the interviewed and fit postings have in common: the day-to-day work, kind of employer, level, pay, location.
+Say in one plain sentence what the reach adds (more senior? new field?).
 Suggest up to 5 other job titles that describe the same work AND fit their real experience.
 List words in these postings that can mean very different jobs (e.g. "development" = fundraising or software; "producer" = web, audio or video; "coordinator" = admin or program) with the meanings.
 Pick 10 to 20 keywords that signal the right job.
-Shape: {"summary": "one or two sentences: 'What these have in common: ...'", "suggestedTitles": [string], "ambiguous": [{"word": string, "meanings": [string]}], "keywords": [string], "level": "mid|senior|lead|manager|unclear", "payRange": "e.g. $85k to $105k or empty"}`;
+Shape: {"summary": "one or two sentences: 'Your sweet spot: ...'", "reach": "one sentence or empty", "titles": ["the titles of the interviewed and fit postings, cleaned up"], "suggestedTitles": [string], "ambiguous": [{"word": string, "meanings": [string]}], "keywords": [string], "level": "mid|senior|lead|manager|unclear", "payRange": "e.g. $85k to $105k or empty", "employerTypes": ["Nonprofit|Public media|Health|Education|Government|Tech company|Agency|Finance that appear in interviewed or fit postings"]}`;
   const content = `Titles they already picked: ${titles.join(', ') || 'none'}
 Their roles: ${(profile.roles || []).map((r) => `${r.title} at ${r.company}`).join('; ')}
 Postings:
-${examples.map((e, i) => `#${i + 1} ${e.title || ''} ${e.company || ''}\n${String(e.text || '').slice(0, 5000)}`).join('\n\n')}`;
+${examples.map((e, i) => `#${i + 1} [${e.kind || 'fit'}] ${e.title || ''} ${e.company || ''}\n${String(e.text || '').slice(0, 5000)}`).join('\n\n')}`;
   return claude.json({ system, content, maxTokens: 2000 });
 }
 
@@ -279,7 +283,7 @@ Profile: ${JSON.stringify(slimProfile(profile))}`;
 // ---------- Chat ----------
 
 export async function chat(claude, { messages, profile, want, job, rules, help = [] }) {
-  const system = `You are the App Wizard helper: kind, calm, practical, a little playful. You help with a job search.
+  const system = `You are the Job Wizard helper: kind, calm, practical, a little playful. You help with a job search.
 ${TRUTH}
 You can see the person's profile and what they want. When they tell you something new about their experience, offer to add it: put it in "proposals" as {"type":"add_bullet","company": string,"text": string} written in their words. Never add it yourself.
 When they tell you a preference about jobs ("no more agency jobs", "I'd move to Denver"), add {"type":"rule","text": "plain rule"} to proposals.

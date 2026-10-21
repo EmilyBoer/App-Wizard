@@ -7,10 +7,10 @@ export async function render(root, _params, app) {
     root.innerHTML = `
 <div class="login">
   <section class="art">
-    <div class="brand" style="color:#fff">${sparkle(22)}App Wizard</div>
+    <div class="brand" style="color:#fff">${sparkle(22)}Job Wizard</div>
     <div class="stack" style="max-width:460px">
       <div style="font-family:var(--display);font-size:44px;line-height:48px;font-weight:800;letter-spacing:-.02em">Job applications, minus the dread.</div>
-      <p style="font-size:18px;line-height:28px;opacity:.85">Set it up once. Every morning, App Wizard finds jobs that fit and has your resume and cover letter ready. You check them and press send.</p>
+      <p style="font-size:18px;line-height:28px;opacity:.85">Set it up once. Every morning, Job Wizard finds jobs that fit and has your resume and cover letter ready. You check them and press send.</p>
     </div>
     <p class="small" style="opacity:.7">Everything stays on this computer.</p>
   </section>
@@ -37,7 +37,7 @@ export async function render(root, _params, app) {
       try {
         await act(form.querySelector('[type=submit]'), () => call(mode === 'login' ? 'auth.login' : 'auth.create', data));
         root.innerHTML = '';
-        app.go(mode === 'create' ? '#/setup/2' : '#/dashboard');
+        app.go(mode === 'create' ? '#/build' : '#/journey');
       } catch (ex) { err.textContent = ex.message; err.classList.remove('hidden'); }
     };
     root.querySelector('input')?.focus();

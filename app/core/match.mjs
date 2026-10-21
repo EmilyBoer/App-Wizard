@@ -130,10 +130,12 @@ export function scoreJob(job, want, learning = { events: [], rules: [] }) {
   const hits = kw.filter((k) => text.toLowerCase().includes(k));
   s += Math.min(15, hits.length * 2.5);
   const jw = words(text);
-  const liked = (want.examples || []).map((e) => words(`${e.title} ${e.text}`.slice(0, 4000)));
+  // Jobs that got interviews count most; a reach only a little.
+  const WEIGHT = { interviewed: 1.15, fit: 1, reach: 0.6 };
+  const liked = (want.examples || []).map((e) => ({ w: words(`${e.title} ${e.text}`.slice(0, 4000)), k: WEIGHT[e.kind] ?? 1 }));
   const yes = learning.events.filter((e) => e.type === 'job' && (e.value === 'yes' || e.value === 'applied' || e.value === 'interview')).map((e) => words(`${e.title} ${e.snippet || ''}`));
   const no = learning.events.filter((e) => e.type === 'job' && e.value === 'no').map((e) => words(`${e.title} ${e.snippet || ''}`));
-  const likeSim = Math.max(0, ...[...liked, ...yes].map((l) => overlap(jw, l)));
+  const likeSim = Math.max(0, ...liked.map((l) => overlap(jw, l.w) * l.k), ...yes.map((l) => overlap(jw, l)));
   const noSim = Math.max(0, ...no.map((l) => overlap(jw, l)));
   s += likeSim * 25; s -= noSim * 15;
   if (likeSim > 0.35) reasons.push('Similar to jobs you liked');

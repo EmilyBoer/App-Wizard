@@ -1,4 +1,5 @@
 import { call, esc, tag, act, toast, on, modal, posted, ago, BUCKET, VERDICT, STATUS_TAG, sparkle } from '../lib.js';
+import * as tracker from './tracker.js';
 
 export async function render(root, _p, app) {
   let showWeak = false;
@@ -16,23 +17,21 @@ export async function render(root, _p, app) {
 <div class="head"><div><div class="eyebrow">${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</div><h1>Good ${hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'}${name ? `, ${esc(name)}` : ''}.</h1>
 <p class="muted">${ready.length ? `${ready.length} application${ready.length > 1 ? 's are' : ' is'} ready for you to check and send.` : fresh.length ? `${fresh.length} new match${fresh.length > 1 ? 'es' : ''} to look at.` : 'Nothing new yet. Check your job sites or add a job.'}</p></div>
 <div class="row"><button class="btn" data-act="add">Add jobs</button><button class="btn secondary" data-act="refresh" data-busy="Checking job sites…">Check for new jobs</button><button class="btn primary" data-act="batch" data-busy="Getting applications ready…">Get applications ready</button></div></div>
-${!o.hasKey ? `<div class="note att">Add your Claude API key in <a href="#/profile/settings">Profile, Settings</a> so App Wizard can read and write for you.</div>` : ''}
+${!o.hasKey ? `<div class="note att">Add your Claude API key in <a href="#/profile/settings">Profile, Claude and schedule</a> so Job Wizard can read and write for you.</div>` : ''}
 ${o.pending ? `<div class="note info">${o.pending} thing${o.pending > 1 ? 's' : ''} in your experience to check. <a href="#/setup/3">Take a look</a></div>` : ''}
-${o.followUps.length ? `<div class="note att"><b>Follow-ups due:</b> ${o.followUps.map((f) => `${esc(f.company)} (${esc(f.title)})`).join(', ')}. <a href="#/tracker">Open tracker</a></div>` : ''}
+${o.followUps.length ? `<div class="note att"><b>Follow-ups due:</b> ${o.followUps.map((f) => `${esc(f.company)} (${esc(f.title)})`).join(', ')}. See them in Your journey below.</div>` : ''}
 <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">
-${[['New matches', fresh.length, '#/dashboard'], ['Ready to apply', ready.length, '#/tracker'], ['Applied', o.counts.applied, '#/tracker'], ['Interviewing', o.counts.interviewing, '#/interviews'], ['Offers', o.counts.offer, '#/tracker']].map(([l, n, h]) => `<a class="stat" href="${h}"><span class="small muted">${l}</span><b>${n || 0}</b></a>`).join('')}
+${[['New matches', fresh.length, '#/journey'], ['Ready to apply', ready.length, '#/journey'], ['Applied', o.counts.applied, '#/journey'], ['Interviewing', o.counts.interviewing, '#/interviews'], ['Offers', o.counts.offer, '#/journey']].map(([l, n, h]) => `<a class="stat" href="${h}"><span class="small muted">${l}</span><b>${n || 0}</b></a>`).join('')}
 </div>
 ${o.lastBatch ? `<details class="card quiet tight"><summary class="small"><b>Morning batch</b> · ${esc(ago(o.lastBatch.at))} · ${o.lastBatch.made} made ready</summary><ul class="small">${o.lastBatch.log.map((l) => `<li>${esc(l)}</li>`).join('')}</ul></details>` : ''}
 
-<section class="stack"><div class="row between"><h2>Your pipeline</h2><a href="#/tracker" class="small">Open tracker</a></div>
-${pipeline.length ? `<div class="grid">${pipeline.slice(0, 8).map((t) => pipeCard(t)).join('')}</div>` : '<p class="muted small">Jobs you save or that are ready to apply show up here.</p>'}</section>
-
-<section class="stack"><div class="row between"><h2>Applied</h2><a href="#/tracker" class="small">See all</a></div>
-${applied.length ? `<div class="grid">${applied.slice(0, 8).map((t) => pipeCard(t)).join('')}</div>` : '<p class="muted small">Nothing sent yet.</p>'}</section>
+${ready.length ? `<section class="stack"><h2>Ready for you to send</h2><div class="grid">${ready.map((t) => pipeCard(t)).join('')}</div></section>` : ''}
 
 <section class="stack"><div class="row between"><h2>New matches</h2><span class="small muted">${lastFetch ? `Checked ${esc(ago(lastFetch))}` : ''}${weak ? ` · <button class="btn link" data-act="weak">Show ${weak} weaker match${weak > 1 ? 'es' : ''}</button>` : ''}${hiddenCount ? ` · <button class="btn link" data-act="hidden">${hiddenCount} hidden by your rules</button>` : ''}</span></div>
-${fresh.length ? `<div class="grid">${fresh.slice(0, 24).map((j, i) => jobCard(j, i === 0)).join('')}</div>` : `<div class="empty">${sparkle(24)}<b>No new matches right now.</b><span class="muted small">Add more job sites in Setup, or paste a job link or alert email with Add jobs.</span></div>`}</section>
+${fresh.length ? `<div class="grid">${fresh.slice(0, 24).map((j, i) => jobCard(j, i === 0)).join('')}</div>` : `<div class="empty">${sparkle(24)}<b>No new matches right now.</b><span class="muted small">Add companies to watch in Profile, or paste a job link or alert email with Add jobs.</span></div>`}</section>
+<div id="board"></div>
 </div>`;
+    await tracker.render(root.querySelector('#board'), [], app, 'embedded');
   };
   const pipeCard = (t) => `<a class="job" href="${t.jobId ? `#/job/${encodeURIComponent(t.jobId)}` : '#/tracker'}"><div class="row between">${tag(tr_label(t.status), STATUS_TAG[t.status])}${t.fit ? tag((VERDICT[t.fit] || [t.fit])[0], (VERDICT[t.fit] || [0, 'muted'])[1]) : ''}</div><div class="t">${esc(t.title)}</div><div class="small muted">${esc([t.company, t.salary, t.location].filter(Boolean).join(' · '))}</div>${t.status === 'ready' ? '<span class="small"><b>Resume and letter ready.</b> Check and send.</span>' : ''}</a>`;
   const jobCard = (j, top) => `<a class="job ${top ? 'top' : ''}" href="#/job/${encodeURIComponent(j.id)}"><div class="row between">${j.verdict ? tag(VERDICT[j.verdict][0], VERDICT[j.verdict][1]) : j.bucket ? tag(BUCKET[j.bucket][0] + ' match', BUCKET[j.bucket][1]) : ''}<span class="score muted">${esc(posted(j))}</span></div><div class="t">${esc(j.title)}</div><div class="small muted">${esc([j.company, j.location, j.pay].filter(Boolean).join(' · '))}</div>${j.needsText ? '<span class="small" style="color:var(--attention)">Paste the description to check the fit.</span>' : `<span class="small">${esc(j.why || (j.scoreReasons || []).join(' · '))}</span>`}</a>`;

@@ -36,7 +36,7 @@ export function open({ jobId = null, app, starter } = {}) {
   };
   call('chat.history').then((h) => {
     const mine = h.filter((m) => (jobId ? m.jobId === jobId : !m.jobId)).slice(-20);
-    if (!mine.length) bubble({ role: 'assistant', text: jobId ? 'Ask me anything about this job: how you fit, how to talk about a gap, what to ask them.' : 'Hi! Ask me anything about your search or how App Wizard works. If you tell me something about your work that isn’t in your profile, I’ll offer to add it.' });
+    if (!mine.length) bubble({ role: 'assistant', text: jobId ? 'Ask me anything about this job: how you fit, how to talk about a gap, what to ask them.' : 'Hi! Ask me anything about your search or how Job Wizard works. If you tell me something about your work that isn’t in your profile, I’ll offer to add it.' });
     mine.forEach(bubble);
     if (starter) { input.value = starter; }
   });

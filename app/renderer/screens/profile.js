@@ -1,11 +1,13 @@
 import { call, esc, tag, act, toast, on, modal, ago } from '../lib.js';
+import { dashboard as setupDashboard } from './builder.js';
 
-const TABS = [['experience', 'Experience'], ['learned', 'What we’ve learned'], ['settings', 'Settings'], ['extension', 'Browser extension']];
+const TABS = [['setup', 'Your choices'], ['learned', 'What we’ve learned'], ['settings', 'Claude and schedule'], ['extension', 'Browser extension']];
 
-export async function render(root, [tab = 'experience'], app) {
+export async function render(root, [tab = 'setup'], app) {
+  if (!TAB[tab]) tab = 'setup';
   const paint = async () => {
     root.innerHTML = `<div class="page">
-<div class="head"><div><h1>Profile</h1><p class="muted">Your facts, your preferences and your settings. Everything App Wizard writes comes from here.</p></div></div>
+<div class="head"><div><h1>Profile</h1><p class="muted">Every choice you made in setup, and how Job Wizard works for you. Change anything and your matches update.</p></div></div>
 <nav class="row" aria-label="Profile sections">${TABS.map(([k, l]) => `<a class="chip" aria-pressed="${k === tab}" href="#/profile/${k}" style="text-decoration:none">${l}</a>`).join('')}</nav>
 <div id="tab"></div></div>`;
     const el = root.querySelector('#tab');
@@ -15,6 +17,7 @@ export async function render(root, [tab = 'experience'], app) {
 }
 
 const TAB = {
+  async setup(el, app) { await setupDashboard(el, app, { embedded: true }); },
   async experience(el) {
     const p = await call('profile.get');
     const w = await call('want.get');
@@ -43,7 +46,7 @@ ${l.edits.length ? `<section class="card"><h2>Your recent edits</h2><p class="mu
   },
   async settings(el, app, repaint) {
     const s = await call('settings.get');
-    el.innerHTML = `<section class="card"><h2>Claude</h2><p class="muted small">App Wizard uses Claude to read and write. <a href="#/help/api-key">Step-by-step help</a></p><div class="row"><a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" class="btn">Sign in to Claude Console to get a key</a></div>
+    el.innerHTML = `<section class="card"><h2>Claude</h2><p class="muted small">Job Wizard uses Claude to read and write. <a href="#/help/api-key">Step-by-step help</a></p><div class="row"><a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" class="btn">Sign in to Claude Console to get a key</a></div>
 <label class="field">API key<div class="row"><input type="password" id="key" value="${esc(s.claudeKey)}" placeholder="sk-ant-…" style="flex:1 1 300px"><button class="btn secondary" data-act="key" data-busy="Checking…">Save and test</button></div></label><div class="note alert hidden" id="keyerr" role="alert"></div>
 <div class="row-l"><label class="field">Writing model<input type="text" id="model" value="${esc(s.model)}"></label><label class="field">Fast model<input type="text" id="fast" value="${esc(s.fastModel)}"></label></div></section>
 <section class="card"><h2>Every morning</h2><div class="row-l"><label class="field">Time<select id="hour" style="width:auto">${[5, 6, 7, 8, 9, 10].map((h) => `<option value="${h}" ${h === Number(s.morningHour) ? 'selected' : ''}>${h}:00 AM</option>`).join('')}</select></label><label class="field">How many to get ready<select id="count" style="width:auto">${[1, 2, 3, 5, 8].map((n) => `<option ${n === Number(s.morningCount) ? 'selected' : ''}>${n}</option>`).join('')}</select></label><label class="radio" style="align-self:flex-end"><input type="checkbox" id="mon" ${s.morningOn ? 'checked' : ''}>Turned on</label></div>
@@ -54,13 +57,13 @@ ${s.lastBatch ? `<p class="small muted">Last run ${esc(ago(s.lastBatch.at))}: ${
   },
   async extension(el) {
     const token = await call('ext.token');
-    el.innerHTML = `<section class="card featured"><h2>Fill applications in your browser</h2><p class="muted">The App Wizard extension fills in application forms with your profile and the answers you approved. You check everything and press submit yourself.</p>
+    el.innerHTML = `<section class="card featured"><h2>Fill applications in your browser</h2><p class="muted">The Job Wizard extension fills in application forms with your profile and the answers you approved. You check everything and press submit yourself.</p>
 <ol class="stack-s" style="margin:0;padding-left:20px">
-<li>In Chrome or Edge, open <b>Extensions</b>, turn on <b>Developer mode</b>, press <b>Load unpacked</b>, and pick the <span style="font-family:var(--mono)">extension</span> folder that came with App Wizard. (A one-click install from the Chrome Web Store is coming.)</li>
-<li>Press the App Wizard icon in your browser toolbar and paste this pairing code:</li></ol>
+<li>In Chrome or Edge, open <b>Extensions</b>, turn on <b>Developer mode</b>, press <b>Load unpacked</b>, and pick the <span style="font-family:var(--mono)">extension</span> folder that came with Job Wizard. (A one-click install from the Chrome Web Store is coming.)</li>
+<li>Press the Job Wizard icon in your browser toolbar and paste this pairing code:</li></ol>
 <div class="row"><input type="text" readonly value="${esc(token)}" id="tok" style="font-family:var(--mono);flex:1 1 320px"><button class="btn" data-act="copy">Copy</button><button class="btn" data-act="reset">Make a new code</button></div>
-<p class="small muted">Keep App Wizard open while you apply; the extension talks to it on this computer only.</p></section>
-<section class="card"><h2>What it fills</h2><ul style="margin:0;padding-left:18px"><li>Name, email, phone, location, LinkedIn and website</li><li>Your current title and company</li><li>Answers you saved in Standard answers</li><li>Your resume and cover letter for that job, when App Wizard made them</li></ul><p class="small muted">It never answers personal questions you haven’t saved an answer for, and it never presses submit.</p></section>`;
+<p class="small muted">Keep Job Wizard open while you apply; the extension talks to it on this computer only.</p></section>
+<section class="card"><h2>What it fills</h2><ul style="margin:0;padding-left:18px"><li>Name, email, phone, location, LinkedIn and website</li><li>Your current title and company</li><li>Answers you saved in Standard answers</li><li>Your resume and cover letter for that job, when Job Wizard made them</li></ul><p class="small muted">It never answers personal questions you haven’t saved an answer for, and it never presses submit.</p></section>`;
     on(el, {
       copy: () => navigator.clipboard.writeText(el.querySelector('#tok').value).then(() => toast('Copied.')),
       reset: async () => { if (confirm('Make a new code? You’ll need to paste it into the extension again.')) { await call('ext.token', { reset: true }); TAB.extension(el); } },

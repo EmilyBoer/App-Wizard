@@ -42,7 +42,7 @@ export function fakeClaude(overrides = {}) {
       };
     }
     if (system.includes('You describe how a person writes')) return { guide: ['Short sentences.', 'Plain words.'], sampleLine: 'I moved our website to a new system and taught people to publish on their own.', sampleFrom: 'b_x' };
-    if (system.includes('help someone describe the job they want')) return { summary: 'What these have in common: running a website for a mission-driven employer.', suggestedTitles: ['Website Manager', 'Editorial Manager'], ambiguous: [{ word: 'Development', meanings: ['Fundraising', 'Building software'] }], keywords: ['website', 'cms', 'content strategy', 'editorial calendar'], level: 'senior', payRange: '$85k to $105k' };
+    if (system.includes('describe the jobs they should go after')) return { summary: 'What these have in common: running a website for a mission-driven employer.', suggestedTitles: ['Website Manager', 'Editorial Manager'], ambiguous: [{ word: 'Development', meanings: ['Fundraising', 'Building software'] }], keywords: ['website', 'cms', 'content strategy', 'editorial calendar'], level: 'senior', payRange: '$85k to $105k' };
     if (system.includes('You judge whether a job fits')) {
       const bid = (text.match(/"id":"(b_[a-f0-9]+)"/) || [])[1];
       return { mustHaves: [{ want: 'Own the website', bulletId: bid, fit: 'direct' }, { want: 'Analytics dashboards', bulletId: 'b_fake', fit: 'direct' }], qualified: { ok: true, note: '' }, direction: { label: 'core', note: '' }, mission: { label: 'love', note: '' }, practical: { ok: true, note: '' }, verdict: 'strong', why: 'You run websites like this now.', gapQuestions: [] };
@@ -60,7 +60,7 @@ export function fakeClaude(overrides = {}) {
       return { greeting: 'Dear Hiring Team,', paragraphs: ['Your post about growing the website caught my eye.', 'At Meridian I moved about 400 pages to a new system on schedule.', 'I am passionate about this.'], closing: 'Thank you,', factsUsed: [bid] };
     }
     if (system.includes('interview cheat sheet')) return { company: { about: 'A public radio station.', recent: [], values: [] }, role: { focus: 'Run the website', theyNeed: [] }, pitch: 'I run websites.', questions: [{ q: 'Tell me about a migration.', answer: 'The 400 page move.', from: ['b_nope'] }], askThem: ['What does success look like?'], watchOuts: [] };
-    if (system.includes('App Wizard helper')) return { reply: 'Nice. Want me to add that?', proposals: [{ type: 'add_bullet', company: 'Meridian Parks Foundation', text: 'Built a monthly analytics report in Looker Studio.' }] };
+    if (system.includes('Job Wizard helper')) return { reply: 'Nice. Want me to add that?', proposals: [{ type: 'add_bullet', company: 'Meridian Parks Foundation', text: 'Built a monthly analytics report in Looker Studio.' }] };
     if (system.includes('preference rules')) return { rules: [{ text: "We'll rank public media jobs higher.", kind: 'boost', pattern: 'public radio', evidence: 3 }] };
     if (system.includes('resume design')) return { columns: 2, sidebar: 'left', fonts: ['Brice', 'Open Sans'], accent: '#1f4e79', sections: [], decorations: ['skill bars'], looksLike: 'modern' };
     if (system.includes('application question')) return { needsYou: true, why: 'This is personal.' };

@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "App Wizard",
+  "name": "Job Wizard",
   "version": "0.1.0",
-  "description": "Fill job applications with your App Wizard profile. You check everything and press submit.",
-  "action": { "default_popup": "popup.html", "default_title": "App Wizard" },
+  "description": "Fill job applications with your Job Wizard profile. You check everything and press submit.",
+  "action": { "default_popup": "popup.html", "default_title": "Job Wizard" },
   "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": ["http://127.0.0.1:47321/*"],
   "background": { "service_worker": "background.js" },

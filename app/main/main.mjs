@@ -1,4 +1,4 @@
-// App Wizard desktop app (Electron).
+// Job Wizard desktop app (Electron).
 import { app, BrowserWindow, ipcMain, dialog, shell, Menu, Tray, nativeImage, protocol, net } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -20,7 +20,7 @@ const api = createApi({ base: path.join(app.getPath('userData'), 'data'), onEven
 
 function createWindow() {
   win = new BrowserWindow({
-    width: 1360, height: 900, minWidth: 900, minHeight: 640, title: 'App Wizard', backgroundColor: '#FFFFFF',
+    width: 1360, height: 900, minWidth: 900, minHeight: 640, title: 'Job Wizard', backgroundColor: '#FFFFFF',
     icon: path.resolve(here, '../assets/icon.png'),
     webPreferences: { preload: path.join(here, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
@@ -53,7 +53,7 @@ ipcMain.handle('aw:pdf', async (_e, { html, fileName, paper, ask }) => {
     const text = await off.webContents.executeJavaScript('document.body.innerText');
     const pdf = await off.webContents.printToPDF({ pageSize: paper === 'a4' ? 'A4' : 'Letter', printBackground: true, preferCSSPageSize: true });
     const pages = (pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) || []).length;
-    const folder = path.join(app.getPath('documents'), 'App Wizard');
+    const folder = path.join(app.getPath('documents'), 'Job Wizard');
     fs.mkdirSync(folder, { recursive: true });
     let file = path.join(folder, `${fileName}.pdf`);
     if (ask) {
@@ -95,14 +95,14 @@ app.whenReady().then(async () => {
   });
   Menu.setApplicationMenu(Menu.buildFromTemplate([
     ...(process.platform === 'darwin' ? [{ role: 'appMenu' }] : []),
-    { label: 'File', submenu: [{ label: 'Get applications ready now', click: () => api.call('batch.run', { reason: 'manual' }).catch(() => {}) }, { type: 'separator' }, { label: 'Quit App Wizard', accelerator: 'CmdOrCtrl+Q', click: () => { quitting = true; app.quit(); } }] },
+    { label: 'File', submenu: [{ label: 'Get applications ready now', click: () => api.call('batch.run', { reason: 'manual' }).catch(() => {}) }, { type: 'separator' }, { label: 'Quit Job Wizard', accelerator: 'CmdOrCtrl+Q', click: () => { quitting = true; app.quit(); } }] },
     { role: 'editMenu' }, { role: 'viewMenu' }, { role: 'windowMenu' },
   ]));
   const icon = nativeImage.createFromPath(path.resolve(here, '../assets/icon.png')).resize({ width: 18, height: 18 });
   tray = new Tray(icon);
-  tray.setToolTip('App Wizard');
+  tray.setToolTip('Job Wizard');
   tray.setContextMenu(Menu.buildFromTemplate([
-    { label: 'Open App Wizard', click: show },
+    { label: 'Open Job Wizard', click: show },
     { label: 'Get applications ready now', click: () => api.call('batch.run', { reason: 'manual' }).catch(() => {}) },
     { type: 'separator' },
     { label: 'Quit', click: () => { quitting = true; app.quit(); } },

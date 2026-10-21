@@ -191,3 +191,5 @@ table.t td { padding: 10px 14px; border-top: 1px solid var(--line); vertical-ali
   .split > .side { max-width: none; }
 }
 @media print { .top, .drawer { display: none; } }
+
+body.building .nav, body.building .ask { visibility: hidden; }

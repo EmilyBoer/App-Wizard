@@ -14,36 +14,24 @@ const KIND = {
   other: ['Other', 'muted', 'Kept for reference.'],
 };
 
+// These pages edit one part of your setup in depth. They're reached from Profile.
+const EDITOR_TITLE = { 2: 'Your files', 3: 'Your experience', 4: 'Your writing style', 5: 'Resume design', 6: 'What you want', 7: 'Companies and job sites', 8: 'Application answers', 9: 'Rate jobs' };
+
 export async function render(root, params, app) {
-  let step = Math.min(10, Math.max(2, Number(params[0]) || app.overview.setup.step || 2));
-  await call('setup.go', { step });
-  const done = new Set(app.overview.setup.done);
-  root.innerHTML = `
-<div class="page"><div class="split">
-  <aside class="side checklist" aria-label="Setup checklist">
-    <div class="eyebrow" style="margin-bottom:12px">Your setup</div>
-    <ol>${STEPS.map((s, i) => {
-      const n = i + 1, cls = n === step ? 'on' : done.has(n) || n === 1 ? 'done' : '';
-      return `<li class="${cls}"><a href="#/setup/${Math.max(2, n)}" ${n === step ? 'aria-current="step"' : ''}><span class="dot">${cls === 'done' ? '✓' : n}</span>${s}</a></li>`;
-    }).join('')}</ol>
-    <p class="tiny muted" style="margin:16px 8px 0">${MINUTES_LEFT[step] ? `About ${MINUTES_LEFT[step]} minutes left. ` : ''}You can stop any time; we save as you go.</p>
-  </aside>
-  <section class="main" id="step"></section>
-</div></div>`;
+  const step = Math.min(9, Math.max(2, Number(params[0]) || 3));
+  if (step === 2) return app.go('#/documents');
+  root.innerHTML = `<div class="page" style="max-width:1040px"><a href="#/profile" class="small">← Profile</a><section class="stack" id="step" style="gap:24px"></section></div>`;
   const el = root.querySelector('#step');
   const ctx = {
     app, el, step,
-    head(h1, intro) { return `<div><div class="eyebrow">Step ${step} of 10 · ${STEPS[step - 1]}</div><h1>${h1}</h1><p class="muted" style="max-width:680px">${intro}</p></div>`; },
-    foot({ next = 'Continue', skip = true, back = true } = {}) {
-      return `<div class="foot">${back ? '<button class="btn" data-act="back">Back</button>' : ''}<button class="btn primary big" data-act="next" data-busy="Saving…">${next}</button>${skip ? '<button class="btn link" data-act="skip" style="color:var(--ink-muted)">Skip for now</button>' : ''}</div>`;
-    },
-    async next() { await call('setup.done', { step }); app.go(`#/setup/${Math.min(10, step + 1)}`); },
+    head(h1, intro) { return `<div><div class="eyebrow">Profile · ${EDITOR_TITLE[step]}</div><h1>${h1}</h1><p class="muted" style="max-width:680px">${intro}</p></div>`; },
+    foot({ next = 'Done' } = {}) { return `<div class="foot"><button class="btn primary big" data-act="next" data-busy="Saving…">${next === 'Continue' || next === 'Continue anyway' ? 'Done' : next}</button><a class="btn" href="#/profile">Back to Profile</a></div>`; },
+    async next() { app.go('#/profile'); },
   };
-  on(el, { back: () => app.go(`#/setup/${Math.max(2, step - 1)}`), skip: () => app.go(`#/setup/${Math.min(10, step + 1)}`) });
   await STEP_RENDER[step](ctx);
 }
 
-const STEP_RENDER = { 2: materials, 3: experience, 4: voice, 5: design, 6: want, 7: sites, 8: answers, 9: rateJobs, 10: allSet };
+const STEP_RENDER = { 2: materials, 3: experience, 4: voice, 5: design, 6: want, 7: sites, 8: answers, 9: rateJobs };
 
 // ---------------- 2. Materials ----------------
 async function materials(ctx) {
@@ -116,7 +104,7 @@ ${ctx.foot({ next: 'Continue: build my work history' })}`;
 }
 
 function keyCard() {
-  return `<section class="card featured" id="keycard"><h2>First: connect Claude</h2><p class="muted">App Wizard uses Claude to read your files and write. During testing, paste your own Claude API key. <a href="#/help/api-key">How to get one</a></p>
+  return `<section class="card featured" id="keycard"><h2>First: connect Claude</h2><p class="muted">Job Wizard uses Claude to read your files and write. During testing, paste your own Claude API key. <a href="#/help/api-key">How to get one</a></p>
 <div class="row"><a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" class="btn">Sign in to Claude Console to get a key</a><span class="small muted">Sign in, press Create Key, copy it, and paste it here.</span></div>
 <div class="row"><input type="password" id="key" placeholder="sk-ant-…" style="flex:1 1 280px"><button class="btn secondary" data-act="savekey" data-busy="Checking…">Save and test</button></div><div class="note alert hidden" id="keyerr" role="alert"></div></section>`;
 }
@@ -136,7 +124,7 @@ async function experience(ctx) {
     const under = p.underselling.filter((u) => u.status === 'pending');
     const c = p.contact || {};
     el.innerHTML = `${ctx.head('Here’s what we found. Is it right?', 'We put your files together into one work history. Settle anything that doesn’t match, and say yes to anything we found that’s true.')}
-<div class="note good"><b>Our promise:</b> everything App Wizard writes for you comes from this page. We reword and reorder; we never invent jobs, dates, numbers or skills.</div>
+<div class="note good"><b>Our promise:</b> everything Job Wizard writes for you comes from this page. We reword and reorder; we never invent jobs, dates, numbers or skills.</div>
 ${!p.roles.length ? `<div class="empty"><h2>No work history yet</h2><p class="muted">Add files on the last step, or add your roles by hand.</p><div class="row"><a class="btn secondary" href="#/setup/2">Add files</a><button class="btn" data-act="addrole">Add a role</button><button class="btn" data-act="rebuild" data-busy="Building…">Build from my files</button></div></div>` : ''}
 ${conflicts.length ? `<section class="card featured"><h2>${conflicts.length} thing${conflicts.length > 1 ? 's' : ''} to settle</h2><p class="muted">Your files don’t agree. Pick what’s true.</p>
 ${conflicts.map((k) => `<div class="stack-s" data-conflict="${k.id}"><b class="small">${esc(k.label)}</b><div class="row">${k.options.map((o, i) => radio(k.id, o.value, `${o.value} (${srcName(o.source)})`, i === 0)).join('')}<label class="radio"><input type="radio" name="${k.id}" value="__other">Something else</label><input type="text" class="hidden" placeholder="Type it" style="width:200px"><button class="btn small secondary" data-act="settle" data-id="${k.id}">Save</button></div></div>`).join('')}</section>` : ''}
@@ -262,7 +250,7 @@ ${d.customFonts.map((f) => `<div class="item" style="padding:8px 0">${f.embeddab
 <div class="stack-s"><b class="small">Length</b><div class="row">${radio('length', 'one', 'One page', d.length !== 'one-half')}${radio('length', 'one-half', 'Up to 1½ pages', d.length === 'one-half')}</div>${d.years >= 10 ? `<span class="small muted">Recommended for you: you have ${d.years} years of experience.</span>` : ''}</div>
 <div class="stack-s"><b class="small">How far back to go</b><div class="row">${[10, 15, 50].map((y) => radio('years', y, y === 50 ? 'Everything' : `${y} years`, Number(d.yearsBack) === y)).join('')}</div></div>
 <p class="tiny muted">Text never gets smaller than 10 point. If it doesn’t fit, we trim the least relevant lines from your oldest roles first and show you what we cut.</p></section>
-<section class="card"><h2>Downloads</h2><p class="muted">Every resume and cover letter comes as:</p><div class="row">${tag('PDF', 'good')}${tag('Plain text', 'good')}</div><p class="tiny muted">File names look like <span style="font-family:var(--mono)">First_Last_Resume_Company_Role.pdf</span></p><div class="note muted">Need to edit? Change any line inside App Wizard before you download, or copy the plain text into Word or Google Docs.</div></section>
+<section class="card"><h2>Downloads</h2><p class="muted">Every resume and cover letter comes as:</p><div class="row">${tag('PDF', 'good')}${tag('Plain text', 'good')}</div><p class="tiny muted">File names look like <span style="font-family:var(--mono)">First_Last_Resume_Company_Role.pdf</span></p><div class="note muted">Need to edit? Change any line inside Job Wizard before you download, or copy the plain text into Word or Google Docs.</div></section>
 </div>
 ${ctx.foot()}`;
     el.querySelector('#pv').srcdoc = prev.html;
@@ -420,14 +408,14 @@ ${askingNo ? `<b class="small">Why not? Pick any.</b><div class="row" id="reason
 async function allSet(ctx) {
   const { el, app } = ctx;
   const [s, o] = await Promise.all([call('settings.get'), call('app.overview')]);
-  el.innerHTML = `${ctx.head('You’re all set.', 'From here on, App Wizard does the hunting. You do the deciding.')}
+  el.innerHTML = `${ctx.head('You’re all set.', 'From here on, Job Wizard does the hunting. You do the deciding.')}
 <section class="card featured"><h2>Every morning</h2><p class="muted">We check your job sites, find new matches, and get a resume and cover letter ready for the best ones. The app needs to be open (it can sit in the background).</p>
 <div class="row-l"><label class="field">Time<select id="hour" style="width:auto">${[5, 6, 7, 8, 9, 10].map((h) => `<option value="${h}" ${h === Number(s.morningHour) ? 'selected' : ''}>${h}:00 AM</option>`).join('')}</select></label>
 <label class="field">How many to get ready<select id="count" style="width:auto">${[1, 2, 3, 5, 8].map((n) => `<option ${n === Number(s.morningCount) ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
 <label class="radio" style="align-self:flex-end"><input type="checkbox" id="mon" ${s.morningOn ? 'checked' : ''}>Turned on</label></div></section>
 <div class="grid">
 <div class="card tight">${sparkle(18)}<b>Check what’s ready</b><span class="small muted">Your Dashboard shows new matches and applications ready to send.</span></div>
-<div class="card tight">${sparkle(18)}<b>Apply in your browser</b><span class="small muted">The App Wizard extension fills in forms. You check and press submit. <a href="#/help/extension">Set it up</a></span></div>
+<div class="card tight">${sparkle(18)}<b>Apply in your browser</b><span class="small muted">The Job Wizard extension fills in forms. You check and press submit. <a href="#/help/extension">Set it up</a></span></div>
 <div class="card tight">${sparkle(18)}<b>Keep teaching it</b><span class="small muted">Every yes, no and edit makes it smarter. ${o.learning.rules} rule${o.learning.rules === 1 ? '' : 's'} learned so far.</span></div>
 </div>
 <div class="foot"><button class="btn" data-act="back">Back</button><button class="btn primary big" data-act="finish" data-busy="Getting your first batch ready…">Go to my Dashboard</button><button class="btn" data-act="batch" data-busy="Working…">Get my first batch ready now</button><span data-progress class="small muted"></span></div>`;
