@@ -22,7 +22,7 @@ function createWindow() {
   win = new BrowserWindow({
     width: 1360, height: 900, minWidth: 900, minHeight: 640, title: 'Job Wizard', backgroundColor: '#FFFFFF',
     icon: path.resolve(here, '../assets/icon.png'),
-    webPreferences: { preload: path.join(here, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true },
+    webPreferences: { preload: path.join(here, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true, plugins: true },
   });
   win.loadURL('app://wizard/index.html');
   win.webContents.setWindowOpenHandler(({ url }) => { if (/^https?:/.test(url)) shell.openExternal(url); return { action: 'deny' }; });
@@ -63,6 +63,19 @@ ipcMain.handle('aw:pdf', async (_e, { html, fileName, paper, ask }) => {
     }
     fs.writeFileSync(file, pdf);
     return { file, pages, text };
+  } finally { off.destroy(); fs.rm(tmp, () => {}); }
+});
+
+// A picture of a page (for comparing a rebuilt design with the original).
+ipcMain.handle('aw:snapshot', async (_e, { html, width = 816, height = 1056 }) => {
+  const tmp = path.join(os.tmpdir(), `app-wizard-snap-${Date.now()}.html`);
+  fs.writeFileSync(tmp, html);
+  const off = new BrowserWindow({ show: false, width, height, useContentSize: true, webPreferences: { sandbox: true, javascript: true, offscreen: true } });
+  try {
+    await off.loadFile(tmp);
+    await off.webContents.executeJavaScript('document.fonts.ready.then(() => new Promise((r) => setTimeout(r, 300)))');
+    const img = await off.webContents.capturePage({ x: 0, y: 0, width, height });
+    return img.toPNG().toString('base64');
   } finally { off.destroy(); fs.rm(tmp, () => {}); }
 });
 

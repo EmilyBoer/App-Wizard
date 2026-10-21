@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('aw', {
   },
   onEvent: (fn) => ipcRenderer.on('aw:event', (_e, ev) => fn(ev)),
   pdf: (opts) => ipcRenderer.invoke('aw:pdf', opts),
+  snapshot: (opts) => ipcRenderer.invoke('aw:snapshot', opts),
   reveal: (file) => ipcRenderer.invoke('aw:reveal', file),
   open: (url) => ipcRenderer.invoke('aw:open', url),
 });

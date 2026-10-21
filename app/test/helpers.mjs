@@ -72,7 +72,11 @@ export function fakeClaude(overrides = {}) {
     ready: true,
     calls,
     json: async ({ system, content }) => { calls.push(system.slice(0, 40)); return structuredClone(answer(system, content)); },
-    send: async () => 'OK',
+    send: async ({ system }) => {
+      calls.push(system.slice(0, 40));
+      if (system.includes('rebuild a resume') || system.includes('You rebuilt a resume')) return REBUILD(system.includes('You rebuilt'));
+      return 'OK';
+    },
   });
   factory.calls = calls;
   return factory;
@@ -110,7 +114,7 @@ export function makeDocx(paragraphs) {
   return zipOne('word/document.xml', Buffer.from(xml));
 }
 
-function zipOne(name, data) {
+export function zipOne(name, data) {
   const comp = zlib.deflateRawSync(data);
   const nameBuf = Buffer.from(name);
   const local = Buffer.alloc(30); local.writeUInt32LE(0x04034b50, 0); local.writeUInt16LE(20, 4); local.writeUInt16LE(8, 8); local.writeUInt32LE(comp.length, 18); local.writeUInt32LE(data.length, 22); local.writeUInt16LE(nameBuf.length, 26);
@@ -119,4 +123,14 @@ function zipOne(name, data) {
   const centralPart = Buffer.concat([central, nameBuf]);
   const end = Buffer.alloc(22); end.writeUInt32LE(0x06054b50, 0); end.writeUInt16LE(1, 8); end.writeUInt16LE(1, 10); end.writeUInt32LE(centralPart.length, 12); end.writeUInt32LE(localPart.length, 16);
   return Buffer.concat([localPart, centralPart, end]);
+}
+
+// A rebuilt design as the fake Claude returns it.
+function REBUILD(fixing) {
+  return `<info>{"margin":{"top":0.5,"right":0.6,"bottom":0.5,"left":0.6},"fontRoles":{"heading":"Garet","body":"Calibri"},"leftOut":["photo"],"note":"Very close.","differences":${fixing ? '["Name was 2pt too small"]' : '[]'}}</info>
+<css>.nm{font-family:"Garet",sans-serif;font-size:${fixing ? 26 : 24}pt}.b{font-family:Calibri,sans-serif}.job{break-inside:avoid}</css>
+<template><div class="nm">{{name}}</div><div class="ct">{{email}}{{#phone}} | {{phone}}{{/phone}}</div>{{#summary}}<h2>PROFILE</h2><p>{{summary}}</p>{{/summary}}<h2>EXPERIENCE</h2>{{#roles}}<div class="job"><b>{{title}}</b>, {{company}} <i>{{dates}}</i><ul>{{#bullets}}<li onclick="x()">{{text}}</li>{{/bullets}}</ul></div>{{/roles}}{{#skills}}{{name}}{{^_last}}, {{/_last}}{{/skills}}<script>alert(1)</script></template>
+<background><div style="position:absolute;left:0;top:0;width:2in;height:11in;background:#eef"></div></background>
+<letterhead><div class="nm">{{name}}</div><div>{{email}}</div></letterhead>
+<sample>{"contact":{"name":"Jordan Lee","email":"jordan@example.com","phone":"555"},"summary":"Original summary.","roles":[{"title":"Content Strategist","company":"Meridian","start":"2021","end":"Present","bullets":[{"text":"Original bullet one."}]}],"skills":["SEO","Drupal"],"education":[],"certifications":[]}</sample>`;
 }

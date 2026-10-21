@@ -241,7 +241,7 @@ test('design: Canva import picks a layout and swaps fonts', async () => {
   assert.deepEqual(r.missing, ['Brice']);
   const prev = await api.call('design.preview');
   assert.match(prev.html, /Montserrat/);
-  assert.match(prev.html, /grid-template-columns:31% 1fr/);
+  assert.match(prev.html, /grid-template-columns:[0-9.]+in 1fr/);
 });
 
 test('missing API key gives a plain message', async () => {

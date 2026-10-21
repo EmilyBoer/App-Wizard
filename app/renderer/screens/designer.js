@@ -1,5 +1,6 @@
 // The resume editor: settings on the left, the resume changing live on the right.
-import { call, esc, toast, readFiles } from '../lib.js';
+import { call, esc, toast, readFiles, modal, working } from '../lib.js';
+import { sourceList, fontsPanel, compareView } from './own.js';
 
 const FONT_PAIRS = [
   ['Inter', 'Inter', 'Clean'], ['Montserrat', 'Open Sans', 'Modern'], ['Playfair Display', 'Source Sans 3', 'Elegant'], ['Merriweather', 'Lato', 'Warm'],
@@ -32,38 +33,44 @@ export async function renderDesigner(el, { dark = false } = {}) {
     const openGroups = new Set([...panel.querySelectorAll('details[open]')].map((x) => x.dataset.g));
     const isOpen = (g, def) => (panel.children.length ? openGroups.has(g) : def);
     const pairOn = (h, b) => d.fonts.heading === h && d.fonts.body === b;
-    const fonts = [...d.fonts_available, ...(d.customFonts || []).map((f) => f.family)];
+    const fonts = [...new Set([...d.fonts_available, ...(d.customFonts || []).map((f) => f.family)])];
     const sidebarOn = d.layout !== 'single';
+    const own = d.mode === 'own' && d.ownBuilt;
     panel.innerHTML = `
-${group('tpl', 'Template', `<div class="dz-thumbs">${Object.entries(d.presets).map(([k, p]) => `<button type="button" class="dz-thumb ${d.template === k ? 'on' : ''}" data-preset="${k}" aria-pressed="${d.template === k}"><div class="dz-mini"><iframe tabindex="-1" title="" scrolling="no" data-thumb="${k}"></iframe></div><b>${esc(p.label)}</b><span class="tiny muted">${esc(p.note)}</span></button>`).join('')}</div>
-<label class="btn small" style="align-self:flex-start">Import a Canva design (PDF)<input type="file" class="sr" id="dz-canva" accept=".pdf"></label>${d.raw?.canva ? `<span class="tiny muted">Imported ${esc(d.raw.canva.name)}. ${(d.raw.canva.missing || []).length ? `Its ${esc(d.raw.canva.missing.join(', '))} font was swapped for the closest match.` : ''}</span>` : ''}`, isOpen('tpl', true))}
-${group('layout', 'Layout', `${seg('layout', d.layout, [['single', 'One column', icon('single')], ['sidebar-left', 'Sidebar left', icon('sidebar-left')], ['sidebar-right', 'Sidebar right', icon('sidebar-right')]])}
-${sidebarOn ? `<b class="small">In the sidebar</b><div class="row">${['skills', 'education', 'certifications', 'summary'].map((k) => `<label class="radio"><input type="checkbox" data-side="${k}" ${d.sidebar.includes(k) ? 'checked' : ''}>${esc(d.sections[k])}</label>`).join('')}</div><label class="radio" style="align-self:flex-start"><input type="checkbox" data-tint ${d.sidebarTint ? 'checked' : ''}>Tint the sidebar</label>` : ''}`, isOpen('layout', true))}
+${group('tpl', 'Template', `<div class="dz-thumbs">${d.ownBuilt ? `<button type="button" class="dz-thumb ${own ? 'on' : ''}" data-own aria-pressed="${own}"><div class="dz-mini"><iframe tabindex="-1" title="" scrolling="no" data-thumb="own"></iframe></div><b>Your own design</b><span class="tiny muted">Rebuilt from ${esc(d.ownFrom || 'your resume')}</span></button>` : ''}${Object.entries(d.presets).map(([k, p]) => `<button type="button" class="dz-thumb ${!own && d.template === k ? 'on' : ''}" data-preset="${k}" aria-pressed="${!own && d.template === k}"><div class="dz-mini"><iframe tabindex="-1" title="" scrolling="no" data-thumb="${k}"></iframe></div><b>${esc(p.label)}</b><span class="tiny muted">${esc(p.note)}</span></button>`).join('')}</div>
+${d.ownBuilt ? '' : '<button type="button" class="btn small secondary" data-keepown style="align-self:flex-start">Keep my own resume’s design</button><span class="tiny muted">We rebuild the look of a resume you already have (a PDF, Word file, Canva export or screenshot), fonts and all.</span>'}`, isOpen('tpl', true))}
+${own ? group('own', 'Your own design', `<div id="dz-ownfonts"></div><div class="row"><button type="button" class="btn small secondary" data-compare>Compare with my original</button><button type="button" class="btn small" data-keepown>Rebuild from a different file</button></div><span class="tiny muted">To change colors, spacing or layout, pick a template instead. Your own design stays here.</span>`, true) : ''}
+${own ? '' : group('layout', 'Layout', `${seg('layout', d.layout, [['single', 'One column', icon('single')], ['sidebar-left', 'Sidebar left', icon('sidebar-left')], ['sidebar-right', 'Sidebar right', icon('sidebar-right')]])}
+${sidebarOn ? `<b class="small">In the sidebar</b><div class="row">${['skills', 'education', 'certifications', 'summary'].map((k) => `<label class="radio"><input type="checkbox" data-side="${k}" ${d.sidebar.includes(k) ? 'checked' : ''}>${esc(d.sections[k])}</label>`).join('')}</div><b class="small">Sidebar color</b>${seg('sidebarTint', d.sidebarTint, [['none', 'None'], ['light', 'Light tint'], ['dark', 'Dark, white text']])}` : ''}`, isOpen('layout', true))}
 ${(() => {
       const inSide = (k) => sidebarOn && d.sidebar.includes(k);
       const lists = sidebarOn ? [['Main column', d.order.filter((k) => !inSide(k))], ['Sidebar', d.order.filter(inSide)]] : [['', d.order]];
       const rows = (list) => list.map((k, i) => `<div class="dz-sec ${d.hidden.includes(k) ? 'off' : ''}"><label class="radio" style="border:0;padding:0;background:none"><input type="checkbox" data-show="${k}" ${d.hidden.includes(k) ? '' : 'checked'} aria-label="Show ${esc(d.sections[k])}"></label><span class="grow">${esc(d.sections[k])}</span><button type="button" class="btn small" data-move="${k}" data-dir="-1" ${i === 0 ? 'disabled' : ''} aria-label="Move ${esc(d.sections[k])} up">↑</button><button type="button" class="btn small" data-move="${k}" data-dir="1" ${i === list.length - 1 ? 'disabled' : ''} aria-label="Move ${esc(d.sections[k])} down">↓</button></div>`).join('');
       return group('sections', 'Sections', lists.map(([name, list]) => `${name ? `<b class="small">${name}</b>` : ''}<div class="dz-sections">${rows(list) || '<span class="tiny muted">Nothing here yet.</span>'}</div>`).join('') + '<span class="tiny muted">Untick a section to hide it. Use the arrows to change the order.</span>', isOpen('sections', true));
     })()}
-${group('look', 'Name, header and titles', `<b class="small">Name size</b>${seg('nameSize', d.nameSize, [['standard', 'Standard'], ['large', 'Large'], ['xl', 'Extra large']])}
+${own ? '' : group('look', 'Name, header and titles', `<b class="small">Name size</b>${seg('nameSize', d.nameSize, [['standard', 'Standard'], ['large', 'Large'], ['xl', 'Extra large']])}
 <label class="radio" style="align-self:flex-start"><input type="checkbox" data-upper ${d.nameUpper ? 'checked' : ''}>Name in capitals</label>
-<b class="small">Name and contact</b>${seg('header', d.header, [['left', 'Left'], ['center', 'Centered'], ['split', 'Split'], ['band', 'Color band']])}
-<b class="small">Section titles</b>${seg('titles', d.titles, [['rule', 'Underline'], ['caps', 'Capitals'], ['bar', 'Side bar'], ['plain', 'Large'], ['center', 'Centered'], ['gutter', 'In the margin']])}`, isOpen('look', true))}
-${group('color', 'Color', `<div class="row">${d.accents.map((c) => `<button type="button" class="swatch ${d.accent.toLowerCase() === c.toLowerCase() ? 'on' : ''}" data-set="accent" data-val='"${c}"' style="background:${c}" aria-label="Color ${c}" aria-pressed="${d.accent.toLowerCase() === c.toLowerCase()}"></button>`).join('')}<label class="swatch custom" title="Pick any color"><input type="color" id="dz-color" value="${esc(d.accent)}" aria-label="Pick any color"></label></div><span class="tiny muted">Dark colors print and read best.</span>`, isOpen('color', false))}
-${group('fonts', 'Fonts', `<div class="dz-pairs">${FONT_PAIRS.filter(([h, b]) => fonts.includes(h) && fonts.includes(b)).map(([h, b, name]) => `<button type="button" class="dz-pair ${pairOn(h, b) ? 'on' : ''}" data-pair='${JSON.stringify([h, b])}' aria-pressed="${pairOn(h, b)}"><span style="font-family:'${h}',serif;font-weight:700;font-size:17px">${esc(h)}</span><span class="tiny muted" style="font-family:'${b}',sans-serif">${esc(name)} · ${esc(b)}</span></button>`).join('')}</div>
+${sidebarOn ? '<span class="tiny muted">With a sidebar, your name sits above the main column and your contact details go in the sidebar.</span>' : `<b class="small">Name and contact</b>${seg('header', d.header, [['left', 'Left'], ['center', 'Centered'], ['split', 'Split'], ['band', 'Color band']])}
+${d.header === 'split' ? '' : `<b class="small">Contact line</b>${seg('contact', d.contact, [['spread', 'Spread across the page'], ['together', 'Grouped together']])}`}`}
+<label class="radio" style="align-self:flex-start"><input type="checkbox" data-icons ${d.icons ? 'checked' : ''}>Small icons next to contact details</label>
+<b class="small">Section titles</b>${seg('titles', d.titles, [['rule', 'Underline'], ['caps', 'Capitals'], ['short', 'Short line'], ['bar', 'Side bar'], ['plain', 'Large'], ['center', 'Centered'], ['gutter', 'In the margin']])}`, isOpen('look', true))}
+${own ? '' : group('color', 'Color', `<div class="row">${d.accents.map((c) => `<button type="button" class="swatch ${d.accent.toLowerCase() === c.toLowerCase() ? 'on' : ''}" data-set="accent" data-val='"${c}"' style="background:${c}" aria-label="Color ${c}" aria-pressed="${d.accent.toLowerCase() === c.toLowerCase()}"></button>`).join('')}<label class="swatch custom" title="Pick any color"><input type="color" id="dz-color" value="${esc(d.accent)}" aria-label="Pick any color"></label></div><span class="tiny muted">Dark colors print and read best.</span>`, isOpen('color', false))}
+${own ? '' : group('fonts', 'Fonts', `<div class="dz-pairs">${FONT_PAIRS.filter(([h, b]) => fonts.includes(h) && fonts.includes(b)).map(([h, b, name]) => `<button type="button" class="dz-pair ${pairOn(h, b) ? 'on' : ''}" data-pair='${JSON.stringify([h, b])}' aria-pressed="${pairOn(h, b)}"><span style="font-family:'${h}',serif;font-weight:700;font-size:17px">${esc(h)}</span><span class="tiny muted" style="font-family:'${b}',sans-serif">${esc(name)} · ${esc(b)}</span></button>`).join('')}</div>
 <div class="row-l"><label class="field">Headings<select data-font="heading">${fonts.map((f) => `<option ${f === d.fonts.heading ? 'selected' : ''}>${esc(f)}</option>`).join('')}</select></label><label class="field">Body<select data-font="body">${fonts.map((f) => `<option ${f === d.fonts.body ? 'selected' : ''}>${esc(f)}</option>`).join('')}</select></label></div>
 <label class="btn small" style="align-self:flex-start">Upload your own font<input type="file" class="sr" id="dz-font" accept=".ttf,.otf,.woff,.woff2"></label><a class="tiny" href="#/help/custom-font">Help: adding a custom font</a>`, isOpen('fonts', false))}
-${group('text', 'Text and spacing', `<b class="small">Text size</b>${seg('size', d.size, [[10, '10'], [10.5, '10.5'], [11, '11'], [11.5, '11.5']])}
+${own ? '' : group('text', 'Text and spacing', `<b class="small">Text size</b>${seg('size', d.size, [[10, '10'], [10.5, '10.5'], [11, '11'], [11.5, '11.5']])}
 <b class="small">Spacing</b>${seg('spacing', d.spacing, [['compact', 'Compact'], ['balanced', 'Balanced'], ['roomy', 'Roomy']])}
 <b class="small">Margins</b>${seg('margin', d.margin, [[0.5, 'Narrow'], [0.6, 'Normal'], [0.75, 'Wide'], [1, 'Extra wide']])}
+<label class="radio" style="align-self:flex-start"><input type="checkbox" data-fill ${d.fill ? 'checked' : ''}>Spread out to fill the page</label>
 <span class="tiny muted">Text never goes below 10 point, so it stays readable.</span>`, isOpen('text', false))}
-${group('details', 'Details', `<b class="small">Dates</b>${seg('dates', d.dates, [['right', 'On the right'], ['below', 'Under the title']])}
+${own ? '' : group('details', 'Details', `<b class="small">Dates</b>${seg('dates', d.dates, [['right', 'On the right'], ['below', 'Under the title']])}
 <b class="small">Bullets</b>${seg('bullets', d.bullets, [['dot', '• Dots'], ['dash', '– Dashes'], ['none', 'None']])}
-<b class="small">Skills</b>${seg('skills', d.skills, [['inline', 'In a line'], ['list', 'A list'], ['tags', 'Boxes']])}`, isOpen('details', false))}
+<b class="small">Skills</b>${seg('skills', d.skills, [['inline', 'In a line'], ['columns', 'Columns'], ['list', 'A list'], ['tags', 'Boxes']])}`, isOpen('details', false))}
 ${group('page', 'Page', `<b class="small">Paper</b>${seg('paper', d.paper || 'letter', [['letter', 'US Letter'], ['a4', 'A4']])}
 <b class="small">Length</b>${seg('length', d.length || 'one', [['one', 'One page'], ['one-half', 'Up to 1½ pages']])}${d.years >= 10 ? `<span class="tiny muted">You have ${d.years} years of experience, so 1½ pages is fine.</span>` : ''}
 <b class="small">How far back</b>${seg('yearsBack', Number(d.yearsBack) || 15, [[10, '10 years'], [15, '15 years'], [50, 'Everything']])}`, isOpen('page', false))}
-<button type="button" class="btn small" data-reset style="align-self:flex-start">Reset to the ${esc(d.presets[d.template]?.label || 'template')} defaults</button>`;
+${own ? '' : `<button type="button" class="btn small" data-reset style="align-self:flex-start">Reset to the ${esc(d.presets[d.template]?.label || 'template')} defaults</button>`}`;
+    if (own) fontsPanel(panel.querySelector('#dz-ownfonts'), { compact: true, onChange: () => paintPreview() });
     if (thumbs) fillThumbs();
   }
 
@@ -76,10 +83,10 @@ ${group('page', 'Page', `<b class="small">Paper</b>${seg('paper', d.paper || 'le
     const seq = ++previewSeq;
     const { html } = await call('design.preview');
     if (seq !== previewSeq) return;
-    el.querySelector('#dz-name').textContent = `${d.presets[d.template]?.label || 'Custom'}${isCustomized() ? ' (customized)' : ''}`;
+    el.querySelector('#dz-name').textContent = d.mode === 'own' && d.ownBuilt ? 'Your own design' : `${d.presets[d.template]?.label || 'Custom'}${isCustomized() ? ' (customized)' : ''}`;
     frame.srcdoc = html;
   }
-  const isCustomized = () => Boolean(d.raw && ['layout', 'header', 'titles', 'size', 'spacing', 'margin', 'dates', 'bullets', 'skills', 'sidebarTint', 'accent', 'order', 'hidden', 'sidebar', 'nameSize', 'nameUpper'].some((k) => k in d.raw));
+  const isCustomized = () => Boolean(d.raw && d.keys.some((k) => k in d.raw));
 
   frame.onload = () => {
     const doc = frame.contentDocument;
@@ -88,9 +95,9 @@ ${group('page', 'Page', `<b class="small">Paper</b>${seg('paper', d.paper || 'le
     frame.style.width = pw + 'px'; frame.style.height = full + 'px';
     fit();
     // page breaks and fit
-    const contentH = ph - d.margin * 96 * 2;
+    // The page box includes its margins, so its height against the paper height is the page count.
     const used = doc.querySelector('.page')?.scrollHeight || 0;
-    const pages = used / contentH;
+    const pages = used / ph;
     const limit = d.length === 'one-half' ? 1.5 : 1;
     const breaks = el.querySelector('#dz-breaks');
     breaks.innerHTML = Array.from({ length: Math.ceil(full / ph) - 1 }, (_, i) => `<div class="dz-break" style="top:${(i + 1) * ph}px"><span>Page ${i + 2}</span></div>`).join('');
@@ -120,6 +127,9 @@ ${group('page', 'Page', `<b class="small">Paper</b>${seg('paper', d.paper || 'le
   panel.addEventListener('click', async (e) => {
     const b = e.target.closest('button, [data-preset]');
     if (!b) return;
+    if ('own' in b.dataset) { await call('own.use', { on: true }); d = await call('design.get'); paintPanel(); paintPreview(); return; }
+    if ('keepown' in b.dataset) return keepOwnFlow();
+    if ('compare' in b.dataset) { modal('<div class="row between"><h2>Your original and our rebuild</h2><button class="btn small" data-close>Close</button></div><div id="own-cmp"></div>', { wide: true, onMount: (m) => compareView(m.querySelector('#own-cmp'), { onSettled: () => paintPreview() }) }); return; }
     if (b.dataset.preset) { await call('design.applyPreset', { id: b.dataset.preset }); d = await call('design.get'); paintPanel(); paintPreview(); return; }
     if (b.dataset.set) return save({ [b.dataset.set]: JSON.parse(b.dataset.val) });
     if (b.dataset.pair) { const [heading, body] = JSON.parse(b.dataset.pair); return save({ fonts: { heading, body } }); }
@@ -139,7 +149,8 @@ ${group('page', 'Page', `<b class="small">Paper</b>${seg('paper', d.paper || 'le
   panel.addEventListener('change', async (e) => {
     const t = e.target;
     if (t.dataset.side) return save({ sidebar: t.checked ? [...new Set([...d.sidebar, t.dataset.side])] : d.sidebar.filter((x) => x !== t.dataset.side) });
-    if ('tint' in t.dataset) return save({ sidebarTint: t.checked });
+    if ('icons' in t.dataset) return save({ icons: t.checked });
+    if ('fill' in t.dataset) return save({ fill: t.checked });
     if ('upper' in t.dataset) return save({ nameUpper: t.checked });
     if (t.dataset.show) return save({ hidden: t.checked ? d.hidden.filter((x) => x !== t.dataset.show) : [...d.hidden, t.dataset.show] });
     if (t.dataset.font) return save({ fonts: { [t.dataset.font]: t.value } });
@@ -147,6 +158,25 @@ ${group('page', 'Page', `<b class="small">Paper</b>${seg('paper', d.paper || 'le
     if (t.id === 'dz-font') { const [f] = await readFiles(t.files); try { const r = await call('design.uploadFont', f); toast(r.warning || `${r.family} is ready. Pick it under Fonts.`, Boolean(r.warning)); } catch (ex) { toast(ex.message, true); } d = await call('design.get'); paintPanel(); return; }
     if (t.id === 'dz-canva') { const [f] = await readFiles(t.files); toast('Looking at your design…'); try { await call('design.importCanva', f); toast('Imported. Check the preview.'); } catch (ex) { toast(ex.message, true); } d = await call('design.get'); paintPanel(); paintPreview(); }
   });
+
+  async function keepOwnFlow() {
+    const m = modal(`<div class="row between"><h2>Keep your own resume’s design</h2><button class="btn small" data-close>Close</button></div><div id="own-flow" class="stack"></div>`, { wide: true });
+    const box = (m?.querySelector ? m : document).querySelector('#own-flow');
+    const step1 = async () => {
+      const sources = await call('own.sources');
+      box.innerHTML = `${sourceList(sources)}<label class="btn small" style="align-self:flex-start">${sources.length ? 'Or add another file' : 'Add your resume'}<input type="file" class="sr" id="own-add" accept=".pdf,.docx,.png,.jpg,.jpeg"></label>
+<p class="tiny muted">PDF works best (Canva: Share, Download, PDF Standard). Word files and screenshots work too.</p>
+<div class="row"><button class="btn primary" id="own-next" ${sources.length ? '' : 'disabled'}>Continue</button></div>`;
+      box.querySelector('#own-add').onchange = async (e) => { const files = await readFiles(e.target.files); box.innerHTML = working('Adding your file…'); try { await call('materials.add', { files }); } catch (ex) { toast(ex.message, true); } step1(); };
+      box.querySelector('#own-next').onclick = async () => { const id = box.querySelector('input[name=src]:checked, input[name=src][type=hidden]')?.value; if (!id) return; await call('own.start', { id }); step2(); };
+    };
+    const step2 = async () => {
+      box.innerHTML = '<h3>Your resume’s fonts</h3><div id="own-fonts"></div><div class="row"><button class="btn primary" id="own-build">Rebuild my design</button><span class="tiny muted">Missing fonts can be uploaded later.</span></div>';
+      await fontsPanel(box.querySelector('#own-fonts'));
+      box.querySelector('#own-build').onclick = async () => { box.innerHTML = '<div id="own-cmp"></div>'; await compareView(box.querySelector('#own-cmp'), { onSettled: async () => { d = await call('design.get'); thumbs = null; call('design.thumbnails').then((t) => { thumbs = t; fillThumbs(); }); paintPanel(); paintPreview(); } }); };
+    };
+    step1();
+  }
 
   paintPanel();
   paintPreview();

@@ -363,3 +363,63 @@ Shape: {"source": "LinkedIn|Indeed|Google|Glassdoor|ZipRecruiter|Other", "jobs":
   const out = await claude.json({ system, content: [fileBlock(file), { type: 'text', text: 'List the jobs in this screenshot.' }], maxTokens: 2500, fast: true });
   return { source: out.source || 'Other', jobs: (out.jobs || []).filter((j) => j.title).slice(0, 40) };
 }
+
+// ---------- Keep your own design: rebuild a resume's look in HTML and CSS ----------
+
+const REBUILD_RULES = (fonts) => `Your rebuild is a template: the person's content gets poured into it for every tailored resume, so it must work for any number of jobs and bullets.
+
+Blanks you can use (nothing else): {{name}} {{headline}} {{location}} {{phone}} {{email}} {{linkedin}} {{website}} {{summary}} {{skillsText}}
+Lists: {{#roles}} … {{/roles}} with {{title}} {{company}} {{location}} {{dates}} {{start}} {{end}} and inside it {{#bullets}}{{text}}{{/bullets}}
+{{#skills}}{{name}}{{/skills}}   {{#education}}{{degree}} {{field}} {{school}} {{year}}{{/education}}   {{#certifications}}{{name}} {{year}}{{/certifications}}
+Show only if present: wrap with {{#phone}}…{{/phone}} (works for any blank). Separators between list items: {{^_last}}, {{/_last}}. Wrap every section in {{#summary}}, {{#skills}} etc. so empty sections disappear.
+Section headings are fixed text, written exactly as in the original (same words, same capitals).
+
+Match the original as exactly as you can: page margins, every font size in pt, weights, italics, letter-spacing, capitals, colors (hex), line height, space between sections, jobs and bullets, rules and lines (thickness, color, length), columns and their widths, alignment, where dates sit, bullet characters and their indent, contact line layout and separators.
+
+Technical rules:
+- The template goes inside <div class="page">, which already has the page margins as padding. Give the margins in inches. Don't style .page itself.
+- Write CSS against your own class names. Sizes in pt, widths in in, pt or %. Content is real text in reading order, name and contact first. Two columns: CSS grid. No tables for layout, no images, no scripts, no outside links.
+- Shapes that run to the edge of the paper (a colored sidebar for the whole page height, a band across the top) go in BACKGROUND as divs with inline styles positioned in inches (position:absolute inside a full-page box that repeats on every page). Content never goes in BACKGROUND.
+- Fonts: use exactly these family names, each with a generic fallback (serif or sans-serif): ${fonts.join(', ') || 'whatever the original uses'}.
+- Small contact icons are fine as tiny inline SVGs if the original has them. Leave out photos, logos, skill bars, charts and other graphics; list them in leftOut.
+- Avoid break-inside on large blocks; put break-inside:avoid on each job.
+
+Answer in exactly these tagged parts:
+<info>{"margin":{"top":in,"right":in,"bottom":in,"left":in},"fontRoles":{"heading":"family","body":"family"},"leftOut":["…"],"note":"one plain sentence on how close the rebuild is","differences":["only when comparing: what you fixed"]}</info>
+<css>…</css>
+<template>…</template>
+<background>…(may be empty)</background>
+<letterhead>the name and contact part of the template, styled the same, for cover letters</letterhead>`;
+
+function readTagged(text) {
+  const part = (k) => { const m = String(text).match(new RegExp(`<${k}>([\\s\\S]*?)</${k}>`, 'i')); return m ? m[1].trim() : ''; };
+  let info = {};
+  try { info = parseJsonLoose(part('info')); } catch { info = {}; }
+  const out = { ...info, css: part('css'), template: part('template'), background: part('background'), letterHead: part('letterhead'), sample: null };
+  const sample = part('sample');
+  if (sample) { try { out.sample = parseJsonLoose(sample); } catch { /* optional */ } }
+  return out;
+}
+function parseJsonLoose(s) { const t = String(s).trim(); const i = t.search(/[[{]/); return JSON.parse(t.slice(i)); }
+
+/** First rebuild from the original file (PDF or image), or from a Word file's XML. */
+export async function rebuildDesign(claude, { file, docx, fonts }) {
+  const system = `You rebuild a resume's visual design as HTML and CSS, as exactly as possible, so new content can be poured into it.\n\n${REBUILD_RULES(fonts)}
+<sample>{"contact":{"name","location","phone","email","linkedin","website"},"headline":"","summary":"","roles":[{"title","company","location","start","end","bullets":[{"text"}]}],"skills":[""],"education":[{"degree","field","school","year"}],"certifications":[{"name","year"}]}</sample>
+In <sample>, copy the original resume's own words exactly (dates as written), so we can show your rebuild next to the original with the same text.`;
+  const content = docx
+    ? [{ type: 'text', text: `This is a Word resume. You can't see it, so read the layout from its XML. Sizes: w:sz is half-points (22 = 11pt). Spacing: w:spacing before/after in twentieths of a point; w:line 240 = single. Indents and margins (w:pgMar) are in twips: 1440 per inch. Colors are hex. Tables and tabs show columns and right-aligned dates.\n\nstyles.xml:\n${docx.styles}\n\ndocument.xml:\n${docx.document}` }]
+    : [fileBlock(file), { type: 'text', text: 'Rebuild this resume design.' }];
+  return readTagged(await claude.send({ system, content, maxTokens: 16000 }));
+}
+
+/** Compare a picture of the rebuild with the original and fix what's different. */
+export async function compareDesign(claude, { file, docx, fonts, current, snapshot, notes }) {
+  const system = `You rebuilt a resume's design as HTML and CSS. Now compare your rebuild with the original and fix every visible difference: sizes, spacing, weights, colors, lines, alignment, columns, line breaks in the header. Be precise; small differences matter to the person.\n\n${REBUILD_RULES(fonts)}\nIn <info>, list what you fixed in "differences".`;
+  const content = [
+    ...(docx ? [{ type: 'text', text: `The original is a Word file (XML below).\n\nstyles.xml:\n${docx.styles.slice(0, 15000)}\n\ndocument.xml:\n${docx.document.slice(0, 40000)}` }] : [{ type: 'text', text: 'The original:' }, fileBlock(file)]),
+    ...(snapshot ? [{ type: 'text', text: 'Your rebuild, rendered with the same text:' }, { type: 'image', source: { type: 'base64', media_type: 'image/png', data: snapshot } }] : []),
+    { type: 'text', text: `Your current rebuild:\n<info>${JSON.stringify({ margin: current.margin, fontRoles: current.fontRoles })}</info>\n<css>${current.css}</css>\n<template>${current.template}</template>\n<background>${current.background || ''}</background>\n<letterhead>${current.letterHead || ''}</letterhead>${notes ? `\n\nThe person says: "${notes}". Fix that first.` : ''}` },
+  ];
+  return readTagged(await claude.send({ system, content, maxTokens: 16000 }));
+}

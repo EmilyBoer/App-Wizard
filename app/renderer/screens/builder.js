@@ -2,6 +2,7 @@
 // The answers build "Your setup", where every choice can be changed later.
 import { call, esc, tag, chip, radio, act, toast, on, readFiles, dropZone, modal, posted, sparkle, working } from '../lib.js';
 import { embed as embedPage } from './setup.js';
+import { sourceList, fontsPanel, compareView } from './own.js';
 
 const KIND = { resume: ['Resume', 'good'], linkedin: ['LinkedIn', 'good'], review: ['Review', 'good'], portfolio: ['Work sample', 'good'], writing: ['Your writing', 'info'], personality: ['Personality', 'muted'], job_posting: ['Job you want', 'att'], other: ['Other', 'muted'] };
 const NO_REASONS = ['Wrong kind of work', 'Too junior', 'Too senior', 'Pay too low', 'Location', 'Type of employer', 'Title was misleading', 'Something else'];
@@ -23,6 +24,30 @@ ${st.materials.length ? `<p class="small"><b>${st.materials.length} file${st.mat
       on(el, { rmfile: async (b) => { await call('materials.remove', { id: b.dataset.id }); ui.repaint(); } });
     },
     next(el, st) { if (!st.hasResume) { toast('Add at least one resume or your LinkedIn PDF to continue.', true); return false; } call('builder.prepareProfile').catch(() => {}); } },
+
+  { id: 'keep', ask: 'Keep your resume’s look, or start fresh?', help: 'We can rebuild your current resume’s design, fonts and all, so every resume we tailor for you looks like yours. Or start fresh with one of our designs.',
+    body: (st) => `<div class="own-choice">
+<button type="button" class="choice-card" data-keep="1" aria-pressed="${st.keep === true}"><span class="choice-mini" aria-hidden="true"><i></i><i></i><i></i></span><b>Keep my current design</b><span class="small muted">We rebuild it to match, then you compare the two side by side.</span></button>
+<button type="button" class="choice-card" data-keep="0" aria-pressed="${st.keep === false}"><span class="choice-mini alt" aria-hidden="true"><i></i><i></i><i></i></span><b>Use a new design</b><span class="small muted">Pick from 8 templates any time in Profile, Resume design.</span></button></div>
+<div id="srcbox" class="stack-s"></div>`,
+    async mount(el, st) {
+      const sources = await call('own.sources');
+      const box = el.querySelector('#srcbox');
+      const sync = () => { const k = el.querySelector('[data-keep][aria-pressed=true]')?.dataset.keep; box.innerHTML = k === '1' ? sourceList(sources) : k === '0' ? '<p class="small muted">Good choice. After setup, open <b>Profile, Resume design</b> to pick a template, colors and fonts.</p>' : ''; };
+      el.querySelectorAll('[data-keep]').forEach((b) => (b.onclick = () => { el.querySelectorAll('[data-keep]').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); sync(); }));
+      sync(); void st;
+    },
+    async next(el) {
+      const k = el.querySelector('[data-keep][aria-pressed=true]')?.dataset.keep;
+      if (!k) { toast('Pick one.', true); return false; }
+      if (k === '0') return call('own.choose', { keep: false });
+      const src = el.querySelector('input[name=src]:checked, input[name=src][type=hidden]')?.value;
+      if (!src) { toast('Add your resume as a PDF, Word file or screenshot to keep its design, or pick a new design.', true); return false; }
+      await call('own.start', { id: src });
+    } },
+
+  { id: 'fonts', when: (st) => st.keep === true && st.ownFonts > 0, ask: 'Your resume uses these fonts.', help: 'To match your design exactly, Job Wizard needs each one. Upload any that are missing now, or do it later in Profile, Resume design. Until then we use the closest free match.', skip: 'Do this later',
+    body: () => '<div id="fontsbox"></div>', mount: (el) => fontsPanel(el.querySelector('#fontsbox')) },
 
   { id: 'interviewed', ask: 'Where have you interviewed recently?', help: 'Even if they didn’t work out. These are the strongest sign of where you fit, because an employer already said yes.', skip: 'I haven’t had interviews lately',
     body: (st) => jobAdder(st.interviewed, 'interviewed'), mount: (el, st, ui) => wireAdder(el, 'interviewed', ui) },
@@ -113,7 +138,7 @@ ${(st.want.suggestedTitles || []).filter((x) => x.accepted == null).length ? `<b
     },
     next(el, st) { if (!st.want.titles.length) { toast('Keep at least one job title.', true); return false; } } },
 
-  { id: 'design', ask: 'How should your resume look?', help: 'Pick a template, then make it yours: layout, sidebar, section order, color, fonts and spacing. The preview is your real resume and changes as you go.', custom: true },
+  { id: 'design', when: (st) => st.keep !== false, ask: (st) => (st.keep ? 'Here’s your design, rebuilt.' : 'How should your resume look?'), help: (st) => (st.keep ? 'Your original is on the left, our rebuild on the right with the same words. Tell us anything that looks different and we’ll fix it.' : 'Pick a template, then make it yours: layout, sidebar, section order, color, fonts and spacing. The preview is your real resume and changes as you go.'), custom: true },
 
   { id: 'rate', ask: 'Last one: rate a few real jobs.', help: 'These are live jobs we found with your answers. Every yes and no teaches Job Wizard what fits before your first morning batch.', skip: 'Skip for now', custom: true },
 
@@ -145,7 +170,7 @@ export async function render(root, params, app) {
     root.innerHTML = `<div class="page" style="max-width:760px;padding-top:32px">
 <div class="stack-s"><div class="row between"><span class="eyebrow">${back ? 'Profile' : `Question ${idx + 1} of ${list.length}`}</span>${back ? '<a href="#/profile" class="small">Back to Profile</a>' : '<button class="btn link small" data-act="later" style="color:var(--ink-muted)">Finish later</button>'}</div>
 <div style="height:8px;border-radius:999px;background:var(--line);overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--spark-deep);border-radius:999px"></div></div></div>
-<div><h1 style="margin-top:24px">${q.ask}</h1><p class="muted" style="font-size:18px;line-height:28px">${q.help}</p></div>
+<div><h1 style="margin-top:24px">${typeof q.ask === 'function' ? q.ask(st) : q.ask}</h1><p class="muted" style="font-size:18px;line-height:28px">${typeof q.help === 'function' ? q.help(st) : q.help}</p></div>
 <div id="qbody" class="stack"></div>
 <div class="foot" id="qfoot"></div></div>`;
     const body = root.querySelector('#qbody'), foot = root.querySelector('#qfoot');
@@ -154,6 +179,12 @@ export async function render(root, params, app) {
       try { st = await q.enter(); q._entered = true; } catch (e) { body.innerHTML = `<div class="note alert">${esc(e.message)}</div>`; foot.innerHTML = navButtons(q, idx); return; }
     }
     if (q.id === 'rate') return rateScreen(body, foot);
+    if (q.id === 'design' && st.keep) {
+      root.querySelector('.page').style.maxWidth = '1280px';
+      foot.innerHTML = '';
+      await compareView(body, { onSettled: () => { foot.innerHTML = `${idx > 0 && !back ? '<button class="btn" data-act="prev">Back</button>' : ''}<button class="btn primary big" data-act="next">Looks right</button><button class="btn link" data-act="usetpl" style="color:var(--ink-muted)">Use a template instead</button>`; } });
+      return;
+    }
     if (q.id === 'design') { root.querySelector('.page').style.maxWidth = '1280px'; body.innerHTML = working('Loading the preview…'); foot.innerHTML = navButtons(q, idx); await embedPage(body, 5, app, { title: false }); return; }
     if (q.id === 'done') return doneScreen(body, foot);
     body.innerHTML = q.body(st, ui);
@@ -170,6 +201,7 @@ export async function render(root, params, app) {
     prev: () => go(idx - 1),
     skip: async () => { list[idx].leave?.(); app.go(`#/build/${await nextAfter(list[idx].id)}`); },
     later: () => { document.body.classList.remove('building'); app.go('#/profile'); },
+    usetpl: async () => { await call('own.use', { on: false }); await call('own.choose', { keep: false }); toast('Pick a design any time in Profile, Resume design.'); app.go(`#/build/${await nextAfter('design')}`); },
     next: (b) => act(b, async () => {
       const q = list[idx];
       const r = q.next ? await q.next(root.querySelector('#qbody'), st, ui) : undefined;
@@ -264,7 +296,7 @@ ${section('About you', [
     `<div class="choice"><div class="choice-label">Contact details</div><div class="choice-value"><div class="contact-grid">${[['name', 'Full name'], ['email', 'Email'], ['phone', 'Phone'], ['location', 'City and state'], ['linkedin', 'LinkedIn'], ['website', 'Portfolio or website']].map(([k, l]) => `<label class="field small">${l}<input type="text" data-contact="${k}" value="${esc(c[k] || '')}" placeholder="${{ linkedin: 'linkedin.com/in/…', website: 'yoursite.com', location: 'e.g. Portland, OR' }[k] || ''}"></label>`).join('')}</div><span class="tiny muted">Saved as you type. These go at the top of every resume and letter.</span></div><span></span></div>`,
     row('Experience', `${st.profile.roles.length} roles · ${st.profile.skills.length} skills · ${st.profile.years} years${st.profile.checks ? ` · <a href="#/setup/3">${st.profile.checks} things to check</a>` : ''}<div class="small muted">From ${st.materials.length} file${st.materials.length === 1 ? '' : 's'}. <a href="#/documents">Add more in Documents</a></div>`, '#/setup/3', 'Edit'),
     row('Writing style', st.voice.samples.length ? `${st.voice.samples.length} writing sample${st.voice.samples.length === 1 ? '' : 's'}` : 'Learned from your resumes', '#/profile/style', 'Open'),
-    row('Resume design', 'Template, fonts and length', '#/profile/design', 'Open'),
+    row('Resume design', st.keep && st.ownBuilt ? 'Your own design, rebuilt from your resume' : 'Template, fonts and length', '#/profile/design', 'Open'),
   ])}
 ${section('What you’re looking for', [
     row('Job titles', w.titles.length ? pills(w.titles) : '', '#/build/sweetspot?back=1'),

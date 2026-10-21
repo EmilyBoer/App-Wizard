@@ -9,7 +9,7 @@ const bridge = window.aw || {
     return body.result;
   },
   onEvent(fn) { try { const es = new EventSource('/events'); es.onmessage = (e) => fn(JSON.parse(e.data)); } catch {} },
-  pdf: null, reveal: null, open: (url) => window.open(url, '_blank', 'noopener'),
+  pdf: null, snapshot: null, reveal: null, open: (url) => window.open(url, '_blank', 'noopener'),
 };
 export const aw = bridge;
 export const call = (m, a) => bridge.call(m, a);

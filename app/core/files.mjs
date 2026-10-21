@@ -91,20 +91,27 @@ export function fontInfo(buf) {
     const o = 12 + i * 16;
     tables[buf.slice(o, o + 4).toString('latin1')] = { offset: buf.readUInt32BE(o + 8), length: buf.readUInt32BE(o + 12) };
   }
-  let fsType = 0;
-  if (tables['OS/2']) fsType = buf.readUInt16BE(tables['OS/2'].offset + 8);
-  let family = null;
+  let fsType = 0, weight = 400, italic = false;
+  if (tables['OS/2']) {
+    const o = tables['OS/2'].offset;
+    weight = buf.readUInt16BE(o + 4) || 400;
+    fsType = buf.readUInt16BE(o + 8);
+    italic = Boolean(buf.readUInt16BE(o + 62) & 1);
+  }
+  let family = null, typographic = null;
   if (tables.name) {
     const base = tables.name.offset, count = buf.readUInt16BE(base + 2), strings = base + buf.readUInt16BE(base + 4);
     for (let i = 0; i < count; i++) {
       const r = base + 6 + i * 12;
       const platform = buf.readUInt16BE(r), nameId = buf.readUInt16BE(r + 6), len = buf.readUInt16BE(r + 8), off = buf.readUInt16BE(r + 10);
-      if (nameId !== 1) continue;
+      if (nameId !== 1 && nameId !== 16) continue;
       const raw = buf.slice(strings + off, strings + off + len);
-      family = platform === 3 || platform === 0 ? Buffer.from(raw).swap16().toString('utf16le') : raw.toString('latin1');
-      if (platform === 3) break;
+      const v = platform === 3 || platform === 0 ? Buffer.from(raw).swap16().toString('utf16le') : raw.toString('latin1');
+      // Name 16 is the real family ("Calibri"); name 1 can include the style ("Calibri Light").
+      if (nameId === 16) { if (!typographic || platform === 3) typographic = v; } else if (!family || platform === 3) family = v;
     }
   }
+  family = typographic || family;
   const restricted = (fsType & 0x000f) === 0x0002;
-  return { family, embeddable: !restricted, restriction: restricted ? 'restricted' : (fsType & 0x0004) ? 'preview-print' : (fsType & 0x0008) ? 'editable' : 'installable' };
+  return { family, weight, italic, embeddable: !restricted, restriction: restricted ? 'restricted' : (fsType & 0x0004) ? 'preview-print' : (fsType & 0x0008) ? 'editable' : 'installable' };
 }

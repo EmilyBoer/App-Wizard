@@ -8,11 +8,12 @@ import { Accounts, id } from './store.mjs';
 import { makeClaude } from './claude.mjs';
 import * as ai from './ai.mjs';
 import { prepareFile, fontInfo, mimeFor } from './files.mjs';
+import { pdfFonts, docxFonts, docxLayoutXml, fontStatus, closestFont, familyFromName } from './fonts.mjs';
 import { mergeProfile, settleConflict, decideUnderselling, addBullet, pendingCount, yearsOfExperience, similar } from './profile.mjs';
 import { rankJobs, parsePay, payLabel, bucket, EMPLOYER_TYPES, WORK_TYPES } from './match.mjs';
 import { recordEvent, learnFromNo, learnFromYes, learnFromEdit, writingEdits, mergeRules, learningSummary } from './learn.mjs';
 import { addToTracker, setStatus, findDuplicate, dueFollowUps, toCsv, STATUSES, STATUS_LABEL } from './tracker.mjs';
-import { resumeHtml, letterHtml, fileName, resumeText, letterText, matchFont, FONTS, TEMPLATES, PRESETS, SECTIONS, ACCENTS, normalizeDesign, cutOnce, expectedText, readableCheck, maxPages, pageSize } from './docs.mjs';
+import { resumeHtml, letterHtml, ownResumeHtml, fillTemplate, templateData, fileName, resumeText, letterText, matchFont, FONTS, TEMPLATES, PRESETS, SECTIONS, ACCENTS, normalizeDesign, DESIGN_KEYS, cutOnce, expectedText, readableCheck, maxPages, pageSize } from './docs.mjs';
 import { jobsFromAlertEmail, parseIcs, researchCompany } from './intake.mjs';
 import { ARTICLES, searchHelp } from './help.mjs';
 import { identifyWebsite, fetchAll, checkJobLink, readSource, parseJobUrl, makeJob } from '../../engine/src/index.mjs';
@@ -83,21 +84,21 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
     'settings.testKey': async () => { await claude().send({ system: 'Reply with OK.', content: 'Say OK', fast: true, maxTokens: 5 }); return { ok: true }; },
 
     // ----- materials -----
-    'materials.list': () => store().get('materials').list.map(({ text, raw, ...m }) => ({ ...m, chars: (text || '').length })),
+    'materials.list': () => store().get('materials').list.map(({ text, raw, original, ...m }) => ({ ...m, chars: (text || '').length })),
     'materials.add': async ({ files = [], text, name, defer }) => {
       if (text) files = [...files, { name: name || 'Pasted text.txt', data: Buffer.from(text).toString('base64') }];
       const hasKey = claudeReady();
       const added = [];
       const recs = files.map((f) => {
         const prepared = prepareFile(f);
-        const rec = { id: id('m_'), name: f.name, mime: prepared.mime, added: now().toISOString(), kind: 'other', summary: '', text: prepared.text || '', raw: prepared.base64 || null, problem: prepared.problem || null };
+        const rec = { id: id('m_'), name: f.name, mime: prepared.mime, added: now().toISOString(), kind: 'other', summary: '', text: prepared.text || '', raw: prepared.base64 || null, original: /\.docx$/i.test(f.name) && !prepared.problem ? (Buffer.isBuffer(f.data) ? f.data.toString('base64') : f.data) : null, problem: prepared.problem || null };
         if (!prepared.problem && (!hasKey || defer)) Object.assign(rec, { waiting: true, kind: /linkedin|profile/i.test(f.name) ? 'linkedin' : 'resume', summary: 'We’ll read this once Claude is connected.' });
         return { rec, prepared };
       });
       progress('materials', `Reading ${recs.length} file${recs.length === 1 ? '' : 's'}…`);
       await inBatches(recs.filter(({ rec }) => !rec.problem && !rec.waiting), 4, ({ rec, prepared }) => readInto(rec, prepared));
       for (const { rec } of recs) { store().update('materials', (m) => { m.list.push(rec); }); added.push(rec); }
-      return added.map(({ text, raw, ...m }) => m);
+      return added.map(({ text, raw, original, ...m }) => m);
     },
     'materials.readWaiting': async () => {
       const waiting = store().get('materials').list.filter((m) => m.waiting);
@@ -184,22 +185,28 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
     }),
 
     // ----- design -----
-    'design.get': () => ({ ...normalizeDesign(store().get('design')), raw: store().get('design'), fonts_available: FONTS, templates: TEMPLATES, presets: PRESETS, sections: SECTIONS, accents: ACCENTS, years: yearsOfExperience(store().get('profile')) }),
+    'design.get': () => ({ ...normalizeDesign(store().get('design')), raw: (({ own, customFonts, canva, ...r }) => r)(store().get('design')), ownBuilt: Boolean(store().get('design').own?.template), ownFrom: store().get('design').own?.from?.name || null, fonts_available: FONTS, templates: TEMPLATES, presets: PRESETS, sections: SECTIONS, accents: ACCENTS, keys: DESIGN_KEYS, years: yearsOfExperience(store().get('profile')) }),
     'design.save': (patch) => store().update('design', (d) => {
-      for (const k of ['template', 'paper', 'length', 'yearsBack', 'accent', 'layout', 'header', 'titles', 'size', 'spacing', 'margin', 'dates', 'bullets', 'skills', 'sidebarTint', 'order', 'hidden', 'sidebar', 'nameSize', 'nameUpper']) if (k in patch) d[k] = patch[k];
+      for (const k of ['template', 'paper', 'length', 'yearsBack', 'mode', ...DESIGN_KEYS]) if (k in patch) d[k] = patch[k];
       if (patch.fonts) d.fonts = { ...(d.fonts || {}), ...patch.fonts };
     }),
     // Pick a template: take all its settings, keep page size, length, history and uploaded fonts.
     'design.applyPreset': ({ id: pid }) => store().update('design', (d) => {
       if (!PRESETS[pid]) throw new UserError('Unknown template.');
-      for (const k of ['layout', 'header', 'titles', 'size', 'spacing', 'margin', 'dates', 'bullets', 'skills', 'sidebarTint', 'accent', 'order', 'hidden', 'sidebar', 'nameSize', 'nameUpper']) delete d[k];
-      d.template = pid; d.fonts = { ...PRESETS[pid].fonts };
+      for (const k of DESIGN_KEYS) delete d[k];
+      d.template = pid; d.mode = 'template'; d.fonts = { ...PRESETS[pid].fonts };
     }),
     'design.uploadFont': ({ name, data }) => {
-      const info = fontInfo(data);
-      const family = info.family || name.replace(/\.(ttf|otf|woff2?)$/i, '').replace(/[-_](Regular|Bold|Italic|Medium|Light|SemiBold).*/i, '');
-      store().update('design', (d) => { d.customFonts = [...d.customFonts.filter((f) => f.family !== family), { family, name, mime: mimeFor(name), base64: Buffer.isBuffer(data) ? data.toString('base64') : data, embeddable: info.embeddable, restriction: info.restriction }]; });
-      return { family, embeddable: info.embeddable, warning: info.embeddable ? null : `${family} says it can't be placed inside PDFs. Your PDF may show a different font on other computers. We suggest using ${matchFont(family)} instead.` };
+      let info;
+      try { info = fontInfo(data); } catch (e) { throw new UserError(`${name}: ${e.message} Font files end in .ttf, .otf, .woff or .woff2.`); }
+      const family = info.family || familyFromName(name.replace(/\.(ttf|otf|woff2?)$/i, ''));
+      const weight = info.weight || (/bold/i.test(name) ? 700 : 400), italic = info.italic ?? /italic/i.test(name);
+      store().update('design', (d) => {
+        d.customFonts = [...(d.customFonts || []).filter((f) => !(f.family === family && (f.weight || 400) === weight && Boolean(f.italic) === italic)), { family, name, mime: mimeFor(name), base64: Buffer.isBuffer(data) ? data.toString('base64') : data, weight, italic, embeddable: info.embeddable, restriction: info.restriction }];
+        // A font your own design needs: use the real one from now on.
+        for (const f of d.own?.fonts || []) if (f.family.toLowerCase() === family.toLowerCase()) { f.status = 'uploaded'; f.use = f.family; }
+      });
+      return { family, weight, italic, embeddable: info.embeddable, warning: info.embeddable ? null : `${family} says it can't be placed inside PDFs. Your PDF may show a different font on other computers. We suggest using ${matchFont(family)} instead.` };
     },
     'design.removeFont': ({ family }) => store().update('design', (d) => { d.customFonts = d.customFonts.filter((f) => f.family !== family); for (const k of ['heading', 'body']) if (d.fonts[k] === family) d.fonts[k] = 'Inter'; }),
     'design.importCanva': async ({ name, data }) => {
@@ -214,6 +221,71 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
       store().update('design', (d) => { d.template = template; d.layout = look.columns === 2 ? (look.sidebar === 'right' ? 'sidebar-right' : 'sidebar-left') : 'single'; d.fonts = { heading, body }; d.accent = /^#[0-9a-f]{6}$/i.test(look.accent) ? look.accent : d.accent; d.canva = { name, base64: prepared.base64, fontsFound, missing, decorations: look.decorations || [], sections: look.sections || [], imported: now().toISOString(), approved: false }; });
       return { template, fonts: { heading, body }, fontsFound, missing, decorations: look.decorations || [] };
     },
+    // ----- keep your own design -----
+    // Resumes we can rebuild: PDFs, Word files and screenshots.
+    'own.sources': () => store().get('materials').list.filter((m) => !m.problem && (m.kind === 'resume' || m.waiting) && (m.mime === 'application/pdf' || /^image\//.test(m.mime) || m.original))
+      .map((m) => ({ id: m.id, name: m.name, mime: m.mime, added: m.added })).reverse(),
+    'own.get': () => { const d = store().get('design'); return { mode: d.mode || 'template', keep: d.keep ?? null, own: d.own ? slimOwn(d.own) : null }; },
+    // Setup answer: keep my design (true) or pick a new one (false).
+    'own.choose': ({ keep }) => store().update('design', (d) => { d.keep = Boolean(keep); if (!keep && d.mode === 'own') d.mode = 'template'; }),
+    // Step 1, no Claude needed: which fonts the file uses, read straight from the file.
+    'own.start': ({ id: mid }) => {
+      const m = store().get('materials').list.find((x) => x.id === mid);
+      if (!m) throw new UserError('Pick one of your resumes.');
+      let found = [];
+      try { found = m.mime === 'application/pdf' ? pdfFonts(m.raw) : m.original ? docxFonts(m.original) : []; } catch { found = []; }
+      const uploaded = [...new Set((store().get('design').customFonts || []).map((f) => f.family))];
+      const fonts = found.slice(0, 6).map((f) => ({ family: f.family, names: f.names, weights: f.weights, ...fontStatus(f.family, uploaded) }));
+      store().update('design', (d) => { d.keep = true; d.own = { from: { id: m.id, name: m.name, mime: m.mime }, fonts, fromImage: /^image\//.test(m.mime), started: now().toISOString(), template: null }; });
+      return slimOwn(store().get('design').own);
+    },
+    // Which font to use when the original isn't available (or go back to the original).
+    'own.setFont': ({ family, use }) => store().update('design', (d) => { const f = d.own?.fonts.find((x) => x.family === family); if (f) f.use = use || closestFont(family).family; }),
+    // Step 2, with Claude: rebuild the layout.
+    'own.build': async () => {
+      const d = store().get('design');
+      if (!d.own) throw new UserError('Pick the resume whose look you want to keep.');
+      const src = ownSource(d.own);
+      progress('own', 'Rebuilding your design…');
+      const fontsForCss = d.own.fonts.map((f) => f.family);
+      const out = await ai.rebuildDesign(claude(), { ...src, fonts: fontsForCss });
+      const built = checkRebuild(out);
+      // Fonts the rebuild uses that the file didn't list (screenshots, mostly).
+      store().update('design', (x) => {
+        const uploaded = [...new Set((x.customFonts || []).map((f) => f.family))];
+        for (const fam of Object.values(out.fontRoles || {})) if (fam && !x.own.fonts.some((f) => f.family.toLowerCase() === String(fam).toLowerCase())) x.own.fonts.push({ family: fam, guessed: true, ...fontStatus(fam, uploaded) });
+        for (const f of x.own.fonts) f.role = out.fontRoles?.heading === f.family ? 'heading' : out.fontRoles?.body === f.family ? 'body' : f.role;
+        Object.assign(x.own, built, { sample: cleanSample(out.sample), leftOut: out.leftOut || [], note: out.note || '', rounds: 1, built: now().toISOString() });
+        x.mode = 'own';
+      });
+      return slimOwn(store().get('design').own);
+    },
+    // Step 3: look again with a picture of the rebuild (and anything the person noticed) and fix differences.
+    'own.refine': async ({ snapshot, notes } = {}) => {
+      const d = store().get('design');
+      if (!d.own?.template) throw new UserError('Rebuild your design first.');
+      progress('own', notes ? 'Fixing that…' : 'Checking it against your original…');
+      const out = await ai.compareDesign(claude(), { ...ownSource(d.own), fonts: d.own.fonts.map((f) => f.family), current: d.own, snapshot, notes });
+      const built = checkRebuild(out);
+      store().update('design', (x) => { x.own.history = [...(x.own.history || []).slice(-2), { css: x.own.css, template: x.own.template, background: x.own.background, letterHead: x.own.letterHead, margin: x.own.margin }]; Object.assign(x.own, built, { rounds: (x.own.rounds || 1) + 1, lastFixes: out.differences || [], note: out.note || x.own.note }); });
+      return slimOwn(store().get('design').own);
+    },
+    'own.undo': () => store().update('design', (x) => { const prev = x.own?.history?.pop(); if (prev) Object.assign(x.own, prev); }),
+    // The rebuild with the original's own words, for side-by-side checking; or with your profile.
+    'own.preview': ({ sample = true } = {}) => {
+      const d = store().get('design');
+      if (!d.own?.template) return { html: '' };
+      const p = store().get('profile');
+      const resume = sample && d.own.sample ? d.own.sample : { contact: p.contact, summary: p.summary, roles: p.roles.slice(0, 4).map((r) => ({ ...r, bullets: r.bullets.slice(0, 4) })), skills: p.skills.slice(0, 12).map((x) => x.name), education: p.education, certifications: p.certifications };
+      return { html: ownResumeHtml(resume, normalizeDesign({ ...d, mode: 'own' })) };
+    },
+    'own.original': () => {
+      const d = store().get('design');
+      const m = d.own && store().get('materials').list.find((x) => x.id === d.own.from.id);
+      if (!m) return null;
+      return m.mime === 'application/pdf' || /^image\//.test(m.mime) ? { mime: m.mime, base64: m.raw, name: m.name } : { mime: m.mime, name: m.name, text: m.text };
+    },
+    'own.use': ({ on }) => store().update('design', (x) => { if (on && !x.own?.template) throw new UserError('Rebuild your design first.'); x.mode = on ? 'own' : 'template'; }),
     'design.approveCanva': ({ approved }) => store().update('design', (d) => { if (d.canva) d.canva.approved = approved; if (!approved) d.canva = null; }),
     'design.preview': ({ override } = {}) => {
       const p = store().get('profile');
@@ -227,7 +299,9 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
       const resume = { contact: p.contact, summary: p.summary, roles: p.roles.slice(0, 3).map((r) => ({ ...r, bullets: r.bullets.slice(0, 3) })), skills: p.skills.slice(0, 10).map((s) => s.name), education: p.education, certifications: p.certifications };
       if (!resume.roles.length) Object.assign(resume, SAMPLE_RESUME(p.contact));
       const keep = store().get('design');
-      return Object.fromEntries(Object.keys(PRESETS).map((k) => [k, resumeHtml(resume, { template: k, paper: keep.paper, customFonts: keep.customFonts })]));
+      const out = Object.fromEntries(Object.keys(PRESETS).map((k) => [k, resumeHtml(resume, { template: k, paper: keep.paper, customFonts: keep.customFonts })]));
+      if (keep.own?.template) out.own = resumeHtml(resume, { ...keep, mode: 'own' });
+      return out;
     },
 
     // ----- what you want -----
@@ -314,7 +388,8 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
       const hasResume = mats.some((m) => ['resume', 'linkedin'].includes(m.kind));
       return {
         hasKey: claudeReady(),
-        materials: mats.map(({ text, raw, ...m }) => m),
+        materials: mats.map(({ text, raw, original, ...m }) => m),
+        keep: s.get('design').keep ?? null, ownBuilt: Boolean(s.get('design').own?.template), ownFonts: (s.get('design').own?.fonts || []).length,
         hasResume, profileBuilt: p.roles.length > 0,
         profileStale: hasResume && mats.some((m) => ['resume', 'linkedin', 'review', 'portfolio'].includes(m.kind) && !m.inProfile),
         profile: { contact: p.contact, roles: p.roles.map((r) => ({ title: r.title, company: r.company, start: r.start, end: r.end, results: r.bullets.length })), skills: p.skills.map((x) => x.name), years: yearsOfExperience(p), checks: pendingCount(p) },
@@ -730,6 +805,12 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
     return { kept: kept.length, hidden: hidden.length, report: report || js.report };
   }
 
+  function ownSource(own) {
+    const m = store().get('materials').list.find((x) => x.id === own.from.id);
+    if (!m) throw new UserError('The resume file for your design was removed. Pick it again.');
+    if (m.original) return { docx: docxLayoutXml(m.original) };
+    return { file: { name: m.name, mime: m.mime, base64: m.raw } };
+  }
   const docById = (did) => { const d = store().get('documents').list.find((x) => x.id === did); if (!d) throw new UserError('Document not found.'); return d; };
   const saveDoc = (d) => store().update('documents', (x) => { const i = x.list.findIndex((y) => y.id === d.id); if (i >= 0) x.list[i] = d; });
   const renderDoc = (d) => {
@@ -756,6 +837,21 @@ export class UserError extends Error { constructor(m) { super(m); this.name = 'U
 
 function slimJob(j) {
   return { id: j.id, title: j.title, company: j.company, location: j.location, url: j.url, source: j.source, postedAt: j.postedAt, ageDays: j.ageDays, freshness: j.freshness, score: j.score, bucket: j.score != null ? bucket(j.score) : null, scoreReasons: j.scoreReasons, hiddenBecause: j.hiddenBecause, pay: j.pay ? payLabel(j.pay) : '', rated: j.rated || null, ratedReasons: j.ratedReasons || [], verdict: j.match?.verdict || null, why: j.match?.why || '', needsText: j.needsText || !j.description, fromAlert: j.fromAlert || null, addedBy: j.addedBy || null, snippet: String(j.description || '').slice(0, 280) };
+}
+function slimOwn(o) { const { history, ...rest } = o; return { ...rest, canUndo: Boolean(history?.length) }; }
+// A rebuild has to be a working template: blanks for jobs and bullets, nothing unsafe, no outside files.
+function checkRebuild(out) {
+  if (!out.template || !/\{\{#\s*roles\s*\}\}/.test(out.template) || !/\{\{#\s*bullets\s*\}\}/.test(out.template)) throw new UserError('The rebuild didn’t come out right. Try again, or pick a template instead.');
+  const num = (v, def) => Math.min(1.5, Math.max(0.2, Number(v) || def));
+  const mg = out.margin || {};
+  return { css: String(out.css || ''), template: String(out.template), background: String(out.background || ''), letterHead: String(out.letterHead || ''), margin: { top: num(mg.top, 0.6), right: num(mg.right, 0.6), bottom: num(mg.bottom, 0.6), left: num(mg.left, 0.6) }, fontRoles: out.fontRoles || {} };
+}
+function cleanSample(x) {
+  if (!x || typeof x !== 'object' || !Array.isArray(x.roles)) return null;
+  const str = (v) => String(v ?? '').slice(0, 600);
+  return { contact: Object.fromEntries(['name', 'location', 'phone', 'email', 'linkedin', 'website'].map((k) => [k, str(x.contact?.[k])])), headline: str(x.headline), summary: str(x.summary),
+    roles: x.roles.slice(0, 12).map((r) => ({ title: str(r.title), company: str(r.company), location: str(r.location), start: str(r.start), end: str(r.end), bullets: (r.bullets || []).slice(0, 12).map((b) => ({ text: str(b.text ?? b) })) })),
+    skills: (x.skills || []).slice(0, 60).map(str), education: (x.education || []).slice(0, 6).map((e) => ({ degree: str(e.degree), field: str(e.field), school: str(e.school), year: str(e.year) })), certifications: (x.certifications || []).slice(0, 10).map((c) => ({ name: str(c.name), year: str(c.year) })) };
 }
 function slimDoc(d) { return { id: d.id, jobId: d.jobId, kind: d.kind, version: d.version, created: d.created, file: d.file, checks: d.checks, status: d.status, company: d.company, title: d.title, cuts: d.cuts || [], readable: d.readable ?? null, pages: d.pages ?? null, edited: Boolean(d.edited), pdfPath: d.pdfPath || null }; }
 
