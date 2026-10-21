@@ -2,7 +2,7 @@ import { call, esc, tag, act, toast, on, modal, ago } from '../lib.js';
 import { dashboard as setupDashboard } from './builder.js';
 import { embed as embedPage } from './setup.js';
 
-const TABS = [['setup', 'Your information'], ['style', 'Writing style'], ['design', 'Resume design'], ['learned', 'What we’ve learned']];
+const TABS = [['setup', 'Your information'], ['design', 'Resume design'], ['style', 'Writing style'], ['learned', 'What we’ve learned']];
 
 export async function render(root, [tab = 'setup'], app) {
   if (!TAB[tab]) tab = 'setup';

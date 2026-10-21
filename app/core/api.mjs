@@ -186,13 +186,13 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
     // ----- design -----
     'design.get': () => ({ ...normalizeDesign(store().get('design')), raw: store().get('design'), fonts_available: FONTS, templates: TEMPLATES, presets: PRESETS, sections: SECTIONS, accents: ACCENTS, years: yearsOfExperience(store().get('profile')) }),
     'design.save': (patch) => store().update('design', (d) => {
-      for (const k of ['template', 'paper', 'length', 'yearsBack', 'accent', 'layout', 'header', 'titles', 'size', 'spacing', 'margin', 'dates', 'bullets', 'skills', 'sidebarTint', 'order', 'hidden', 'sidebar']) if (k in patch) d[k] = patch[k];
+      for (const k of ['template', 'paper', 'length', 'yearsBack', 'accent', 'layout', 'header', 'titles', 'size', 'spacing', 'margin', 'dates', 'bullets', 'skills', 'sidebarTint', 'order', 'hidden', 'sidebar', 'nameSize', 'nameUpper']) if (k in patch) d[k] = patch[k];
       if (patch.fonts) d.fonts = { ...(d.fonts || {}), ...patch.fonts };
     }),
     // Pick a template: take all its settings, keep page size, length, history and uploaded fonts.
     'design.applyPreset': ({ id: pid }) => store().update('design', (d) => {
       if (!PRESETS[pid]) throw new UserError('Unknown template.');
-      for (const k of ['layout', 'header', 'titles', 'size', 'spacing', 'margin', 'dates', 'bullets', 'skills', 'sidebarTint', 'accent', 'order', 'hidden', 'sidebar']) delete d[k];
+      for (const k of ['layout', 'header', 'titles', 'size', 'spacing', 'margin', 'dates', 'bullets', 'skills', 'sidebarTint', 'accent', 'order', 'hidden', 'sidebar', 'nameSize', 'nameUpper']) delete d[k];
       d.template = pid; d.fonts = { ...PRESETS[pid].fonts };
     }),
     'design.uploadFont': ({ name, data }) => {

@@ -39,9 +39,16 @@ ${group('tpl', 'Template', `<div class="dz-thumbs">${Object.entries(d.presets).m
 <label class="btn small" style="align-self:flex-start">Import a Canva design (PDF)<input type="file" class="sr" id="dz-canva" accept=".pdf"></label>${d.raw?.canva ? `<span class="tiny muted">Imported ${esc(d.raw.canva.name)}. ${(d.raw.canva.missing || []).length ? `Its ${esc(d.raw.canva.missing.join(', '))} font was swapped for the closest match.` : ''}</span>` : ''}`, isOpen('tpl', true))}
 ${group('layout', 'Layout', `${seg('layout', d.layout, [['single', 'One column', icon('single')], ['sidebar-left', 'Sidebar left', icon('sidebar-left')], ['sidebar-right', 'Sidebar right', icon('sidebar-right')]])}
 ${sidebarOn ? `<b class="small">In the sidebar</b><div class="row">${['skills', 'education', 'certifications', 'summary'].map((k) => `<label class="radio"><input type="checkbox" data-side="${k}" ${d.sidebar.includes(k) ? 'checked' : ''}>${esc(d.sections[k])}</label>`).join('')}</div><label class="radio" style="align-self:flex-start"><input type="checkbox" data-tint ${d.sidebarTint ? 'checked' : ''}>Tint the sidebar</label>` : ''}`, isOpen('layout', true))}
-${group('sections', 'Sections', `<div class="dz-sections">${d.order.map((k, i) => `<div class="dz-sec ${d.hidden.includes(k) ? 'off' : ''}"><label class="radio" style="border:0;padding:0;background:none"><input type="checkbox" data-show="${k}" ${d.hidden.includes(k) ? '' : 'checked'} aria-label="Show ${esc(d.sections[k])}"></label><span class="grow">${esc(d.sections[k])}${sidebarOn && d.sidebar.includes(k) ? ' <span class="tiny muted">sidebar</span>' : ''}</span><button type="button" class="btn small" data-move="${k}" data-dir="-1" ${i === 0 ? 'disabled' : ''} aria-label="Move ${esc(d.sections[k])} up">↑</button><button type="button" class="btn small" data-move="${k}" data-dir="1" ${i === d.order.length - 1 ? 'disabled' : ''} aria-label="Move ${esc(d.sections[k])} down">↓</button></div>`).join('')}</div>`, isOpen('sections', true))}
-${group('look', 'Header and titles', `<b class="small">Name and contact</b>${seg('header', d.header, [['left', 'Left'], ['center', 'Centered'], ['split', 'Split'], ['band', 'Color band']])}
-<b class="small">Section titles</b>${seg('titles', d.titles, [['rule', 'Line'], ['caps', 'Caps'], ['bar', 'Bar'], ['plain', 'Plain']])}`, isOpen('look', false))}
+${(() => {
+      const inSide = (k) => sidebarOn && d.sidebar.includes(k);
+      const lists = sidebarOn ? [['Main column', d.order.filter((k) => !inSide(k))], ['Sidebar', d.order.filter(inSide)]] : [['', d.order]];
+      const rows = (list) => list.map((k, i) => `<div class="dz-sec ${d.hidden.includes(k) ? 'off' : ''}"><label class="radio" style="border:0;padding:0;background:none"><input type="checkbox" data-show="${k}" ${d.hidden.includes(k) ? '' : 'checked'} aria-label="Show ${esc(d.sections[k])}"></label><span class="grow">${esc(d.sections[k])}</span><button type="button" class="btn small" data-move="${k}" data-dir="-1" ${i === 0 ? 'disabled' : ''} aria-label="Move ${esc(d.sections[k])} up">↑</button><button type="button" class="btn small" data-move="${k}" data-dir="1" ${i === list.length - 1 ? 'disabled' : ''} aria-label="Move ${esc(d.sections[k])} down">↓</button></div>`).join('');
+      return group('sections', 'Sections', lists.map(([name, list]) => `${name ? `<b class="small">${name}</b>` : ''}<div class="dz-sections">${rows(list) || '<span class="tiny muted">Nothing here yet.</span>'}</div>`).join('') + '<span class="tiny muted">Untick a section to hide it. Use the arrows to change the order.</span>', isOpen('sections', true));
+    })()}
+${group('look', 'Name, header and titles', `<b class="small">Name size</b>${seg('nameSize', d.nameSize, [['standard', 'Standard'], ['large', 'Large'], ['xl', 'Extra large']])}
+<label class="radio" style="align-self:flex-start"><input type="checkbox" data-upper ${d.nameUpper ? 'checked' : ''}>Name in capitals</label>
+<b class="small">Name and contact</b>${seg('header', d.header, [['left', 'Left'], ['center', 'Centered'], ['split', 'Split'], ['band', 'Color band']])}
+<b class="small">Section titles</b>${seg('titles', d.titles, [['rule', 'Underline'], ['caps', 'Capitals'], ['bar', 'Side bar'], ['plain', 'Large'], ['center', 'Centered'], ['gutter', 'In the margin']])}`, isOpen('look', true))}
 ${group('color', 'Color', `<div class="row">${d.accents.map((c) => `<button type="button" class="swatch ${d.accent.toLowerCase() === c.toLowerCase() ? 'on' : ''}" data-set="accent" data-val='"${c}"' style="background:${c}" aria-label="Color ${c}" aria-pressed="${d.accent.toLowerCase() === c.toLowerCase()}"></button>`).join('')}<label class="swatch custom" title="Pick any color"><input type="color" id="dz-color" value="${esc(d.accent)}" aria-label="Pick any color"></label></div><span class="tiny muted">Dark colors print and read best.</span>`, isOpen('color', false))}
 ${group('fonts', 'Fonts', `<div class="dz-pairs">${FONT_PAIRS.filter(([h, b]) => fonts.includes(h) && fonts.includes(b)).map(([h, b, name]) => `<button type="button" class="dz-pair ${pairOn(h, b) ? 'on' : ''}" data-pair='${JSON.stringify([h, b])}' aria-pressed="${pairOn(h, b)}"><span style="font-family:'${h}',serif;font-weight:700;font-size:17px">${esc(h)}</span><span class="tiny muted" style="font-family:'${b}',sans-serif">${esc(name)} · ${esc(b)}</span></button>`).join('')}</div>
 <div class="row-l"><label class="field">Headings<select data-font="heading">${fonts.map((f) => `<option ${f === d.fonts.heading ? 'selected' : ''}>${esc(f)}</option>`).join('')}</select></label><label class="field">Body<select data-font="body">${fonts.map((f) => `<option ${f === d.fonts.body ? 'selected' : ''}>${esc(f)}</option>`).join('')}</select></label></div>
@@ -72,7 +79,7 @@ ${group('page', 'Page', `<b class="small">Paper</b>${seg('paper', d.paper || 'le
     el.querySelector('#dz-name').textContent = `${d.presets[d.template]?.label || 'Custom'}${isCustomized() ? ' (customized)' : ''}`;
     frame.srcdoc = html;
   }
-  const isCustomized = () => Boolean(d.raw && ['layout', 'header', 'titles', 'size', 'spacing', 'margin', 'dates', 'bullets', 'skills', 'sidebarTint', 'accent', 'order', 'hidden', 'sidebar'].some((k) => k in d.raw));
+  const isCustomized = () => Boolean(d.raw && ['layout', 'header', 'titles', 'size', 'spacing', 'margin', 'dates', 'bullets', 'skills', 'sidebarTint', 'accent', 'order', 'hidden', 'sidebar', 'nameSize', 'nameUpper'].some((k) => k in d.raw));
 
   frame.onload = () => {
     const doc = frame.contentDocument;
@@ -93,10 +100,13 @@ ${group('page', 'Page', `<b class="small">Paper</b>${seg('paper', d.paper || 'le
   function fit() {
     const stage = el.querySelector('#dz-stage'), scaleBox = el.querySelector('#dz-scale');
     const [pw] = PAGE_PX[d.paper === 'a4' ? 'a4' : 'letter'];
-    const scale = Math.min(1, (stage.clientWidth - 2) / pw);
+    const pad = stage.clientWidth > 600 ? 40 : 16;
+    const scale = Math.min(1, (stage.clientWidth - pad * 2) / pw);
     scaleBox.style.transform = `scale(${scale})`;
     scaleBox.style.width = pw + 'px';
-    stage.style.height = (parseFloat(frame.style.height) || 1056) * scale + 'px';
+    scaleBox.style.left = Math.max(pad, (stage.clientWidth - pw * scale) / 2) + 'px';
+    scaleBox.style.top = pad + 'px';
+    stage.style.height = (parseFloat(frame.style.height) || 1056) * scale + pad * 2 + 'px';
   }
   const ro = new ResizeObserver(() => fit());
   ro.observe(el.querySelector('#dz-stage'));
@@ -113,13 +123,24 @@ ${group('page', 'Page', `<b class="small">Paper</b>${seg('paper', d.paper || 'le
     if (b.dataset.preset) { await call('design.applyPreset', { id: b.dataset.preset }); d = await call('design.get'); paintPanel(); paintPreview(); return; }
     if (b.dataset.set) return save({ [b.dataset.set]: JSON.parse(b.dataset.val) });
     if (b.dataset.pair) { const [heading, body] = JSON.parse(b.dataset.pair); return save({ fonts: { heading, body } }); }
-    if (b.dataset.move) { const order = [...d.order]; const i = order.indexOf(b.dataset.move), j = i + Number(b.dataset.dir); [order[i], order[j]] = [order[j], order[i]]; return save({ order }); }
+    if (b.dataset.move) {
+      // Move within its own column (main or sidebar), so every click visibly changes the resume.
+      const inSide = (k) => d.layout !== 'single' && d.sidebar.includes(k);
+      const side = inSide(b.dataset.move);
+      const group = d.order.filter((k) => inSide(k) === side);
+      const i = group.indexOf(b.dataset.move), j = i + Number(b.dataset.dir);
+      if (j < 0 || j >= group.length) return;
+      [group[i], group[j]] = [group[j], group[i]];
+      const other = d.order.filter((k) => inSide(k) !== side);
+      return save({ order: side ? [...other, ...group] : [...group, ...other] });
+    }
     if ('reset' in b.dataset) { await call('design.applyPreset', { id: d.template }); d = await call('design.get'); paintPanel(); paintPreview(); toast('Back to the template’s settings.'); }
   });
   panel.addEventListener('change', async (e) => {
     const t = e.target;
     if (t.dataset.side) return save({ sidebar: t.checked ? [...new Set([...d.sidebar, t.dataset.side])] : d.sidebar.filter((x) => x !== t.dataset.side) });
     if ('tint' in t.dataset) return save({ sidebarTint: t.checked });
+    if ('upper' in t.dataset) return save({ nameUpper: t.checked });
     if (t.dataset.show) return save({ hidden: t.checked ? d.hidden.filter((x) => x !== t.dataset.show) : [...d.hidden, t.dataset.show] });
     if (t.dataset.font) return save({ fonts: { [t.dataset.font]: t.value } });
     if (t.id === 'dz-color') return save({ accent: t.value });
