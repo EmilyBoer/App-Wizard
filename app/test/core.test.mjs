@@ -312,3 +312,16 @@ test('setup works before Claude is connected; files are read once it is', async 
   assert.ok(st.materials.every((x) => !x.waiting));
   assert.ok(st.want.summary);
 });
+
+test('pasted jobs get their details; links teach where you look', async () => {
+  const { api } = newApi();
+  await api.call('auth.create', { name: 'Jordan Lee', email: 'p@example.com', password: 'longenough' });
+  const a = await api.call('want.addExample', { url: 'https://www.linkedin.com/jobs/view/4000000001/', text: 'About the job\nSenior Web Producer at Northwind Health\nOwn the CMS.', kind: 'fit' });
+  assert.equal(a.title, 'Senior Web Producer'); assert.equal(a.company, 'Northwind Health');
+  await api.call('want.addExample', { url: 'https://boards.greenhouse.io/lumen/jobs/101', kind: 'interviewed' });
+  await new Promise((r) => setTimeout(r, 20));
+  const st = await api.call('builder.status');
+  assert.equal(st.lookIn['linkedin.com'], 1); assert.equal(st.lookIn['boards.greenhouse.io'], 1);
+  assert.ok(st.sites.some((x) => x.kind === 'alerts' && x.site === 'LinkedIn'), 'LinkedIn noted as a place they look');
+  assert.ok(st.sites.some((x) => x.kind === 'board' && x.board === 'lumen'));
+});

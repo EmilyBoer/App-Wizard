@@ -345,3 +345,12 @@ export async function readDesign(claude, file) {
 Shape: {"columns": 1 or 2, "sidebar": "left|right|none", "fonts": ["font names you can identify, heading first"], "accent": "#hex main accent color or #14213D", "sections": ["section names in reading order"], "decorations": ["photos, skill bars, icons, graphics you see"], "looksLike": "classic|modern|compact"}`;
   return claude.json({ system, content: [fileBlock(file), { type: 'text', text: 'Describe this resume design.' }], maxTokens: 800, temperature: 0 });
 }
+
+// ---------- Job details from a pasted posting ----------
+
+export async function jobDetails(claude, { text, url }) {
+  const system = `Pull the basic facts out of a job posting someone pasted. Only what the posting says; leave anything missing empty.
+Shape: {"title": string, "company": string, "location": string, "remote": "remote|hybrid|onsite|", "pay": "as written, e.g. $95,000 to $115,000, or empty", "level": "intern|junior|mid|senior|lead|manager|director|executive|"}`;
+  const out = await claude.json({ system, content: `${url ? `Link: ${url}\n` : ''}${String(text || '').slice(0, 8000)}`, maxTokens: 300, fast: true });
+  return { title: String(out.title || '').slice(0, 120), company: String(out.company || '').slice(0, 120), location: String(out.location || ''), remote: out.remote || '', pay: out.pay || '', level: out.level || '' };
+}

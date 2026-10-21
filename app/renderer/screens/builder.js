@@ -263,6 +263,7 @@ ${card('fit', 'Jobs that suit you', jobs(st.fit))}
 ${card('reach', 'Your reach', jobs(st.reach))}
 ${card('sweetspot', 'Your sweet spot', `${w.summary ? esc(w.summary) + '<br>' : ''}${w.titles.map((t) => `<span class="tag muted">${esc(t)}</span>`).join(' ')}`)}
 ${(w.ambiguous || []).length ? card('words', 'Words that mean two things', w.ambiguous.map((a) => `${esc(a.word)}: ${esc(a.choice === 'skip' ? 'skip these' : a.choice || 'not answered')}`).join('<br>')) : ''}
+${(() => { const hosts = Object.entries(st.lookIn || {}).sort((a, b) => b[1] - a[1]); const watched = st.sites.filter((x) => x.kind === 'board' || x.kind === 'webpage'); return `<section class="card tight"><div class="row between" style="flex-wrap:nowrap;align-items:flex-start"><b>Where you look for jobs</b><a class="btn small" href="#/setup/7">Change</a></div><div class="small">${hosts.length ? hosts.map(([h, n]) => `${esc(h)} <span class="muted">(${n})</span>`).join('<br>') : '<span class="muted">Learned from the job links you add</span>'}</div><span class="tiny muted">${watched.length} compan${watched.length === 1 ? 'y' : 'ies'} watched for new jobs every day</span></section>`; })()}
 ${card('pay', 'Lowest salary', w.payFloor ? `$${Number(w.payFloor).toLocaleString()} a year` : '')}
 ${card('salary', 'Salary expectations answer', esc(answers.salary))}
 ${card('where', 'Where', (w.where || []).map(esc).join(', '))}
@@ -273,7 +274,6 @@ ${card('writing', 'Your writing style', st.voice.samples.length ? st.voice.sampl
 ${card('rate', 'Jobs you’ve rated', `${learning.summary.yes} yes · ${learning.summary.no} no`, `<span class="tiny muted"><a href="#/profile/learned">${learning.summary.rules} rule${learning.summary.rules === 1 ? '' : 's'} learned</a></span>`)}
 </div>
 <section class="stack"><h2>More</h2><div class="grid">
-<a class="card tight" href="#/setup/7" style="text-decoration:none;color:inherit"><b>Companies and job sites we watch</b><span class="small muted">${st.sites.length} watched. Companies from the jobs you added are watched automatically.</span></a>
 <a class="card tight" href="#/setup/5" style="text-decoration:none;color:inherit"><b>Resume design</b><span class="small muted">Template, fonts, length. A bigger design update is coming.</span></a>
 <a class="card tight" href="#/profile/settings" style="text-decoration:none;color:inherit"><b>Claude and morning schedule</b><span class="small muted">API key, models, when the morning batch runs.</span></a>
 <a class="card tight" href="#/profile/extension" style="text-decoration:none;color:inherit"><b>Browser extension</b><span class="small muted">Fill applications in your browser, and the answers it uses.</span></a>
@@ -289,7 +289,7 @@ function jobAdder(list, kind, max) {
 <label class="field">Link to the job <span class="tiny muted" style="font-weight:400">From any site: a company page, LinkedIn, Indeed, a job board</span><input type="url" id="joburl" placeholder="https://…"></label>
 <label class="field">Job description <span class="tiny muted" style="font-weight:400">Copy and paste it here. Needed for LinkedIn and Indeed, which don’t let us read the page.</span><textarea id="jobtext" placeholder="Paste the job description" style="min-height:110px"></textarea></label>
 <div class="row"><button class="btn secondary" data-act="addjob" data-busy="Reading the job…">Add this job</button><label class="btn">Or upload a file<input type="file" class="sr" id="jobfile" accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg"></label><span class="tiny muted">A link, the description, or both.</span></div></div>`}
-<div class="list" id="joblist" ${list.length ? '' : 'hidden'}>${list.map((x) => `<div class="item">${tag(kind === 'interviewed' ? 'Got an interview' : kind === 'reach' ? 'Reach' : 'Suits you', kind === 'interviewed' ? 'good' : kind === 'reach' ? 'info' : 'spark')}<div class="grow"><div>${esc(x.title || 'Job')}${x.company ? ` · ${esc(x.company)}` : ''}</div>${x.url ? `<div class="small muted">${esc(x.url.replace(/^https?:\/\//, '').slice(0, 70))}</div>` : ''}</div><button class="btn small" data-act="rmjob" data-id="${x.id}">Remove</button></div>`).join('')}</div>`;
+<div class="list" id="joblist" ${list.length ? '' : 'hidden'}>${list.map((x) => `<div class="item">${tag(kind === 'interviewed' ? 'Got an interview' : kind === 'reach' ? 'Reach' : 'Suits you', kind === 'interviewed' ? 'good' : kind === 'reach' ? 'info' : 'spark')}<div class="grow"><div>${esc(x.title || 'Job')}${x.company ? ` · ${esc(x.company)}` : ''}</div><div class="small muted">${esc([x.location, x.pay, x.url ? (() => { try { return new URL(x.url).hostname.replace(/^www\./, ''); } catch { return ''; } })() : 'Pasted'].filter(Boolean).join(' · '))}${x.needsDetails || x.waiting ? ' · We’ll fill in the details once Claude is connected.' : ''}</div></div><button class="btn small" data-act="rmjob" data-id="${x.id}">Remove</button></div>`).join('')}</div>`;
 }
 
 function wireAdder(el, kind, ui) {

@@ -108,6 +108,10 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
         await readInto(rec, prepared);
         store().update('materials', (m) => { const i = m.list.findIndex((x) => x.id === rec.id); if (i >= 0) m.list[i] = rec; });
       });
+      for (const e of store().get('want').examples.filter((x) => x.needsDetails && !x.waiting)) {
+        const done = await fillDetails({ ...e });
+        store().update('want', (w) => { const i = w.examples.findIndex((y) => y.id === e.id); if (i >= 0) w.examples[i] = done; });
+      }
       const ex = store().get('want').examples.filter((e) => e.waiting);
       for (const e of ex) {
         progress('builder', `Reading ${e.title}…`);
@@ -218,10 +222,8 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
       if (url && !/^https?:\/\//.test(url)) url = `https://${url}`;
       // A link and the pasted description together: keep both, no need to open the page.
       if (url && text) {
-        const parsed = parseJobUrl(url);
-        if (parsed) store().update('sites', (st) => { if (!st.list.some((x) => x.kind === 'board' && x.source === parsed.source && x.board === parsed.board)) st.list.push({ id: id('site_'), input: url, name: parsed.board, label: parsed.board, kind: 'board', source: parsed.source, board: parsed.board, auto: true, added: now().toISOString() }); });
-        const firstLine = text.split('\n').find((l) => l.trim()) || 'Job';
-        const rec = { id: id('x_'), kind, title: firstLine.slice(0, 100), company: '', text, url };
+        learnSource(url);
+        const rec = await fillDetails({ id: id('x_'), kind, title: (text.split('\n').find((l) => l.trim()) || 'Job').slice(0, 100), company: '', text, url });
         store().update('want', (w) => { w.examples.push(rec); });
         return rec;
       }
@@ -243,15 +245,16 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
             if (r.job) ex = { title: r.job.title, company: r.job.company, text: r.job.description, url: input };
           }
           if (!ex) {
-            if (/linkedin\.com|indeed\.com|glassdoor\.com|ziprecruiter\.com/.test(input)) throw new UserError("That site doesn't let us read the job. Open it, copy the job description, and paste the text here instead.");
+            if (/linkedin\.com|indeed\.com|glassdoor\.com|ziprecruiter\.com/.test(input)) throw new UserError("That site doesn't let us read the job. Keep the link, and paste the job description into the box below it.");
             try { const res = await fetchImpl(input, { headers: { 'user-agent': 'AppWizard/0.1' } }); const html = await res.text(); const { htmlText } = await import('./files.mjs'); ex = { title: (html.match(/<title>([^<]*)/i)?.[1] || '').trim(), company: '', text: htmlText(html).slice(0, 12000), url: input }; } catch { throw new UserError("We couldn't open that link. Paste the job's text instead."); }
             if (ex.text.length < 400) throw new UserError("We couldn't read the job on that page. Copy the job description and paste the text here instead.");
           }
-          // Watch this company's live job list from now on.
-          if (parsed) store().update('sites', (st) => { if (!st.list.some((x) => x.kind === 'board' && x.source === parsed.source && x.board === parsed.board)) st.list.push({ id: id('site_'), input: input, name: ex.company || parsed.board, label: ex.company || parsed.board, kind: 'board', source: parsed.source, board: parsed.board, auto: true, added: now().toISOString() }); });
+          // Watch this company's live job list from now on, and remember where they look.
+          learnSource(input);
         } else ex = { title: input.split('\n').find((l) => l.trim())?.slice(0, 100) || 'Job', company: '', text: input };
       }
       const rec = { id: id('x_'), kind, ...ex };
+      if (!rec.company || /^(about the job|job description|overview)/i.test(rec.title)) await fillDetails(rec);
       store().update('want', (w) => { w.examples.push(rec); });
       return rec;
     },
@@ -291,6 +294,7 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
         profile: { contact: p.contact, roles: p.roles.map((r) => ({ title: r.title, company: r.company, start: r.start, end: r.end, results: r.bullets.length })), skills: p.skills.map((x) => x.name), years: yearsOfExperience(p), checks: pendingCount(p) },
         interviewed: by('interviewed'), fit: by('fit'), reach: by('reach'),
         voice: { samples: s.get('voice').samples.map((x) => ({ id: x.id, name: x.name, words: String(x.text || '').split(/\s+/).length })), sampleLine: s.get('voice').sampleLine || '', useResume: Boolean(s.get('voice').useResume) },
+        lookIn: w.lookIn || {},
         want: { summary: w.summary, reachNote: w.reachNote || '', titles: w.titles, suggestedTitles: w.suggestedTitles, ambiguous: w.ambiguous, payFloor: w.payFloor, where: w.where, dealBreakers: w.dealBreakers },
         sites: s.get('sites').list,
         ready: hasResume && w.examples.filter((e) => e.kind !== 'reach').length >= 2,
@@ -615,6 +619,36 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
     },
     'ext.submitted': ({ trackerId }) => trackerId ? methods['tracker.status']({ id: trackerId, status: 'applied', note: 'Filled with the extension' }) : null,
   };
+
+  // Where people find jobs: count each site they paste from, and watch it when we can.
+  function learnSource(url) {
+    let host = '';
+    try { host = new URL(url).hostname.replace(/^www\./, ''); } catch { return; }
+    store().update('want', (w) => { w.lookIn = w.lookIn || {}; w.lookIn[host] = (w.lookIn[host] || 0) + 1; });
+    const parsed = parseJobUrl(url);
+    if (parsed) {
+      store().update('sites', (st) => { if (!st.list.some((x) => x.kind === 'board' && x.source === parsed.source && x.board === parsed.board)) st.list.push({ id: id('site_'), input: url, name: parsed.board, label: parsed.board, kind: 'board', source: parsed.source, board: parsed.board, auto: true, added: now().toISOString() }); });
+      return;
+    }
+    // Not a hiring system we read directly: find out what kind of site it is, in the background.
+    identifyWebsite(url, { fetchImpl }).then((found) => {
+      store().update('sites', (st) => {
+        const key = found.kind === 'alerts' ? found.site : found.kind === 'board' ? `${found.source}:${found.board}` : host;
+        if (st.list.some((x) => (x.kind === 'alerts' ? x.site : x.kind === 'board' ? `${x.source}:${x.board}` : (() => { try { return new URL(x.url || x.input).hostname.replace(/^www\./, ''); } catch { return ''; } })()) === key)) return;
+        st.list.push({ id: id('site_'), input: url, name: found.label || host, ...found, auto: true, added: now().toISOString() });
+      });
+    }).catch(() => {});
+  }
+
+  async function fillDetails(rec) {
+    if (!rec.text || !claudeReady()) { if (rec.text) rec.needsDetails = true; return rec; }
+    try {
+      const d = await ai.jobDetails(claude(), { text: rec.text, url: rec.url });
+      Object.assign(rec, { title: d.title || rec.title, company: d.company || rec.company, location: d.location, pay: d.pay, level: d.level, remote: d.remote });
+      delete rec.needsDetails;
+    } catch { rec.needsDetails = true; }
+    return rec;
+  }
 
   async function readInto(rec, prepared) {
     try {

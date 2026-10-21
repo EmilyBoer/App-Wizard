@@ -41,6 +41,7 @@ export function fakeClaude(overrides = {}) {
         underselling: [{ text: 'Trained 12 coworkers to publish their own pages.', company: 'Meridian Parks Foundation', source: ids[1] || 'linkedin' }],
       };
     }
+    if (system.includes('Pull the basic facts out of a job posting')) { const first = (text.split('\n').find((l) => /\bat\b/.test(l)) || 'Web Producer at Northwind Health'); const [t, c] = first.replace(/^Link:.*$/m, '').trim().split(/\s+at\s+/); return { title: t.trim(), company: (c || '').trim(), location: 'Remote', remote: 'remote', pay: '', level: 'senior' }; }
     if (system.includes('You describe how a person writes')) return { guide: ['Short sentences.', 'Plain words.'], sampleLine: 'I moved our website to a new system and taught people to publish on their own.', sampleFrom: 'b_x' };
     if (system.includes('describe the jobs they should go after')) return { summary: 'What these have in common: running a website for a mission-driven employer.', suggestedTitles: ['Website Manager', 'Editorial Manager'], ambiguous: [{ word: 'Development', meanings: ['Fundraising', 'Building software'] }], keywords: ['website', 'cms', 'content strategy', 'editorial calendar'], level: 'senior', payRange: '$85k to $105k' };
     if (system.includes('You judge whether a job fits')) {
