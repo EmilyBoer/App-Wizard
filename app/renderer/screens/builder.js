@@ -245,41 +245,56 @@ async function nextAfter(id) {
   return (Q.slice(i + 1).find((x) => !x.when || x.when(fresh)) || Q.at(-1)).id;
 }
 
-// ----- "Your setup": every choice from the builder, each one changeable -----
+// ----- Profile, "Your choices": every answer from setup, grouped, each one changeable -----
 export async function dashboard(root, app, { embedded = false } = {}) {
   document.body.classList.remove('building');
   const [st, answers, learning] = await Promise.all([call('builder.status'), call('builder.answers'), call('learning.get')]);
-  const w = st.want;
-  const card = (q, title, value, extra = '') => `<section class="card tight"><div class="row between" style="flex-wrap:nowrap;align-items:flex-start"><b>${title}</b><a class="btn small" href="#/build/${q}?back=1">Change</a></div><div class="small">${value || '<span class="muted">Not answered yet</span>'}</div>${extra}</section>`;
-  const jobs = (l) => (l.length ? l.map((x) => esc(`${x.title}${x.company ? ` · ${x.company}` : ''}`)).join('<br>') : '');
-  const c = st.profile.contact || {};
-  root.innerHTML = `<div class="${embedded ? 'stack' : 'page'}" style="gap:24px">
-${embedded ? (st.done ? '' : '<div class="note att row between"><span>Setup isn’t finished yet.</span><a class="btn primary" href="#/build">Finish setup</a></div>') : `<div class="head"><div><h1>Your setup</h1><p class="muted">Every choice you made in setup. Change any of them and your matches update.</p></div>${st.done ? '' : '<a class="btn primary" href="#/build">Finish setup</a>'}</div>`}
-<div class="grid">
-<section class="card tight"><div class="row between"><b>Your experience</b><a class="btn small" href="#/setup/3">Edit</a></div><div class="small">${st.profile.roles.length} roles · ${st.profile.skills.length} skills · ${st.profile.years} years</div><span class="tiny muted">From ${st.materials.length} file${st.materials.length === 1 ? '' : 's'}. <a href="#/documents">Add or manage files in Documents</a>${st.profile.checks ? ` · <a href="#/setup/3">${st.profile.checks} to check</a>` : ''}</span></section>
-${card('found', 'Contact details', [c.name, c.email, c.phone, c.location, c.linkedin, c.website].filter(Boolean).map(esc).join('<br>'))}
-${card('interviewed', 'Jobs that got you interviews', jobs(st.interviewed))}
-${card('fit', 'Jobs that suit you', jobs(st.fit))}
-${card('reach', 'Your reach', jobs(st.reach))}
-${card('sweetspot', 'Your sweet spot', `${w.summary ? esc(w.summary) + '<br>' : ''}${w.titles.map((t) => `<span class="tag muted">${esc(t)}</span>`).join(' ')}`)}
-${(w.ambiguous || []).length ? card('words', 'Words that mean two things', w.ambiguous.map((a) => `${esc(a.word)}: ${esc(a.choice === 'skip' ? 'skip these' : a.choice || 'not answered')}`).join('<br>')) : ''}
-${(() => { const hosts = Object.entries(st.lookIn || {}).sort((a, b) => b[1] - a[1]); const watched = st.sites.filter((x) => x.kind === 'board' || x.kind === 'webpage'); return `<section class="card tight"><div class="row between" style="flex-wrap:nowrap;align-items:flex-start"><b>Where you look for jobs</b><a class="btn small" href="#/setup/7">Change</a></div><div class="small">${hosts.length ? hosts.map(([h, n]) => `${esc(h)} <span class="muted">(${n})</span>`).join('<br>') : '<span class="muted">Learned from the job links you add</span>'}</div><span class="tiny muted">${watched.length} compan${watched.length === 1 ? 'y' : 'ies'} watched for new jobs every day</span></section>`; })()}
-${card('pay', 'Lowest salary', w.payFloor ? `$${Number(w.payFloor).toLocaleString()} a year` : '')}
-${card('salary', 'Salary expectations answer', esc(answers.salary))}
-${card('where', 'Where', (w.where || []).map(esc).join(', '))}
-${card('relocate', 'Would you move?', esc(answers.relocate))}
-${card('start', 'When you could start', esc(answers.start))}
-${card('never', 'Never show me', (w.dealBreakers || []).map(esc).join(', '))}
-${card('writing', 'Your writing style', st.voice.samples.length ? st.voice.samples.map((x) => esc(x.name)).join('<br>') : 'Learning from your resume', `<span class="tiny muted"><a href="#/setup/4">Fine-tune your style</a></span>`)}
-${card('rate', 'Jobs you’ve rated', `${learning.summary.yes} yes · ${learning.summary.no} no`, `<span class="tiny muted"><a href="#/profile/learned">${learning.summary.rules} rule${learning.summary.rules === 1 ? '' : 's'} learned</a></span>`)}
-</div>
-<section class="stack"><h2>More</h2><div class="grid">
-<a class="card tight" href="#/setup/5" style="text-decoration:none;color:inherit"><b>Resume design</b><span class="small muted">Template, fonts, length. A bigger design update is coming.</span></a>
-<a class="card tight" href="#/profile/settings" style="text-decoration:none;color:inherit"><b>Claude and morning schedule</b><span class="small muted">API key, models, when the morning batch runs.</span></a>
-<a class="card tight" href="#/profile/extension" style="text-decoration:none;color:inherit"><b>Browser extension</b><span class="small muted">Fill applications in your browser, and the answers it uses.</span></a>
-</div></section>
+  const w = st.want, c = st.profile.contact || {};
+  const host = (u) => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return ''; } };
+  const none = '<span class="muted">Not answered yet</span>';
+  const row = (label, value, href, action = 'Change') => `<div class="choice"><div class="choice-label">${label}</div><div class="choice-value">${value || none}</div>${href ? `<a class="btn small" href="${href}">${action}</a>` : '<span></span>'}</div>`;
+  const jobs = (l) => (l.length ? l.map((x) => `<div>${esc(x.title || 'Job')}${x.company ? ` <span class="muted">· ${esc(x.company)}</span>` : ''}</div>`).join('') : '');
+  const pills = (l) => `<div class="row">${l.map((t) => `<span class="pill">${esc(t)}</span>`).join('')}</div>`;
+  const words = (w.ambiguous || []).filter((a) => a.choice);
+  const hosts = Object.entries(st.lookIn || {}).sort((a, b) => b[1] - a[1]);
+  const watched = st.sites.filter((x) => x.kind === 'board' || x.kind === 'webpage').length;
+  const section = (title, rows) => `<section class="choices"><h2>${title}</h2><div class="choice-list">${rows.join('')}</div></section>`;
+  root.innerHTML = `<div class="${embedded ? 'stack' : 'page'}" style="gap:32px;max-width:960px">
+${st.done ? '' : '<div class="note att row between"><span>Setup isn’t finished yet.</span><a class="btn primary" href="#/build">Finish setup</a></div>'}
+${section('About you', [
+    row('Name and contact', [c.name, c.email, c.phone, c.location].filter(Boolean).map(esc).join(' · ') + ([c.linkedin, c.website].some(Boolean) ? `<div class="small muted">${[c.linkedin, c.website].filter(Boolean).map(esc).join(' · ')}</div>` : ''), '#/build/found?back=1', 'Edit'),
+    row('Experience', `${st.profile.roles.length} roles · ${st.profile.skills.length} skills · ${st.profile.years} years${st.profile.checks ? ` · <a href="#/setup/3">${st.profile.checks} things to check</a>` : ''}<div class="small muted">From ${st.materials.length} file${st.materials.length === 1 ? '' : 's'}. <a href="#/documents">Add more in Documents</a></div>`, '#/setup/3', 'Edit'),
+    row('Writing style', st.voice.samples.length ? `${st.voice.samples.length} writing sample${st.voice.samples.length === 1 ? '' : 's'}` : 'Learned from your resumes', '#/build/writing?back=1'),
+  ])}
+${section('What you’re looking for', [
+    row('Job titles', w.titles.length ? pills(w.titles) : '', '#/build/sweetspot?back=1'),
+    row('Your sweet spot', w.summary ? `<div class="clamp">${esc(w.summary)}</div>` : '', '#/build/sweetspot?back=1'),
+    row('Got you interviews', jobs(st.interviewed), '#/build/interviewed?back=1'),
+    row('Suit you', jobs(st.fit), '#/build/fit?back=1'),
+    row('Your reach', jobs(st.reach), '#/build/reach?back=1'),
+    ...(words.length || (w.ambiguous || []).length ? [row('Words that mean two things', words.length ? words.map((a) => `${esc(a.word)}: <span class="muted">${esc(a.choice === 'skip' ? 'skip these' : a.choice === 'both' ? 'both' : a.choice)}</span>`).join('<br>') : '', '#/build/words?back=1')] : []),
+    row('Where', (w.where || []).map(esc).join(' · '), '#/build/where?back=1'),
+    row('Lowest salary', w.payFloor ? `$${Number(w.payFloor).toLocaleString()} a year` : '', '#/build/pay?back=1'),
+    row('Never show me', (w.dealBreakers || []).length ? pills(w.dealBreakers) : '<span class="muted">Nothing</span>', '#/build/never?back=1'),
+  ])}
+${section('Answers for applications', [
+    row('Salary expectations', esc(answers.salary), '#/build/salary?back=1'),
+    row('Would you move?', esc(answers.relocate), '#/build/relocate?back=1'),
+    row('When you could start', esc(answers.start), '#/build/start?back=1'),
+  ])}
+${section('How Job Wizard works for you', [
+    row('Where you look', (hosts.length ? hosts.map(([h, n]) => `${esc(h)} <span class="muted">(${n})</span>`).join(' · ') : '<span class="muted">Learned from the job links you add</span>') + `<div class="small muted">${watched} compan${watched === 1 ? 'y' : 'ies'} checked for new jobs every day</div>`, '#/setup/7'),
+    row('What it’s learned', `${learning.summary.yes} yes · ${learning.summary.no} no · ${learning.summary.rules} rule${learning.summary.rules === 1 ? '' : 's'}`, '#/profile/learned', 'See'),
+    row('Resume design', 'Template, fonts and length', '#/setup/5'),
+    row('Claude and morning schedule', 'API key, and when your morning batch runs', '#/profile/settings'),
+    row('Browser extension', 'Fill in applications in your browser', '#/profile/extension'),
+  ])}
 </div>`;
-  void app; void modal;
+  // Jobs added before titles were pulled out: fix them quietly, then redraw.
+  if ([...st.interviewed, ...st.fit, ...st.reach].some((x) => !x.company || /^(job description|about the job|overview|job)$/i.test(String(x.title).trim()))) {
+    call('want.fillMissing').then((n) => { if (n && root.isConnected) dashboard(root, app, { embedded }); }).catch(() => {});
+  }
+  void modal;
 }
 
 // Paste a link or text, or drop a file; shows what's been added for this kind of job.

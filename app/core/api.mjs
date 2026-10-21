@@ -258,6 +258,16 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
       store().update('want', (w) => { w.examples.push(rec); });
       return rec;
     },
+    // Fill in titles and companies for jobs added before details were pulled out (or while Claude wasn't connected).
+    'want.fillMissing': () => once('want.fillMissing', async () => {
+      if (!claudeReady()) return 0;
+      const todo = store().get('want').examples.filter((e) => e.text && !e.waiting && (e.needsDetails || !e.company || /^(job description|about the job|overview|job)$/i.test(String(e.title).trim())));
+      for (const e of todo) {
+        const done = await fillDetails({ ...e });
+        store().update('want', (w) => { const i = w.examples.findIndex((y) => y.id === e.id); if (i >= 0) w.examples[i] = done; });
+      }
+      return todo.length;
+    }),
     'want.setExample': ({ id: xid, ...patch }) => store().update('want', (w) => { const x = w.examples.find((e) => e.id === xid); if (x) for (const k of ['kind', 'title', 'company']) if (k in patch) x[k] = patch[k]; }),
     'want.removeExample': ({ id: xid }) => store().update('want', (w) => { w.examples = w.examples.filter((x) => x.id !== xid); }),
     'want.analyze': async () => {
@@ -273,7 +283,8 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
         const prev = new Map((x.suggestedTitles || []).map((t) => [t.title, t]));
         x.suggestedTitles = (out.suggestedTitles || []).filter((t) => !x.titles.includes(t)).map((t) => prev.get(t) || { title: t, accepted: null });
         const choices = new Map((x.ambiguous || []).map((a) => [a.word.toLowerCase(), a.choice]));
-        x.ambiguous = (out.ambiguous || []).map((a) => ({ ...a, choice: choices.get(a.word.toLowerCase()) ?? null }));
+        const JUNK = /^(cms|gtm|seo|crm|api|ui|ux|manager|lead|senior|operations|catalog|migration|agency|sensors?)$/i;
+        x.ambiguous = (out.ambiguous || []).filter((a) => a.word && !JUNK.test(a.word.trim())).slice(0, 3).map((a) => ({ ...a, choice: choices.get(a.word.toLowerCase()) ?? null }));
         if (!x.payFloor && out.payRange) { const p = parsePay(out.payRange.replace(/k/g, 'k ')); if (p) x.payFloor = p.min; }
         if (!x.level.length && ['mid', 'senior', 'lead', 'manager'].includes(out.level)) x.level = [out.level[0].toUpperCase() + out.level.slice(1)];
       });
