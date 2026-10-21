@@ -51,7 +51,7 @@ async function materials(ctx) {
   const paint = async () => {
     const [list, settings] = await Promise.all([call('materials.list'), call('settings.get')]);
     el.innerHTML = `${ctx.head('Toss in everything about your work.', 'Resumes, your LinkedIn, reviews, screenshots. We read it all and sort it. You’ll check what we found on the next step.')}
-${settings.hasKey ? '' : keyCard()}
+${settings.hasKey ? '<div class="note good"><b>✓ Claude is connected.</b> Your key is saved. Change it any time in Profile, Settings.</div>' : keyCard()}
 <section class="drop" id="drop">
   ${sparkle(28)}
   <div style="font-family:var(--display);font-size:22px;font-weight:700">Drop anything here</div>
