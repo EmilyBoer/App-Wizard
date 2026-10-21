@@ -294,3 +294,21 @@ test('builder: one-question setup builds profile, wants and answers', async () =
   const a = await api.call('builder.answers');
   assert.equal(a.salary, '$95k to $110k'); assert.equal(a.relocate, 'Yes: Seattle');
 });
+
+test('setup works before Claude is connected; files are read once it is', async () => {
+  const fake = fakeClaude();
+  let key = '';
+  const { api } = newApi({ claude: (opts) => (key ? fake(opts) : { ready: false }) });
+  await api.call('auth.create', { name: 'Jordan Lee', email: 'k@example.com', password: 'longenough' });
+  const [m] = await api.call('materials.add', { files: [{ name: 'Jordan resume.pdf', data: b64('%PDF RESUME') }] });
+  assert.equal(m.waiting, true); assert.equal(m.kind, 'resume');
+  await api.call('want.addExample', { input: 'Web Producer\nOwn the CMS.', kind: 'fit' });
+  await api.call('want.addExample', { input: 'https://boards.greenhouse.io/lumen/jobs/104', kind: 'interviewed' });
+  let st = await api.call('builder.status');
+  assert.equal(st.hasKey, false); assert.equal(st.hasResume, true); assert.equal(st.ready, true);
+  key = 'sk-ant-test';
+  st = await api.call('builder.analyze');
+  assert.ok(st.profile.roles.length, 'profile built after connecting');
+  assert.ok(st.materials.every((x) => !x.waiting));
+  assert.ok(st.want.summary);
+});

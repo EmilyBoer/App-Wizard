@@ -193,3 +193,27 @@ table.t td { padding: 10px 14px; border-top: 1px solid var(--line); vertical-ali
 @media print { .top, .drawer { display: none; } }
 
 body.building .nav, body.building .ask { visibility: hidden; }
+
+/* Setup (the builder) runs on a dark background. */
+body.building {
+  --paper: #101A33; --panel: #18244A; --line: #2E3B63; --ink: #F2F4FA; --ink-muted: #AEB6CC;
+  --spark: #FF7A50; --spark-soft: #3A2A35;
+  --good: #4FD39A; --good-soft: #123628; --info: #8FB3FF; --info-soft: #1A2A52;
+  --attention: #FFD27A; --attention-soft: #3A2E10; --alert: #FF8585; --alert-soft: #3A1A1A;
+  --lift: 3px 3px 0 0 #F2F4FA;
+  background: #0B1226; color-scheme: dark;
+}
+body.building, body.building .top { background: #0B1226; }
+body.building .top { border-bottom-color: #1E2A4D; }
+body.building .btn.primary { border-color: #F2F4FA; box-shadow: 3px 3px 0 0 #F2F4FA; }
+body.building .btn.primary:hover { box-shadow: 4px 4px 0 0 #F2F4FA; }
+body.building .btn.primary:active { box-shadow: 1px 1px 0 0 #F2F4FA; }
+body.building .avatar { background: #F2F4FA; color: #0B1226; }
+body.building input, body.building textarea, body.building select { background: #101A33; color: #F2F4FA; border-color: #2E3B63; }
+body.building ::placeholder { color: #7F89A6; }
+body.building .chip[aria-pressed="true"] { border-color: #F2F4FA; }
+body.building .card.featured { border-color: #F2F4FA; }
+body.building .drop { border-color: #AEB6CC; }
+
+html:has(body.building) { background: #0B1226; }
+body.building { min-height: 100vh; }

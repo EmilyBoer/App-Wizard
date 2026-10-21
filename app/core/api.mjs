@@ -48,6 +48,7 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
     if (!c.ready) throw new UserError('Add your Claude API key in Profile, Settings to use this. (Help: Setting up your Claude API key)');
     return c;
   };
+  const claudeReady = () => { try { claude(); return true; } catch { return false; } };
   const setLogin = (acct) => { session = { account: acct, store: accounts.storeFor(acct.id) }; fs.writeFileSync(sessionFile, JSON.stringify({ id: acct.id })); return acct; };
   const jobById = (jid) => { const j = store().get('jobs').list.find((x) => x.id === jid); if (!j) throw new UserError('That job is no longer in your list.'); return j; };
   const saveJob = (job) => store().update('jobs', (js) => { const i = js.list.findIndex((x) => x.id === job.id); if (i >= 0) js.list[i] = job; else js.list.unshift(job); });
@@ -82,29 +83,41 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
     'settings.testKey': async () => { await claude().send({ system: 'Reply with OK.', content: 'Say OK', fast: true, maxTokens: 5 }); return { ok: true }; },
 
     // ----- materials -----
-    'materials.list': () => store().get('materials').list.map(({ text, ...m }) => ({ ...m, chars: (text || '').length })),
-    'materials.add': async ({ files = [], text, name }) => {
+    'materials.list': () => store().get('materials').list.map(({ text, raw, ...m }) => ({ ...m, chars: (text || '').length })),
+    'materials.add': async ({ files = [], text, name, defer }) => {
       if (text) files = [...files, { name: name || 'Pasted text.txt', data: Buffer.from(text).toString('base64') }];
+      const hasKey = claudeReady();
       const added = [];
       for (const f of files) {
         const prepared = prepareFile(f);
         const rec = { id: id('m_'), name: f.name, mime: prepared.mime, added: now().toISOString(), kind: 'other', summary: '', text: prepared.text || '', problem: prepared.problem || null };
         if (!prepared.problem) {
-          progress('materials', `Reading ${f.name}…`);
-          try {
-            const read = await ai.readMaterial(claude(), prepared);
-            Object.assign(rec, { kind: read.kind, summary: read.summary, text: read.text || rec.text });
-            if (read.kind === 'job_posting') {
-              rec.movedTo = 'want';
-              store().update('want', (w) => { w.examples.push({ id: id('x_'), title: read.jobPosting?.title || '', company: read.jobPosting?.company || '', text: rec.text, from: rec.id }); });
-            }
-            if (read.kind === 'writing') store().update('voice', (v) => { v.samples.push({ id: id('s_'), name: f.name, text: rec.text, from: rec.id }); });
-          } catch (e) { rec.problem = e instanceof UserError || e.name === 'ClaudeError' ? e.message : `We couldn't read this: ${e.message}`; }
+          if (!hasKey || defer) {
+            // Claude isn't connected yet: keep the file and read it later.
+            Object.assign(rec, { waiting: true, raw: prepared.base64 || null, kind: /linkedin|profile/i.test(f.name) ? 'linkedin' : 'resume', summary: 'We’ll read this once Claude is connected.' });
+          } else await readInto(rec, prepared);
         }
         store().update('materials', (m) => { m.list.push(rec); });
         added.push(rec);
       }
-      return added.map(({ text, ...m }) => m);
+      return added.map(({ text, raw, ...m }) => m);
+    },
+    'materials.readWaiting': async () => {
+      const waiting = store().get('materials').list.filter((m) => m.waiting);
+      for (const rec of waiting) {
+        progress('builder', `Reading ${rec.name}…`);
+        const prepared = rec.raw ? { name: rec.name, mime: rec.mime, base64: rec.raw } : { name: rec.name, mime: rec.mime, text: rec.text };
+        delete rec.waiting; delete rec.raw; rec.summary = '';
+        await readInto(rec, prepared);
+        store().update('materials', (m) => { const i = m.list.findIndex((x) => x.id === rec.id); if (i >= 0) m.list[i] = rec; });
+      }
+      const ex = store().get('want').examples.filter((e) => e.waiting);
+      for (const e of ex) {
+        progress('builder', `Reading ${e.title}…`);
+        const read = await ai.readMaterial(claude(), { name: e.title, mime: e.mime, base64: e.raw });
+        store().update('want', (w) => { const x = w.examples.find((y) => y.id === e.id); Object.assign(x, { title: read.jobPosting?.title || x.title, company: read.jobPosting?.company || '', text: read.text }); delete x.waiting; delete x.raw; delete x.mime; });
+      }
+      return waiting.length + ex.length;
     },
     'materials.setKind': ({ id: mid, kind }) => {
       let rec;
@@ -147,6 +160,7 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
     'voice.addFile': async ({ file }) => {
       const prepared = prepareFile(file);
       if (prepared.problem) throw new UserError(prepared.problem);
+      if (!prepared.text && !claudeReady()) throw new UserError('We can read Word and text files now. For a PDF or screenshot, paste the text instead, or add it later in Documents.');
       const text = prepared.text || (await ai.readMaterial(claude(), prepared)).text;
       store().update('voice', (v) => { v.samples.push({ id: id('s_'), name: file.name, text }); });
       return true;
@@ -157,7 +171,7 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
     'voice.generate': async () => {
       const v = store().get('voice');
       // No writing samples? Learn from how their resume is written.
-      const samples = v.samples.length ? v.samples : store().get('materials').list.filter((m) => m.kind === 'resume' && m.text).slice(0, 1).map((m) => ({ name: 'Your resume', text: m.text }));
+      const samples = v.samples.length ? v.samples : store().get('materials').list.filter((m) => m.kind === 'resume' && m.text).slice(0, 4).map((m) => ({ name: m.name, text: m.text }));
       const out = await ai.voiceGuide(claude(), { samples, dials: v.dials, never: v.never, profile: store().get('profile'), edits: writingEdits(store().get('learning')) });
       return store().update('voice', (x) => { x.guide = out.guide || []; x.sampleLine = out.sampleLine; x.sampleRating = null; });
     },
@@ -208,6 +222,7 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
         const prepared = prepareFile(file);
         if (prepared.problem) throw new UserError(prepared.problem);
         if (prepared.text) ex = { title: prepared.text.split('\n').find((l) => l.trim())?.slice(0, 100) || file.name, company: '', text: prepared.text };
+        else if (!claudeReady()) ex = { title: file.name, company: '', text: '', waiting: true, raw: prepared.base64, mime: prepared.mime };
         else { const read = await ai.readMaterial(claude(), prepared); ex = { title: read.jobPosting?.title || file.name, company: read.jobPosting?.company || '', text: read.text }; }
       } else {
         input = String(input || '').trim();
@@ -257,11 +272,11 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
     'builder.status': () => {
       const s = store();
       const mats = s.get('materials').list, p = s.get('profile'), w = s.get('want'), settings = s.get('settings');
-      const by = (k) => w.examples.filter((e) => (e.kind || 'fit') === k).map(({ text, ...e }) => e);
+      const by = (k) => w.examples.filter((e) => (e.kind || 'fit') === k).map(({ text, raw, ...e }) => e);
       const hasResume = mats.some((m) => ['resume', 'linkedin'].includes(m.kind));
       return {
-        hasKey: Boolean(settings.claudeKey || process.env.ANTHROPIC_API_KEY),
-        materials: mats.map(({ text, ...m }) => m),
+        hasKey: claudeReady(),
+        materials: mats.map(({ text, raw, ...m }) => m),
         hasResume, profileBuilt: p.roles.length > 0,
         profileStale: hasResume && mats.some((m) => ['resume', 'linkedin', 'review', 'portfolio'].includes(m.kind) && !m.inProfile),
         profile: { contact: p.contact, roles: p.roles.map((r) => ({ title: r.title, company: r.company, start: r.start, end: r.end, results: r.bullets.length })), skills: p.skills.map((x) => x.name), years: yearsOfExperience(p), checks: pendingCount(p) },
@@ -281,7 +296,9 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
     'builder.analyze': () => once('builder.analyze', async () => {
       const st = methods['builder.status']();
       if (!st.hasResume) throw new UserError('Add your resume first.');
-      if (st.profileStale || !st.profileBuilt) { progress('builder', 'Reading your resume…'); await methods['builder.buildProfile'](); }
+      await methods['materials.readWaiting']();
+      if (!methods['builder.status']().hasResume) throw new UserError('We couldn’t find a resume in your files. Go back and add it.');
+      if (methods['builder.status']().profileStale || !st.profileBuilt) { progress('builder', 'Reading your resume…'); await methods['builder.buildProfile'](); }
       if (store().get('want').examples.length) { progress('builder', 'Working out your sweet spot…'); await methods['want.analyze'](); }
       return methods['builder.status']();
     }),
@@ -572,6 +589,19 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
     },
     'ext.submitted': ({ trackerId }) => trackerId ? methods['tracker.status']({ id: trackerId, status: 'applied', note: 'Filled with the extension' }) : null,
   };
+
+  async function readInto(rec, prepared) {
+    progress('materials', `Reading ${rec.name}…`);
+    try {
+      const read = await ai.readMaterial(claude(), prepared);
+      Object.assign(rec, { kind: read.kind, summary: read.summary, text: read.text || rec.text });
+      if (read.kind === 'job_posting') {
+        rec.movedTo = 'want';
+        store().update('want', (w) => { w.examples.push({ id: id('x_'), kind: 'fit', title: read.jobPosting?.title || '', company: read.jobPosting?.company || '', text: rec.text, from: rec.id }); });
+      }
+      if (read.kind === 'writing') store().update('voice', (v) => { v.samples.push({ id: id('s_'), name: rec.name, text: rec.text, from: rec.id }); });
+    } catch (e) { rec.problem = e instanceof UserError || e.name === 'ClaudeError' ? e.message : `We couldn't read this: ${e.message}`; }
+  }
 
   function rerank(fresh, report) {
     const s = store();

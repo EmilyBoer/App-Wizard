@@ -8,15 +8,10 @@ const RATE_TARGET = 10;
 
 // Each question: id, ask (the headline), help, when(st) to include it, body(st, ui), mount(el, st, ui), next(el, st) → false to stay, skip text.
 const Q = [
-  { id: 'connect', when: (st) => !st.hasKey, ask: 'First, connect Claude.', help: 'Job Wizard uses Claude to read your files and write for you. During testing, you use your own Claude API key. It takes about 3 minutes.',
-    body: () => `<div class="stack"><a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" class="btn secondary" style="align-self:flex-start">Sign in to Claude Console to get a key</a>
-<ol class="small muted" style="margin:0;padding-left:20px"><li>Sign in, and add $5 of credit under Settings, Billing.</li><li>Press Create Key, name it Job Wizard, and copy it.</li><li>Paste it here.</li></ol>
-<input type="password" id="key" placeholder="sk-ant-…" autocomplete="off"><div class="note alert hidden" id="err" role="alert"></div></div>`,
-    async next(el) { const err = el.querySelector('#err'); err.classList.add('hidden'); try { await call('settings.save', { claudeKey: el.querySelector('#key').value }); await call('settings.testKey'); toast('Claude is connected.'); } catch (e) { err.textContent = e.message; err.classList.remove('hidden'); return false; } } },
-
-  { id: 'resume', ask: 'Let’s start with your resume.', help: 'Drop in your resume. Add your LinkedIn PDF, older resumes or reviews too if you have them. We pull your contact details, roles and skills from these, so you don’t type anything twice.',
-    body: (st) => `<section class="drop" id="drop">${sparkle(28)}<div style="font-family:var(--display);font-size:22px;font-weight:700">Drop your resume here</div><div class="muted small">PDF, Word, text or screenshots.</div><label class="btn secondary">Choose files<input type="file" multiple class="sr" id="files" accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg,.webp"></label><div data-progress="materials" class="small muted" aria-live="polite"></div></section>
+  { id: 'resume', ask: 'Let’s start with your resumes. All of them.', help: 'Drop in every resume you have: old ones, different versions, ones made for different jobs. We put them all together to learn your full work history and how you write. Your LinkedIn PDF and reviews help too.',
+    body: (st) => `<section class="drop" id="drop">${sparkle(28)}<div style="font-family:var(--display);font-size:22px;font-weight:700">Drop your resumes here</div><div class="muted small">As many as you have. PDF, Word, text or screenshots.</div><label class="btn secondary">Choose files<input type="file" multiple class="sr" id="files" accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg,.webp"></label><div data-progress="materials" class="small muted" aria-live="polite"></div></section>
 ${st.materials.length ? `<div class="list">${st.materials.map((m) => `<div class="item">${m.problem ? tag('Can’t read', 'alert') : tag((KIND[m.kind] || KIND.other)[0], (KIND[m.kind] || KIND.other)[1])}<div class="grow"><div>${esc(m.name)}</div><div class="small muted">${esc(m.problem || m.summary || '')}</div></div><button class="btn small" data-act="rmfile" data-id="${m.id}">Remove</button></div>`).join('')}</div>` : ''}
+${st.materials.length ? `<p class="small"><b>${st.materials.length} file${st.materials.length === 1 ? '' : 's'} added.</b> ${st.materials.length < 3 ? 'Got more? Older or different versions help.' : 'Great, the more the better.'}</p>` : ''}
 <p class="tiny muted">LinkedIn: on your profile, press More, then Save to PDF. We can’t open LinkedIn links ourselves.</p>`,
     mount(el, st, ui) {
       dropZone(el.querySelector('#drop'), el.querySelector('#files'), async (files) => {
@@ -26,14 +21,7 @@ ${st.materials.length ? `<div class="list">${st.materials.map((m) => `<div class
       });
       on(el, { rmfile: async (b) => { await call('materials.remove', { id: b.dataset.id }); ui.repaint(); } });
     },
-    async next(el, st) { if (!st.hasResume) { toast('Add your resume or LinkedIn PDF to continue.', true); return false; } if (st.profileStale || !st.profileBuilt) await call('builder.buildProfile'); } },
-
-  { id: 'found', ask: 'Here’s what we pulled from your resume.', help: 'Fix anything that’s off. Everything Job Wizard writes for you comes from this, and we never make anything up.',
-    body: (st) => { const c = st.profile.contact || {}; return `<div class="grid">${[['name', 'Name'], ['email', 'Email'], ['phone', 'Phone'], ['location', 'City, State'], ['linkedin', 'LinkedIn link'], ['website', 'Website or portfolio']].map(([k, l]) => `<label class="field">${l}<input type="text" data-contact="${k}" value="${esc(c[k] || '')}"></label>`).join('')}</div>
-<div class="list"><div class="list-head">${st.profile.roles.length} role${st.profile.roles.length === 1 ? '' : 's'} · ${st.profile.years} years</div>${st.profile.roles.map((r) => `<div class="item"><div class="grow"><div>${esc(r.title)} · ${esc(r.company)}</div><div class="small muted">${esc(r.start || '')} – ${esc(r.end || '')} · ${r.results} results</div></div></div>`).join('')}</div>
-<div class="row">${st.profile.skills.slice(0, 16).map((x) => `<span class="tag muted">${esc(x)}</span>`).join('')}</div>
-${st.profile.checks ? `<div class="note info">${st.profile.checks} thing${st.profile.checks > 1 ? 's' : ''} to double-check, like dates that don’t match between files. <a href="#/setup/3">Check now</a> or later in Profile.</div>` : ''}`; },
-    mount(el) { el.querySelectorAll('[data-contact]').forEach((i) => (i.onchange = () => call('profile.setContact', { [i.dataset.contact]: i.value }))); } },
+    next(el, st) { if (!st.hasResume) { toast('Add at least one resume or your LinkedIn PDF to continue.', true); return false; } } },
 
   { id: 'interviewed', ask: 'Which jobs got you interviews lately?', help: 'Even if they didn’t work out. These are the strongest sign of where you fit, because an employer already said yes.', skip: 'I haven’t had interviews lately',
     body: (st) => jobAdder(st.interviewed, 'interviewed'), mount: (el, st, ui) => wireAdder(el, 'interviewed', ui) },
@@ -44,23 +32,6 @@ ${st.profile.checks ? `<div class="note info">${st.profile.checks} thing${st.pro
 
   { id: 'reach', ask: 'Now add one reach.', help: 'A job you’d love that’s a stretch: more senior, a new field, a dream company. We’ll show you a few like it, not a flood.', skip: 'Skip the reach',
     body: (st) => jobAdder(st.reach, 'reach', 1), mount: (el, st, ui) => wireAdder(el, 'reach', ui) },
-
-  { id: 'sweetspot', ask: 'Here’s your sweet spot.', help: 'From your resume and the jobs you added. Keep the titles that sound right.', enter: () => call('builder.analyze'),
-    body: (st) => `${st.want.summary ? `<div class="note info"><b>${esc(st.want.summary)}</b></div>` : ''}${st.want.reachNote ? `<div class="note muted"><b>Your reach:</b> ${esc(st.want.reachNote)}</div>` : ''}
-<b class="small">Job titles we’ll look for</b><div class="row">${st.want.titles.map((t) => `<button class="chip" aria-pressed="true" data-act="deltitle" data-t="${esc(t)}">${esc(t)} ×</button>`).join('')}<input type="text" id="title" placeholder="Add a title, press Enter" style="width:240px"></div>
-${(st.want.suggestedTitles || []).filter((x) => x.accepted == null).length ? `<b class="small">You might also fit:</b><div class="row">${st.want.suggestedTitles.filter((x) => x.accepted == null).map((x) => `<span class="chip suggest">${esc(x.title)} <button class="btn small" data-act="sugg" data-t="${esc(x.title)}" data-v="1" style="color:var(--good)">Yes</button><button class="btn small" data-act="sugg" data-t="${esc(x.title)}" data-v="0">No</button></span>`).join('')}</div>` : ''}`,
-    mount(el, st, ui) {
-      const t = el.querySelector('#title'); t.onkeydown = async (e) => { if (e.key === 'Enter' && t.value.trim()) { await call('want.save', { titles: [...st.want.titles, t.value.trim()] }); ui.repaint(); } };
-      on(el, {
-        deltitle: async (b) => { await call('want.save', { titles: st.want.titles.filter((x) => x !== b.dataset.t) }); ui.repaint(); },
-        sugg: async (b) => { const sug = st.want.suggestedTitles.map((x) => (x.title === b.dataset.t ? { ...x, accepted: b.dataset.v === '1' } : x)); await call('want.save', { suggestedTitles: sug, ...(b.dataset.v === '1' ? { titles: [...st.want.titles, b.dataset.t] } : {}) }); ui.repaint(); },
-      });
-    },
-    next(el, st) { if (!st.want.titles.length) { toast('Keep at least one job title.', true); return false; } } },
-
-  { id: 'words', when: (st) => (st.want.ambiguous || []).length > 0, ask: 'Quick check: these words mean two things.', help: 'Job posts use them in different ways. Which do you mean?',
-    body: (st) => st.want.ambiguous.map((a, i) => `<div class="stack-s"><b>“${esc(a.word)}”</b><div class="row">${[...a.meanings, 'Both', 'Neither, skip these'].map((m) => { const v = m === 'Both' ? 'both' : m.startsWith('Neither') ? 'skip' : m; return radio(`amb${i}`, v, m, a.choice === v); }).join('')}</div></div>`).join(''),
-    mount(el, st) { el.querySelectorAll('input[name^=amb]').forEach((r) => (r.onchange = () => { st.want.ambiguous[Number(r.name.slice(3))].choice = r.value; call('want.save', { ambiguous: st.want.ambiguous }); })); } },
 
   { id: 'pay', ask: 'What’s the lowest salary you’d take?', help: 'Per year. Jobs that pay less get hidden. Jobs that don’t list pay still show up, marked “pay not listed.”', skip: 'I’d rather not say',
     body: (st) => `<div class="row" style="font-size:22px"><span>$</span><input type="number" id="pay" min="0" step="1000" value="${st.want.payFloor || ''}" placeholder="85000" style="font-size:22px;max-width:260px"><span class="muted" style="font-size:16px">a year</span></div>`,
@@ -101,11 +72,11 @@ ${(st.want.suggestedTitles || []).filter((x) => x.accepted == null).length ? `<b
     mount(el) { el.querySelectorAll('[data-d]').forEach((c) => (c.onclick = () => c.setAttribute('aria-pressed', c.getAttribute('aria-pressed') === 'true' ? 'false' : 'true'))); const d = el.querySelector('#deal'); d.onkeydown = (e) => { if (e.key === 'Enter' && d.value.trim()) { const c = document.createElement('button'); c.type = 'button'; c.className = 'chip'; c.dataset.d = d.value.trim(); c.textContent = d.value.trim(); c.setAttribute('aria-pressed', 'true'); c.onclick = () => c.setAttribute('aria-pressed', c.getAttribute('aria-pressed') === 'true' ? 'false' : 'true'); d.previousElementSibling.append(c); d.value = ''; } }; },
     next: (el) => call('want.save', { dealBreakers: [...el.querySelectorAll('[data-d][aria-pressed=true]')].map((c) => c.dataset.d) }) },
 
-  { id: 'writing', ask: 'Want your letters to sound like you?', help: 'Share something you wrote in your own words: a long email to friends, a cover letter you liked, a LinkedIn post. A couple of paragraphs is plenty. We only use it to learn how you write.', skip: 'Just use my resume',
+  { id: 'writing', ask: 'Want your letters to sound like you?', help: 'Share something you wrote in your own words: a long email to friends, a cover letter you liked, a LinkedIn post. A couple of paragraphs is plenty. We only use it to learn how you write.', skip: 'Just use my resumes',
     body: (st) => `<div class="stack-s"><textarea id="wtext" placeholder="Paste something you wrote" style="min-height:160px"></textarea>
 <div class="row"><button class="btn secondary" data-act="addw" data-busy="Saving…">Add this</button><label class="btn">Or choose a file<input type="file" class="sr" id="wfile" accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg"></label></div></div>
 ${st.voice.samples.length ? `<div class="list">${st.voice.samples.map((x) => `<div class="item">${tag('Your writing', 'info')}<div class="grow"><div>${esc(x.name)}</div><div class="small muted">${x.words} words</div></div><button class="btn small" data-act="rmw" data-id="${x.id}">Remove</button></div>`).join('')}</div>` : ''}
-<p class="tiny muted">No samples? We’ll learn from how your resume is written. You can add more any time in Profile.</p>`,
+<p class="tiny muted">No samples? We’ll learn from how your resumes are written. You can add more any time in Profile.</p>`,
     mount(el, st, ui) {
       el.querySelector('#wfile').onchange = async (e) => { const [file] = await readFiles(e.target.files); try { await call('voice.addFile', { file }); ui.repaint(); } catch (ex) { toast(ex.message, true); } };
       on(el, {
@@ -114,6 +85,36 @@ ${st.voice.samples.length ? `<div class="list">${st.voice.samples.map((x) => `<d
       });
     },
     async next(el, st) { const t = el.querySelector('#wtext').value.trim(); if (t) await call('voice.addSample', { text: t, name: `Pasted writing (${t.split(/\s+/).slice(0, 5).join(' ')}…)` }); } },
+
+  { id: 'connect', when: (st) => !st.hasKey, ask: 'Now let’s connect Claude.', help: 'Claude is what reads your files and writes for you. During testing, you use your own Claude API key. It takes about 3 minutes, and then we’ll read everything you’ve added.',
+    body: () => `<div class="stack"><a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" class="btn secondary" style="align-self:flex-start">Sign in to Claude Console to get a key</a>
+<ol class="small muted" style="margin:0;padding-left:20px"><li>Sign in, and add $5 of credit under Settings, Billing.</li><li>Press Create Key, name it Job Wizard, and copy it.</li><li>Paste it here.</li></ol>
+<input type="password" id="key" placeholder="sk-ant-…" autocomplete="off"><div class="note alert hidden" id="err" role="alert"></div></div>`,
+    async next(el) { const err = el.querySelector('#err'); err.classList.add('hidden'); try { await call('settings.save', { claudeKey: el.querySelector('#key').value }); await call('settings.testKey'); toast('Claude is connected.'); } catch (e) { err.textContent = e.message; err.classList.remove('hidden'); return false; } } },
+
+  { id: 'found', enter: () => call('builder.analyze'), ask: 'Here’s what we pulled from your resume.', help: 'Fix anything that’s off. Everything Job Wizard writes for you comes from this, and we never make anything up.',
+    body: (st) => { const c = st.profile.contact || {}; return `<div class="grid">${[['name', 'Name'], ['email', 'Email'], ['phone', 'Phone'], ['location', 'City, State'], ['linkedin', 'LinkedIn link'], ['website', 'Website or portfolio']].map(([k, l]) => `<label class="field">${l}<input type="text" data-contact="${k}" value="${esc(c[k] || '')}"></label>`).join('')}</div>
+<div class="list"><div class="list-head">${st.profile.roles.length} role${st.profile.roles.length === 1 ? '' : 's'} · ${st.profile.years} years</div>${st.profile.roles.map((r) => `<div class="item"><div class="grow"><div>${esc(r.title)} · ${esc(r.company)}</div><div class="small muted">${esc(r.start || '')} – ${esc(r.end || '')} · ${r.results} results</div></div></div>`).join('')}</div>
+<div class="row">${st.profile.skills.slice(0, 16).map((x) => `<span class="tag muted">${esc(x)}</span>`).join('')}</div>
+${st.profile.checks ? `<div class="note info">${st.profile.checks} thing${st.profile.checks > 1 ? 's' : ''} to double-check, like dates that don’t match between files. <a href="#/setup/3">Check now</a> or later in Profile.</div>` : ''}`; },
+    mount(el) { el.querySelectorAll('[data-contact]').forEach((i) => (i.onchange = () => call('profile.setContact', { [i.dataset.contact]: i.value }))); } },
+
+  { id: 'sweetspot', ask: 'Here’s your sweet spot.', help: 'From your resume and the jobs you added. Keep the titles that sound right.', enter: async () => { const st = await call('builder.status'); return st.want.summary ? st : call('builder.analyze'); },
+    body: (st) => `${st.want.summary ? `<div class="note info"><b>${esc(st.want.summary)}</b></div>` : ''}${st.want.reachNote ? `<div class="note muted"><b>Your reach:</b> ${esc(st.want.reachNote)}</div>` : ''}
+<b class="small">Job titles we’ll look for</b><div class="row">${st.want.titles.map((t) => `<button class="chip" aria-pressed="true" data-act="deltitle" data-t="${esc(t)}">${esc(t)} ×</button>`).join('')}<input type="text" id="title" placeholder="Add a title, press Enter" style="width:240px"></div>
+${(st.want.suggestedTitles || []).filter((x) => x.accepted == null).length ? `<b class="small">You might also fit:</b><div class="row">${st.want.suggestedTitles.filter((x) => x.accepted == null).map((x) => `<span class="chip suggest">${esc(x.title)} <button class="btn small" data-act="sugg" data-t="${esc(x.title)}" data-v="1" style="color:var(--good)">Yes</button><button class="btn small" data-act="sugg" data-t="${esc(x.title)}" data-v="0">No</button></span>`).join('')}</div>` : ''}`,
+    mount(el, st, ui) {
+      const t = el.querySelector('#title'); t.onkeydown = async (e) => { if (e.key === 'Enter' && t.value.trim()) { await call('want.save', { titles: [...st.want.titles, t.value.trim()] }); ui.repaint(); } };
+      on(el, {
+        deltitle: async (b) => { await call('want.save', { titles: st.want.titles.filter((x) => x !== b.dataset.t) }); ui.repaint(); },
+        sugg: async (b) => { const sug = st.want.suggestedTitles.map((x) => (x.title === b.dataset.t ? { ...x, accepted: b.dataset.v === '1' } : x)); await call('want.save', { suggestedTitles: sug, ...(b.dataset.v === '1' ? { titles: [...st.want.titles, b.dataset.t] } : {}) }); ui.repaint(); },
+      });
+    },
+    next(el, st) { if (!st.want.titles.length) { toast('Keep at least one job title.', true); return false; } } },
+
+  { id: 'words', when: (st) => (st.want.ambiguous || []).length > 0, ask: 'Quick check: these words mean two things.', help: 'Job posts use them in different ways. Which do you mean?',
+    body: (st) => st.want.ambiguous.map((a, i) => `<div class="stack-s"><b>“${esc(a.word)}”</b><div class="row">${[...a.meanings, 'Both', 'Neither, skip these'].map((m) => { const v = m === 'Both' ? 'both' : m.startsWith('Neither') ? 'skip' : m; return radio(`amb${i}`, v, m, a.choice === v); }).join('')}</div></div>`).join(''),
+    mount(el, st) { el.querySelectorAll('input[name^=amb]').forEach((r) => (r.onchange = () => { st.want.ambiguous[Number(r.name.slice(3))].choice = r.value; call('want.save', { ambiguous: st.want.ambiguous }); })); } },
 
   { id: 'rate', ask: 'Last one: rate a few real jobs.', help: 'These are live jobs we found with your answers. Every yes and no teaches Job Wizard what fits before your first morning batch.', skip: 'Skip for now', custom: true },
 
@@ -167,7 +168,7 @@ export async function render(root, params, app) {
 
   on(root, {
     prev: () => go(idx - 1),
-    skip: async () => { const fresh = await call('builder.status'); const nextList = Q.filter((x) => !x.when || x.when(fresh)); const at = nextList.findIndex((x) => x.id === list[idx].id); app.go(`#/build/${nextList[Math.min(nextList.length - 1, at + 1)].id}`); },
+    skip: async () => app.go(`#/build/${await nextAfter(list[idx].id)}`),
     later: () => { document.body.classList.remove('building'); app.go('#/profile'); },
     next: (b) => act(b, async () => {
       const q = list[idx];
@@ -175,10 +176,7 @@ export async function render(root, params, app) {
       if (r === false) return;
       if (back) { document.body.classList.remove('building'); app.go('#/profile'); return; }
       // Answers can add or remove questions (e.g. words that mean two things), so work out the next one fresh.
-      const fresh = await call('builder.status');
-      const nextList = Q.filter((x) => !x.when || x.when(fresh));
-      const at = nextList.findIndex((x) => x.id === q.id);
-      app.go(`#/build/${nextList[Math.min(nextList.length - 1, at + 1)].id}`);
+      app.go(`#/build/${await nextAfter(q.id)}`);
     }),
   });
 
@@ -237,6 +235,13 @@ ${learned.length ? `<section class="card quiet tight"><b>What we’ve learned so
   }
 
   await paint();
+}
+
+// The next question after this one that applies now (answers can add or remove questions).
+async function nextAfter(id) {
+  const fresh = await call('builder.status');
+  const i = Q.findIndex((x) => x.id === id);
+  return (Q.slice(i + 1).find((x) => !x.when || x.when(fresh)) || Q.at(-1)).id;
 }
 
 // ----- "Your setup": every choice from the builder, each one changeable -----
