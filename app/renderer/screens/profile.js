@@ -9,7 +9,7 @@ export async function render(root, [tab = 'setup'], app) {
   const paint = async () => {
     root.innerHTML = `<div class="page">
 <div class="head"><div><h1>Profile</h1><p class="muted">Everything Job Wizard knows about you and your search. Change anything and your matches update.</p></div></div>
-<nav class="row" aria-label="Profile sections">${TABS.map(([k, l]) => `<a class="chip" aria-pressed="${k === tab}" href="#/profile/${k}" style="text-decoration:none">${l}</a>`).join('')}</nav>
+<nav class="tabs" aria-label="Profile sections">${TABS.map(([k, l]) => `<a class="tab ${k === tab ? 'on' : ''}" ${k === tab ? 'aria-current="page"' : ''} href="#/profile/${k}">${l}</a>`).join('')}</nav>
 <div id="tab"></div></div>`;
     const el = root.querySelector('#tab');
     await TAB[tab]?.(el, app, paint);
