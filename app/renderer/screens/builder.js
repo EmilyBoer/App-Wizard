@@ -285,8 +285,10 @@ ${card('rate', 'Jobs you’ve rated', `${learning.summary.yes} yes · ${learning
 // Paste a link or text, or drop a file; shows what's been added for this kind of job.
 function jobAdder(list, kind, max) {
   const full = max && list.length >= max;
-  return `${full ? '' : `<div class="stack-s"><textarea id="jobin" placeholder="Paste a job link, or the job’s text" style="min-height:64px"></textarea>
-<div class="row"><button class="btn secondary" data-act="addjob" data-busy="Reading the job…">Add this job</button><label class="btn">Or choose a file<input type="file" class="sr" id="jobfile" accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg"></label><span class="tiny muted">LinkedIn and Indeed links can’t be read: paste the job’s text instead.</span></div></div>`}
+  return `${full ? '' : `<div class="card tight stack-s">
+<label class="field">Link to the job <span class="tiny muted" style="font-weight:400">From any site: a company page, LinkedIn, Indeed, a job board</span><input type="url" id="joburl" placeholder="https://…"></label>
+<label class="field">Job description <span class="tiny muted" style="font-weight:400">Copy and paste it here. Needed for LinkedIn and Indeed, which don’t let us read the page.</span><textarea id="jobtext" placeholder="Paste the job description" style="min-height:110px"></textarea></label>
+<div class="row"><button class="btn secondary" data-act="addjob" data-busy="Reading the job…">Add this job</button><label class="btn">Or upload a file<input type="file" class="sr" id="jobfile" accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg"></label><span class="tiny muted">A link, the description, or both.</span></div></div>`}
 <div class="list" id="joblist" ${list.length ? '' : 'hidden'}>${list.map((x) => `<div class="item">${tag(kind === 'interviewed' ? 'Got an interview' : kind === 'reach' ? 'Reach' : 'Suits you', kind === 'interviewed' ? 'good' : kind === 'reach' ? 'info' : 'spark')}<div class="grow"><div>${esc(x.title || 'Job')}${x.company ? ` · ${esc(x.company)}` : ''}</div>${x.url ? `<div class="small muted">${esc(x.url.replace(/^https?:\/\//, '').slice(0, 70))}</div>` : ''}</div><button class="btn small" data-act="rmjob" data-id="${x.id}">Remove</button></div>`).join('')}</div>`;
 }
 
@@ -297,7 +299,12 @@ function wireAdder(el, kind, ui) {
     try { await add({ file }); ui.repaint(); } catch (ex) { toast(ex.message, true); }
   });
   on(el, {
-    addjob: (b) => act(b, async () => { const v = el.querySelector('#jobin').value.trim(); if (!v) throw new Error('Paste a job link or its text first.'); await add({ input: v }); ui.repaint(); }),
+    addjob: (b) => act(b, async () => {
+      const url = el.querySelector('#joburl').value.trim(), text = el.querySelector('#jobtext').value.trim();
+      if (!url && !text) throw new Error('Add a link to the job, paste its description, or both.');
+      await add({ url, text });
+      ui.repaint();
+    }),
     rmjob: async (b) => { await call('want.removeExample', { id: b.dataset.id }); ui.repaint(); },
   });
 }

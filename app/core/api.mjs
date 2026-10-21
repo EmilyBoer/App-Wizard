@@ -212,8 +212,20 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
     // ----- what you want -----
     'want.get': () => store().get('want'),
     'want.save': (patch) => store().update('want', (w) => { for (const k of ['titles', 'work', 'places', 'payFloor', 'where', 'level', 'jobType', 'dealBreakers', 'ambiguous', 'keywords', 'suggestedTitles']) if (k in patch) w[k] = patch[k]; }),
-    'want.addExample': async ({ input, kind = 'fit', file }) => {
+    'want.addExample': async ({ input, kind = 'fit', file, url, text }) => {
       if (!['interviewed', 'fit', 'reach'].includes(kind)) kind = 'fit';
+      url = String(url || '').trim(); text = String(text || '').trim();
+      if (url && !/^https?:\/\//.test(url)) url = `https://${url}`;
+      // A link and the pasted description together: keep both, no need to open the page.
+      if (url && text) {
+        const parsed = parseJobUrl(url);
+        if (parsed) store().update('sites', (st) => { if (!st.list.some((x) => x.kind === 'board' && x.source === parsed.source && x.board === parsed.board)) st.list.push({ id: id('site_'), input: url, name: parsed.board, label: parsed.board, kind: 'board', source: parsed.source, board: parsed.board, auto: true, added: now().toISOString() }); });
+        const firstLine = text.split('\n').find((l) => l.trim()) || 'Job';
+        const rec = { id: id('x_'), kind, title: firstLine.slice(0, 100), company: '', text, url };
+        store().update('want', (w) => { w.examples.push(rec); });
+        return rec;
+      }
+      if (!input) input = url || text;
       let ex;
       if (file) {
         const prepared = prepareFile(file);
