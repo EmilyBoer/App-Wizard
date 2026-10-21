@@ -1,10 +1,10 @@
 // Small Claude API client. Uses the Messages API directly (no SDK needed).
 // Every task asks for JSON back and is checked before use.
 
-export class ClaudeError extends Error {}
+export class ClaudeError extends Error { constructor(m) { super(m); this.name = 'ClaudeError'; } }
 
 export function makeClaude({ apiKey, model = 'claude-sonnet-5-5', fastModel = 'claude-haiku-5-5', fetchImpl = fetch } = {}) {
-  async function send({ system, content, fast = false, maxTokens = 4000, temperature = 0.3 }) {
+  async function send({ system, content, fast = false, maxTokens = 4000 }) {
     if (!apiKey) throw new ClaudeError('Add your Claude API key in Profile, Settings first.');
     if (!/^sk-ant-/.test(apiKey.trim())) throw new ClaudeError('That doesn’t look like a Claude API key. Keys start with sk-ant-. Copy it again from console.anthropic.com.');
     let res;
@@ -14,7 +14,6 @@ export function makeClaude({ apiKey, model = 'claude-sonnet-5-5', fastModel = 'c
       body: JSON.stringify({
         model: fast ? fastModel : model,
         max_tokens: maxTokens,
-        temperature,
         system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
         messages: Array.isArray(content) && content[0]?.role ? content : [{ role: 'user', content }],
       }),
