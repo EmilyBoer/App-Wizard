@@ -85,14 +85,14 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
 
     // ----- materials -----
     'materials.list': () => store().get('materials').list.map(({ text, raw, original, ...m }) => ({ ...m, chars: (text || '').length })),
-    'materials.add': async ({ files = [], text, name, defer }) => {
+    'materials.add': async ({ files = [], text, name, defer, kind }) => {
       if (text) files = [...files, { name: name || 'Pasted text.txt', data: Buffer.from(text).toString('base64') }];
       const hasKey = claudeReady();
       const added = [];
       const recs = files.map((f) => {
         const prepared = prepareFile(f);
         const rec = { id: id('m_'), name: f.name, mime: prepared.mime, added: now().toISOString(), kind: 'other', summary: '', text: prepared.text || '', raw: prepared.base64 || null, original: /\.docx$/i.test(f.name) && !prepared.problem ? (Buffer.isBuffer(f.data) ? f.data.toString('base64') : f.data) : null, problem: prepared.problem || null };
-        if (!prepared.problem && (!hasKey || defer)) Object.assign(rec, { waiting: true, kind: /linkedin|profile/i.test(f.name) ? 'linkedin' : 'resume', summary: 'We’ll read this once Claude is connected.' });
+        if (!prepared.problem && (!hasKey || defer)) Object.assign(rec, { waiting: true, kind: kind === 'linkedin' || /linkedin|profile/i.test(f.name) ? 'linkedin' : 'resume', summary: 'We’ll read this once Claude is connected.' });
         return { rec, prepared };
       });
       progress('materials', `Reading ${recs.length} file${recs.length === 1 ? '' : 's'}…`);
@@ -143,6 +143,17 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
     }),
     'profile.settle': ({ conflictId, value }) => store().set('profile', settleConflict(store().get('profile'), conflictId, value)),
     'profile.undersell': ({ itemId, decision, text }) => store().set('profile', decideUnderselling(store().get('profile'), itemId, decision, text)),
+    // A LinkedIn link in any form (a username, linkedin.com/in/…, a full link) becomes https://www.linkedin.com/in/username.
+    'profile.setLinkedIn': ({ value }) => {
+      const v = String(value || '').trim();
+      if (!v) return store().update('profile', (p) => { p.contact = { ...p.contact, linkedin: '' }; });
+      const m = v.match(/linkedin\.com\/(in|pub)\/([^/?#\s]+)/i);
+      const user = m ? m[2] : /^[\w-]{3,100}$/.test(v.replace(/^@/, '')) ? v.replace(/^@/, '') : null;
+      if (!user) throw new UserError('That doesn’t look like a LinkedIn profile link. It looks like linkedin.com/in/your-name.');
+      const url = `https://www.linkedin.com/in/${user}`;
+      store().update('profile', (p) => { p.contact = { ...p.contact, linkedin: url }; });
+      return url;
+    },
     'profile.setContact': (c) => store().update('profile', (p) => { p.contact = { ...p.contact, ...c }; }),
     'profile.setSummary': ({ text }) => store().update('profile', (p) => { p.summary = text; p.summaryApproved = true; }),
     'profile.addRole': (r) => store().update('profile', (p) => { p.roles.unshift({ id: id('r_'), company: r.company, title: r.title, start: r.start, end: r.end || 'present', location: r.location || '', bullets: [], sources: ['you'], manual: true }); }),

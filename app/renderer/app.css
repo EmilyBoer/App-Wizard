@@ -189,7 +189,12 @@ table.t td { padding: 12px 16px; border-top: 1px solid var(--line); vertical-ali
 .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 12px 20px; border-radius: 12px; z-index: 100; font-size: 15px; max-width: 90vw; box-shadow: 0 8px 24px rgba(20,33,61,.2); }
 .toast.err { background: var(--alert); color: #fff; }
 .modal-back { position: fixed; inset: 0; background: rgba(20,33,61,.45); z-index: 80; display: flex; align-items: center; justify-content: center; padding: var(--s4); }
-.modal { background: var(--paper); border-radius: var(--r-lg); padding: var(--s6); width: min(620px, 100%); max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; gap: var(--s4); box-shadow: 0 24px 64px rgba(20,33,61,.25); }
+.modal { position: relative; background: var(--paper); border-radius: var(--r-lg); padding: var(--s6); width: min(620px, 100%); max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; gap: var(--s4); box-shadow: 0 24px 64px rgba(20,33,61,.25); }
+.modal > h2:first-of-type, .modal > .row:first-of-type { padding-right: 40px; }
+.modal-x { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; border-radius: 999px; border: 0; background: transparent; color: var(--ink-muted); font-size: 26px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.modal-x:hover { background: var(--panel-2); color: var(--ink); }
+.modal-x:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.modal-confirm { position: sticky; top: calc(var(--s6) * -1); z-index: 2; }
 .spin { display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 999px; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .working { display: flex; gap: 10px; align-items: center; color: var(--ink-muted); font-size: 15px; }
@@ -263,7 +268,7 @@ details.fold[open] > summary::before { transform: rotate(90deg); }
 .dz-group:not([open]) > summary::after { transform: rotate(-90deg); }
 .dz-body { padding: 0 14px 14px; display: flex; flex-direction: column; gap: 10px; }
 .seg { display: flex; flex-wrap: wrap; gap: 4px; background: var(--panel); border-radius: 10px; padding: 3px; }
-.seg button { flex: 1 1 auto; border: 0; background: transparent; color: var(--ink); padding: 6px 8px; border-radius: 8px; font-size: 13.5px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; justify-content: center; }
+.seg button { flex: 1 1 auto; border: 0; background: transparent; color: var(--ink); padding: 6px 8px; border-radius: 8px; font-size: 14px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; justify-content: center; }
 .seg button[aria-pressed="true"] { background: var(--paper); box-shadow: 0 0 0 1.5px var(--ink); font-weight: 600; }
 .dz-thumbs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .dz-thumb { border: 1px solid var(--line); border-radius: 10px; padding: 6px; background: var(--paper); text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: 2px; color: var(--ink); }

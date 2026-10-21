@@ -212,7 +212,7 @@ ${v.samples.map((s) => `<div class="row">${tag('Added', 'good')}<span class="gro
 <section class="card featured"><h2>Does this sound like you?</h2>
 ${v.sampleLine ? `<p class="muted">A line we wrote from your experience, in your voice.</p><blockquote style="margin:0;padding:16px 20px;border-left:4px solid var(--spark);background:var(--panel);border-radius:8px;font-size:18px;line-height:28px">${esc(v.sampleLine)}</blockquote>
 ${v.sampleRating ? `<div class="note ${v.sampleRating === 'yes' ? 'good' : 'muted'}">${v.sampleRating === 'yes' ? 'Great. We’ll write like this.' : 'Thanks. We’ve noted what to change.'}</div>` : ''}
-<div class="row"><button class="btn primary" data-act="rate" data-r="yes">Sounds like me</button><button class="btn secondary" data-act="close">Close, but…</button><button class="btn" data-act="regen" data-busy="Writing…">Not me, try again</button></div>
+<div class="row"><button class="btn secondary" data-act="rate" data-r="yes">Sounds like me</button><button class="btn" data-act="close">Close, but…</button><button class="btn" data-act="regen" data-busy="Writing…">Not me, try again</button></div>
 <details><summary class="small">What we learned about your voice</summary><ul class="small">${(v.guide || []).map((g) => `<li>${esc(g)}</li>`).join('')}</ul></details>`
     : `<p class="muted">When your samples and dials are set, we’ll write a line for you to check.</p><button class="btn secondary" data-act="regen" data-busy="Writing…" style="align-self:flex-start">Write a sample line</button>`}
 </section>

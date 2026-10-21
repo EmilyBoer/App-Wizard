@@ -13,8 +13,7 @@ const Q = [
   { id: 'resume', ask: 'Let’s start with your resumes. All of them.', help: 'Drop in every resume you have: old ones, different versions, ones made for different jobs. We put them all together to learn your full work history and how you write. Your LinkedIn PDF and reviews help too.',
     body: (st) => `<section class="drop" id="drop">${sparkle(28)}<div style="font-family:var(--display);font-size:22px;font-weight:700">Drop your resumes here</div><div class="muted small">As many as you have. PDF, Word, text or screenshots.</div><label class="btn secondary">Choose files<input type="file" multiple class="sr" id="files" accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg,.webp"></label><div data-progress="materials" class="small muted" aria-live="polite"></div></section>
 ${st.materials.length ? `<div class="list">${st.materials.map((m) => `<div class="item">${m.problem ? tag('Can’t read', 'alert') : tag((KIND[m.kind] || KIND.other)[0], (KIND[m.kind] || KIND.other)[1])}<div class="grow"><div>${esc(m.name)}</div><div class="small muted">${esc(m.problem || m.summary || '')}</div></div><button class="btn small" data-act="rmfile" data-id="${m.id}">Remove</button></div>`).join('')}</div>` : ''}
-${st.materials.length ? `<p class="small"><b>${st.materials.length} file${st.materials.length === 1 ? '' : 's'} added.</b> ${st.materials.length < 3 ? 'Got more? Older or different versions help.' : 'Great, the more the better.'}</p>` : ''}
-<p class="tiny muted">LinkedIn: on your profile, press More, then Save to PDF. We can’t open LinkedIn links ourselves.</p>`,
+${st.materials.length ? `<p class="small"><b>${st.materials.length} file${st.materials.length === 1 ? '' : 's'} added.</b> ${st.materials.length < 3 ? 'Got more? Older or different versions help.' : 'Great, the more the better.'}</p>` : ''}`,
     mount(el, st, ui) {
       dropZone(el.querySelector('#drop'), el.querySelector('#files'), async (files) => {
         el.querySelector('[data-progress]').innerHTML = `<span class="spin"></span> Reading ${files.length} file${files.length > 1 ? 's' : ''}…`;
@@ -24,6 +23,27 @@ ${st.materials.length ? `<p class="small"><b>${st.materials.length} file${st.mat
       on(el, { rmfile: async (b) => { await call('materials.remove', { id: b.dataset.id }); ui.repaint(); } });
     },
     next(el, st) { if (!st.hasResume) { toast('Add at least one resume or your LinkedIn PDF to continue.', true); return false; } call('builder.prepareProfile').catch(() => {}); } },
+
+  { id: 'linkedin', ask: 'Now your LinkedIn.', help: 'Two things, so you only have to visit LinkedIn once: your profile link, which goes on your resumes and applications, and a PDF of your profile, which often has results your resume leaves out.', skip: 'I’m not on LinkedIn',
+    body: (st) => { const li = st.materials.filter((m) => m.kind === 'linkedin'); return `<label class="field">Your LinkedIn profile link<input type="text" id="li" value="${esc(st.profile.contact?.linkedin || '')}" placeholder="linkedin.com/in/your-name" autocomplete="off"></label>
+<div class="card tight stack-s"><b>Save your profile as a PDF</b>
+<ol class="small" style="margin:0;padding-left:20px"><li><a href="https://www.linkedin.com/in/me/" target="_blank" rel="noopener">Open your LinkedIn profile</a> (you may need to sign in).</li><li>Under your name, press <b>Resources</b> (on some screens it’s <b>More</b>).</li><li>Choose <b>Save to PDF</b>. It downloads as Profile.pdf.</li><li>Drop it here.</li></ol>
+<section class="drop" id="lidrop" style="padding:20px"><div class="muted small">Drop Profile.pdf here</div><label class="btn secondary small">Choose file<input type="file" class="sr" id="lifile" accept=".pdf"></label></section>
+${li.length ? `<div class="list">${li.map((m) => `<div class="item">${tag('LinkedIn', 'good')}<div class="grow">${esc(m.name)}</div><button class="btn small" data-act="rmfile" data-id="${m.id}">Remove</button></div>`).join('')}</div>` : ''}</div>`; },
+    mount(el, st, ui) {
+      dropZone(el.querySelector('#lidrop'), el.querySelector('#lifile'), async (files) => {
+        const link = el.querySelector('#li').value.trim();
+        try { if (link) await call('profile.setLinkedIn', { value: link }); await call('materials.add', { files: await readFiles(files), defer: true, kind: 'linkedin' }); toast('LinkedIn added.'); } catch (e) { toast(e.message, true); }
+        ui.repaint();
+      });
+      on(el, { rmfile: async (b) => { await call('materials.remove', { id: b.dataset.id }); ui.repaint(); } });
+    },
+    async next(el, st) {
+      const link = el.querySelector('#li').value.trim();
+      if (!link && !st.materials.some((m) => m.kind === 'linkedin')) { toast('Add your profile link or the PDF, or press “I’m not on LinkedIn”.', true); return false; }
+      if (link) { try { await call('profile.setLinkedIn', { value: link }); } catch (e) { toast(e.message, true); return false; } }
+      call('builder.prepareProfile').catch(() => {});
+    } },
 
   { id: 'keep', ask: 'Keep your resume’s look, or start fresh?', help: 'We can rebuild your current resume’s design, fonts and all, so every resume we tailor for you looks like yours. Or start fresh with one of our designs.',
     body: (st) => `<div class="own-choice">
@@ -80,7 +100,7 @@ ${st.materials.length ? `<p class="small"><b>${st.materials.length} file${st.mat
     } },
 
   { id: 'relocate', ask: 'Would you move for the right job?', help: 'Applications often ask. We’ll answer the same way every time.',
-    body: (st, ui) => `<div class="row">${['No', 'Yes', 'Open to it for the right role'].map((o) => radio('rel', o, o, ui.answers.relocate === o)).join('')}</div><label class="field" id="citiesbox">Which cities or regions?<input type="text" id="cities" value="${esc(ui.answers.relocateCities)}" placeholder="e.g. Seattle, Denver, anywhere on the West Coast"></label>`,
+    body: (st, ui) => `<div class="row">${['No', 'Yes', 'Open to it for the right role'].map((o) => radio('rel', o, o, String(ui.answers.relocate || '').split(':')[0] === o)).join('')}</div><label class="field" id="citiesbox">Which cities or regions?<input type="text" id="cities" value="${esc(ui.answers.relocateCities)}" placeholder="e.g. Seattle, Denver, anywhere on the West Coast"></label>`,
     mount(el) { const box = el.querySelector('#citiesbox'); const sync = () => box.classList.toggle('hidden', !['Yes', 'Open to it for the right role'].includes(el.querySelector('input[name=rel]:checked')?.value)); el.querySelectorAll('input[name=rel]').forEach((r) => (r.onchange = sync)); sync(); },
     async next(el) {
       const v = el.querySelector('input[name=rel]:checked')?.value; if (!v) { toast('Pick one.', true); return false; }
@@ -161,6 +181,16 @@ export async function render(root, params, app) {
     get answers() { return answers; },
     async repaint() { st = await call('builder.status'); answers = await call('builder.answers'); paint(); },
   };
+  let dirty = false;
+  // Leaving a question after typing: offer to save the answer first.
+  const leave = (then) => {
+    const q = list[idx];
+    if (!dirty || !q.next) return then();
+    modal(`<h2>Save your answer first?</h2><p class="muted">You changed this answer but didn’t press Continue.</p><div class="row"><button class="btn primary" data-save>Save and leave</button><button class="btn" data-close data-drop>Leave without saving</button><button class="btn link" data-close>Stay here</button></div>`, { onMount: (m, close) => {
+      m.querySelector('[data-save]').onclick = async () => { const r = await q.next(root.querySelector('#qbody'), st, ui); if (r === false) { close(); return; } dirty = false; close(); then(); };
+      m.querySelector('[data-drop]').addEventListener('click', () => { dirty = false; then(); });
+    } });
+  };
   const go = (i) => app.go(`#/build/${list[Math.min(list.length - 1, Math.max(0, i))].id}${back ? '?back=1' : ''}`);
 
   async function paint() {
@@ -189,6 +219,8 @@ export async function render(root, params, app) {
     if (q.id === 'done') return doneScreen(body, foot);
     body.innerHTML = q.body(st, ui);
     foot.innerHTML = navButtons(q, idx);
+    dirty = false;
+    body.oninput = () => { dirty = true; };
     q.mount?.(body, st, ui);
     body.querySelector('input:not([type=hidden]):not([type=file]), textarea')?.focus();
   }
@@ -198,9 +230,9 @@ export async function render(root, params, app) {
   }
 
   on(root, {
-    prev: () => go(idx - 1),
+    prev: () => leave(() => go(idx - 1)),
     skip: async () => { list[idx].leave?.(); app.go(`#/build/${await nextAfter(list[idx].id)}`); },
-    later: () => { document.body.classList.remove('building'); app.go('#/profile'); },
+    later: () => leave(() => { document.body.classList.remove('building'); app.go('#/profile'); }),
     usetpl: async () => { await call('own.use', { on: false }); await call('own.choose', { keep: false }); toast('Pick a design any time in Profile, Resume design.'); app.go(`#/build/${await nextAfter('design')}`); },
     next: (b) => act(b, async () => {
       const q = list[idx];
@@ -284,7 +316,7 @@ export async function dashboard(root, app, { embedded = false } = {}) {
   const w = st.want, c = st.profile.contact || {};
   const host = (u) => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return ''; } };
   const none = '<span class="muted">Not answered yet</span>';
-  const row = (label, value, href, action = 'Change') => `<div class="choice"><div class="choice-label">${label}</div><div class="choice-value">${value || none}</div>${href ? `<a class="btn small" href="${href}">${action}</a>` : '<span></span>'}</div>`;
+  const row = (label, value, href, action = 'Change') => `<div class="choice"><div class="choice-label">${label}</div><div class="choice-value">${value || none}</div>${href?.startsWith('edit:') ? `<button type="button" class="btn small" data-edit="${href.slice(5)}">${action}</button>` : href ? `<a class="btn small" href="${href}">${action}</a>` : '<span></span>'}</div>`;
   const jobs = (l) => (l.length ? l.map((x) => `<div>${esc(x.title || 'Job')}${x.company ? ` <span class="muted">· ${esc(x.company)}</span>` : ''}</div>`).join('') : '');
   const pills = (l) => `<div class="row">${l.map((t) => `<span class="pill">${esc(t)}</span>`).join('')}</div>`;
   const hosts = Object.entries(st.lookIn || {}).sort((a, b) => b[1] - a[1]);
@@ -294,24 +326,25 @@ export async function dashboard(root, app, { embedded = false } = {}) {
 ${st.done ? '' : '<div class="note att row between"><span>Setup isn’t finished yet.</span><a class="btn primary" href="#/build">Finish setup</a></div>'}
 ${section('About you', [
     `<div class="choice"><div class="choice-label">Contact details</div><div class="choice-value"><div class="contact-grid">${[['name', 'Full name'], ['email', 'Email'], ['phone', 'Phone'], ['location', 'City and state'], ['linkedin', 'LinkedIn'], ['website', 'Portfolio or website']].map(([k, l]) => `<label class="field small">${l}<input type="text" data-contact="${k}" value="${esc(c[k] || '')}" placeholder="${{ linkedin: 'linkedin.com/in/…', website: 'yoursite.com', location: 'e.g. Portland, OR' }[k] || ''}"></label>`).join('')}</div><span class="tiny muted">Saved as you type. These go at the top of every resume and letter.</span></div><span></span></div>`,
+    row('LinkedIn', `${c.linkedin ? esc(c.linkedin.replace(/^https?:\/\/(www\.)?/, '')) : '<span class="muted">No link yet</span>'}<div class="small muted">${st.materials.some((m) => m.kind === 'linkedin') ? 'Profile PDF added' : 'No profile PDF yet'}</div>`, 'edit:linkedin'),
     row('Experience', `${st.profile.roles.length} roles · ${st.profile.skills.length} skills · ${st.profile.years} years${st.profile.checks ? ` · <a href="#/setup/3">${st.profile.checks} things to check</a>` : ''}<div class="small muted">From ${st.materials.length} file${st.materials.length === 1 ? '' : 's'}. <a href="#/documents">Add more in Documents</a></div>`, '#/setup/3', 'Edit'),
     row('Writing style', st.voice.samples.length ? `${st.voice.samples.length} writing sample${st.voice.samples.length === 1 ? '' : 's'}` : 'Learned from your resumes', '#/profile/style', 'Open'),
     row('Resume design', st.keep && st.ownBuilt ? 'Your own design, rebuilt from your resume' : 'Template, fonts and length', '#/profile/design', 'Open'),
   ])}
 ${section('What you’re looking for', [
-    row('Job titles', w.titles.length ? pills(w.titles) : '', '#/build/sweetspot?back=1'),
-    row('Your sweet spot', w.summary ? `<div class="clamp">${esc(w.summary)}</div>` : '', '#/build/sweetspot?back=1'),
-    row('Where you’ve interviewed recently', st.interviewed.length ? st.interviewed.map((x) => `<div>${esc(x.title || 'Job')}${x.company ? ` <span class="muted">· ${esc(x.company)}</span>` : ''}${x.fromJourney ? ' <span class="tiny muted">from Journey</span>' : ''}</div>`).join('') : '', '#/build/interviewed?back=1'),
-    row('Suit you', jobs(st.fit), '#/build/fit?back=1'),
-    row('Your reach', jobs(st.reach), '#/build/reach?back=1'),
-    row('Where', (w.where || []).map(esc).join(' · '), '#/build/where?back=1'),
-    row('Lowest salary', w.payFloor ? `$${Number(w.payFloor).toLocaleString()} a year` : '', '#/build/pay?back=1'),
-    row('Never show me', (w.dealBreakers || []).length ? pills(w.dealBreakers) : '<span class="muted">Nothing</span>', '#/build/never?back=1'),
+    row('Job titles', w.titles.length ? pills(w.titles) : '', 'edit:sweetspot'),
+    row('Your sweet spot', w.summary ? `<div class="clamp">${esc(w.summary)}</div>` : '', 'edit:sweetspot'),
+    row('Where you’ve interviewed recently', st.interviewed.length ? st.interviewed.map((x) => `<div>${esc(x.title || 'Job')}${x.company ? ` <span class="muted">· ${esc(x.company)}</span>` : ''}${x.fromJourney ? ' <span class="tiny muted">from Journey</span>' : ''}</div>`).join('') : '', 'edit:interviewed'),
+    row('Suit you', jobs(st.fit), 'edit:fit'),
+    row('Your reach', jobs(st.reach), 'edit:reach'),
+    row('Where', (w.where || []).map(esc).join(' · '), 'edit:where'),
+    row('Lowest salary', w.payFloor ? `$${Number(w.payFloor).toLocaleString()} a year` : '', 'edit:pay'),
+    row('Never show me', (w.dealBreakers || []).length ? pills(w.dealBreakers) : '<span class="muted">Nothing</span>', 'edit:never'),
   ])}
 ${section('Answers for applications', [
-    row('Salary expectations', esc(answers.salary), '#/build/salary?back=1'),
-    row('Would you move?', esc(answers.relocate), '#/build/relocate?back=1'),
-    row('When you could start', esc(answers.start), '#/build/start?back=1'),
+    row('Salary expectations', esc(answers.salary), 'edit:salary'),
+    row('Would you move?', esc(answers.relocate), 'edit:relocate'),
+    row('When you could start', esc(answers.start), 'edit:start'),
   ])}
 ${section('How Job Wizard works for you', [
     row('Where you look', (hosts.length ? hosts.map(([h, n]) => `${esc(h)} <span class="muted">(${n})</span>`).join(' · ') : '<span class="muted">Learned from the job links you add</span>') + `<div class="small muted">${watched} compan${watched === 1 ? 'y' : 'ies'} checked for new jobs every day</div>`, '#/setup/7'),
@@ -319,7 +352,8 @@ ${section('How Job Wizard works for you', [
     row('Morning batch', `${st.schedule.on ? `Every day at ${st.schedule.hour}:00 AM, your best ${st.schedule.count} match${st.schedule.count === 1 ? '' : 'es'} made ready` : 'Turned off'}`, '#/profile/schedule'),
   ])}
 </div>`;
-  root.querySelectorAll('[data-contact]').forEach((i) => (i.onchange = () => call('profile.setContact', { [i.dataset.contact]: i.value.trim() }).then(() => toast('Saved.'))));
+  root.querySelectorAll('[data-contact]').forEach((i) => (i.onchange = () => (i.dataset.contact === 'linkedin' ? call('profile.setLinkedIn', { value: i.value }) : call('profile.setContact', { [i.dataset.contact]: i.value.trim() })).then(() => toast('Saved.'), (e) => toast(e.message, true))));
+  root.querySelectorAll('[data-edit]').forEach((b) => (b.onclick = () => editAnswer(b.dataset.edit, () => dashboard(root, app, { embedded }))));
   // Jobs added before titles were pulled out: fix them quietly, then redraw.
   if ([...st.interviewed, ...st.fit, ...st.reach].some((x) => !x.company || /^(job description|about the job|overview|job)$/i.test(String(x.title).trim()))) {
     call('want.fillMissing').then((n) => { if (n && root.isConnected) dashboard(root, app, { embedded }); }).catch(() => {});
@@ -352,4 +386,26 @@ function wireAdder(el, kind, ui) {
     }),
     rmjob: async (b) => { await call('want.removeExample', { id: b.dataset.id }); ui.repaint(); },
   });
+}
+
+// ----- Change one answer later, in an overlay (setup itself only runs the first time) -----
+const EDIT_TITLE = { sweetspot: 'Job titles we look for', interviewed: 'Where you’ve interviewed recently', fit: 'Jobs that suit you', reach: 'Your reach', where: 'Where you want to work', pay: 'Lowest salary', never: 'Never show me', salary: 'Salary expectations', relocate: 'Would you move?', start: 'When you could start', linkedin: 'LinkedIn' };
+export async function editAnswer(qid, onSaved) {
+  const q = Q.find((x) => x.id === qid);
+  if (!q) return;
+  let st = await call('builder.status'), answers = await call('builder.answers'), box;
+  const ui = { get answers() { return answers; }, async repaint() { st = await call('builder.status'); answers = await call('builder.answers'); paint(); } };
+  const paint = () => { box.innerHTML = q.body(st, ui); q.mount?.(box, st, ui); };
+  const lists = ['interviewed', 'fit', 'reach'].includes(qid);
+  modal(`<h2>${esc(EDIT_TITLE[qid] || 'Change your answer')}</h2><p class="muted small">${typeof q.help === 'function' ? q.help(st) : q.help}</p><div class="stack edit-body"></div>
+<div class="row"><button class="btn primary" data-save data-busy="Saving…">${lists ? 'Done' : 'Save'}</button>${lists ? '' : '<button class="btn" data-close>Cancel</button>'}</div>`, { wide: lists || qid === 'sweetspot', onMount: (m, close) => {
+    box = m.querySelector('.edit-body');
+    paint();
+    m.querySelector('[data-save]').onclick = (e) => act(e.currentTarget, async () => {
+      const r = q.next ? await q.next(box, st, ui) : undefined;
+      if (r === false) return;
+      q.leave?.();
+      close(); toast('Saved.'); onSaved?.();
+    });
+  } });
 }

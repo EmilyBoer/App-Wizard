@@ -103,3 +103,12 @@ test('Word files: fonts in use, most used first', () => {
   assert.deepEqual(fonts.map((f) => f.family), ['Calibri', 'Garamond']);
   void unzip;
 });
+
+test('LinkedIn link in any form becomes the full profile link', async () => {
+  const { api } = newApi();
+  await api.call('auth.create', { name: 'Jordan Lee', email: 'jl@example.com', password: 'longenough' });
+  for (const v of ['jordanlee', '@jordanlee', 'linkedin.com/in/jordanlee/', 'https://www.linkedin.com/in/jordanlee?trk=x']) assert.equal(await api.call('profile.setLinkedIn', { value: v }), 'https://www.linkedin.com/in/jordanlee');
+  await assert.rejects(api.call('profile.setLinkedIn', { value: 'https://example.com/me' }), /LinkedIn profile link/);
+  await api.call('materials.add', { files: [{ name: 'Profile.pdf', data: b64('%PDF-1.4') }], defer: true, kind: 'linkedin' });
+  assert.equal((await api.call('materials.list'))[0].kind, 'linkedin');
+});

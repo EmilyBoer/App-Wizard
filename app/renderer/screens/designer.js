@@ -129,7 +129,7 @@ ${own ? '' : `<button type="button" class="btn small" data-reset style="align-se
     if (!b) return;
     if ('own' in b.dataset) { await call('own.use', { on: true }); d = await call('design.get'); paintPanel(); paintPreview(); return; }
     if ('keepown' in b.dataset) return keepOwnFlow();
-    if ('compare' in b.dataset) { modal('<div class="row between"><h2>Your original and our rebuild</h2><button class="btn small" data-close>Close</button></div><div id="own-cmp"></div>', { wide: true, onMount: (m) => compareView(m.querySelector('#own-cmp'), { onSettled: () => paintPreview() }) }); return; }
+    if ('compare' in b.dataset) { modal('<h2>Your original and our rebuild</h2><div id="own-cmp"></div>', { wide: true, onMount: (m) => compareView(m.querySelector('#own-cmp'), { onSettled: () => paintPreview() }) }); return; }
     if (b.dataset.preset) { await call('design.applyPreset', { id: b.dataset.preset }); d = await call('design.get'); paintPanel(); paintPreview(); return; }
     if (b.dataset.set) return save({ [b.dataset.set]: JSON.parse(b.dataset.val) });
     if (b.dataset.pair) { const [heading, body] = JSON.parse(b.dataset.pair); return save({ fonts: { heading, body } }); }
@@ -160,7 +160,7 @@ ${own ? '' : `<button type="button" class="btn small" data-reset style="align-se
   });
 
   async function keepOwnFlow() {
-    const m = modal(`<div class="row between"><h2>Keep your own resume’s design</h2><button class="btn small" data-close>Close</button></div><div id="own-flow" class="stack"></div>`, { wide: true });
+    const m = modal(`<h2>Keep your own resume’s design</h2><div id="own-flow" class="stack"></div>`, { wide: true });
     const box = (m?.querySelector ? m : document).querySelector('#own-flow');
     const step1 = async () => {
       const sources = await call('own.sources');

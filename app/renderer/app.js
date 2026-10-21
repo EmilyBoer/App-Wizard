@@ -73,6 +73,8 @@ async function route() {
   if (!screen || name === 'login' || (!done && !['build', 'help', 'setup', 'profile', 'documents', 'claude', 'extension'].includes(name))) {
     return app.go(done ? '#/journey' : '#/build');
   }
+  // Setup only runs the first time. After that, answers are changed in Profile.
+  if (done && name === 'build') return app.go('#/profile');
   document.body.classList.toggle('building', name === 'build');
   // A fresh container per screen, so click handlers from earlier screens never pile up.
   const el = document.createElement('main');

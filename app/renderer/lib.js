@@ -40,16 +40,39 @@ export async function act(btn, fn, { done } = {}) {
 }
 export const quiet = (p) => p.catch(() => {});
 
+/**
+ * An overlay. Always has an X in the corner; Escape and clicking outside close it too.
+ * If something was typed and not saved, it asks before throwing that away.
+ */
 export function modal(html, { onMount, wide } = {}) {
+  const opener = document.activeElement;
   const back = document.createElement('div');
   back.className = 'modal-back';
-  back.innerHTML = `<div class="modal" role="dialog" aria-modal="true" style="${wide ? 'width:min(980px,100%)' : ''}">${html}</div>`;
-  const close = () => back.remove();
-  back.addEventListener('click', (e) => { if (e.target === back || e.target.closest('[data-close]')) close(); });
-  document.addEventListener('keydown', function k(e) { if (e.key === 'Escape') { close(); document.removeEventListener('keydown', k); } });
+  back.innerHTML = `<div class="modal" role="dialog" aria-modal="true" style="${wide ? 'width:min(1080px,100%)' : ''}"><button type="button" class="modal-x" aria-label="Close" title="Close (Esc)">×</button>${html}</div>`;
+  const box = back.querySelector('.modal');
+  let dirty = false;
+  box.addEventListener('input', () => { dirty = true; });
+  const close = () => { back.remove(); document.removeEventListener('keydown', key); if (opener?.isConnected) opener.focus?.(); };
+  const tryClose = () => {
+    if (!dirty) return close();
+    if (box.querySelector('.modal-confirm')) return;
+    const bar = document.createElement('div');
+    bar.className = 'modal-confirm note att row between';
+    bar.innerHTML = '<span>You typed something that isn’t saved. Close anyway?</span><span class="row"><button type="button" class="btn small" data-keep>Keep editing</button><button type="button" class="btn small secondary" data-discard>Close without saving</button></span>';
+    box.prepend(bar);
+    bar.querySelector('[data-keep]').onclick = () => bar.remove();
+    bar.querySelector('[data-discard]').onclick = close;
+    bar.querySelector('[data-keep]').focus();
+  };
+  back.addEventListener('click', (e) => {
+    if (e.target === back || e.target.closest('.modal-x')) return tryClose();
+    if (e.target.closest('[data-close]')) close();
+  });
+  function key(e) { if (e.key === 'Escape') tryClose(); }
+  document.addEventListener('keydown', key);
   document.body.append(back);
-  back.querySelector('input, textarea, select, button')?.focus();
-  onMount?.(back.querySelector('.modal'), close);
+  (box.querySelector('input:not([type=hidden]):not([type=file]), textarea, select') || box.querySelector('.modal-x'))?.focus();
+  onMount?.(box, close);
   return close;
 }
 
