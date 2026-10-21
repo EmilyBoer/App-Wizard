@@ -4,8 +4,8 @@
 import { dateKey } from './profile.mjs';
 import { GOOGLE as GOOGLE_FAMILIES } from './fonts.mjs';
 
-export const FONTS = ['Inter', 'Lato', 'Open Sans', 'Roboto', 'Source Sans 3', 'Work Sans', 'Montserrat', 'Raleway', 'Lora', 'Merriweather', 'EB Garamond', 'Playfair Display'];
-export const SERIF = new Set(['Lora', 'Merriweather', 'EB Garamond', 'Playfair Display']);
+export const FONTS = ['Inter', 'Poppins', 'Lato', 'Open Sans', 'Roboto', 'Source Sans 3', 'Work Sans', 'Montserrat', 'Raleway', 'Lora', 'Source Serif 4', 'Merriweather', 'EB Garamond', 'Playfair Display'];
+export const SERIF = new Set(['Lora', 'Source Serif 4', 'Merriweather', 'EB Garamond', 'Playfair Display']);
 
 // Common Canva fonts and the closest included font.
 export const FONT_MATCH = {
@@ -27,41 +27,51 @@ export function matchFont(name) {
 
 export const MIN = { body: 10, heading: 11, name: 18, marginIn: 0.5, lineHeight: 1.2 };
 // Templates are just good starting combinations of design settings. People can change any setting after.
+// Fonts used here are all free Google Fonts.
 export const PRESETS = {
-  classic: { label: 'Classic', note: 'Serif name, contact spread across the page, fine rules.', layout: 'single', header: 'left', contact: 'spread', icons: false, titles: 'rule', nameSize: 'large', fonts: { heading: 'Lora', body: 'Source Sans 3' }, accent: '#1F2A44', size: 10.5, spacing: 'balanced', margin: 0.7, dates: 'right', bullets: 'dot', skills: 'columns', sidebarTint: 'none' },
-  modern: { label: 'Modern', note: 'A full-height tinted sidebar for contact and skills.', layout: 'sidebar-left', header: 'left', contact: 'spread', icons: true, titles: 'short', nameSize: 'xl', fonts: { heading: 'Montserrat', body: 'Open Sans' }, accent: '#1F4E79', size: 10, spacing: 'balanced', margin: 0.55, dates: 'right', bullets: 'dot', skills: 'list', sidebarTint: 'light' },
-  executive: { label: 'Executive', note: 'Centered, formal and spacious, for senior roles.', layout: 'single', header: 'center', contact: 'spread', icons: false, titles: 'center', nameSize: 'large', nameUpper: true, fonts: { heading: 'Playfair Display', body: 'Source Sans 3' }, accent: '#222222', size: 10.5, spacing: 'balanced', margin: 0.8, dates: 'right', bullets: 'dot', skills: 'columns', sidebarTint: 'none' },
-  minimal: { label: 'Minimal', note: 'Section names in the margin. Calm and airy.', layout: 'single', header: 'left', contact: 'spread', icons: false, titles: 'gutter', nameSize: 'xl', fonts: { heading: 'Work Sans', body: 'Work Sans' }, accent: '#111111', size: 10, spacing: 'roomy', margin: 0.75, dates: 'right', bullets: 'dash', skills: 'inline', sidebarTint: 'none' },
-  compact: { label: 'Compact', note: 'Name and contact side by side. Fits a long history.', layout: 'single', header: 'split', contact: 'spread', icons: true, titles: 'rule', nameSize: 'large', fonts: { heading: 'Roboto', body: 'Roboto' }, accent: '#2B3A55', size: 10, spacing: 'compact', margin: 0.55, dates: 'right', bullets: 'dot', skills: 'inline', sidebarTint: 'none' },
-  bold: { label: 'Bold', note: 'A full-width color band across the top.', layout: 'single', header: 'band', contact: 'spread', icons: true, titles: 'bar', nameSize: 'xl', fonts: { heading: 'Montserrat', body: 'Lato' }, accent: '#0F5257', size: 10, spacing: 'balanced', margin: 0.6, dates: 'right', bullets: 'dot', skills: 'tags', sidebarTint: 'none' },
-  editorial: { label: 'Editorial', note: 'Big serif headings with a writer’s feel.', layout: 'single', header: 'left', contact: 'spread', icons: false, titles: 'plain', nameSize: 'xl', fonts: { heading: 'Playfair Display', body: 'Lato' }, accent: '#7A2E2E', size: 10.5, spacing: 'balanced', margin: 0.75, dates: 'below', bullets: 'dot', skills: 'inline', sidebarTint: 'none' },
-  twotone: { label: 'Two-tone', note: 'A dark full-height sidebar with white text.', layout: 'sidebar-left', header: 'left', contact: 'spread', icons: true, titles: 'caps', nameSize: 'xl', fonts: { heading: 'Raleway', body: 'Lato' }, accent: '#2E4A44', size: 10, spacing: 'balanced', margin: 0.55, dates: 'below', bullets: 'dot', skills: 'list', sidebarTint: 'dark' },
+  classic: { label: 'Classic', note: 'Serif name, a headline in capitals, fine rules.', layout: 'single', header: 'left', headerRule: 'hairline', contact: 'spread', icons: false, headline: true, nameStyle: 'bold', titles: 'rule', nameSize: 'large', fonts: { heading: 'Lora', body: 'Inter' }, accent: '#23395B', size: 10, spacing: 'balanced', margin: 0.6, dates: 'right', bullets: 'dot', skills: 'columns', sidebarTint: 'none', pageTint: 'none' },
+  timeline: { label: 'Timeline', note: 'Dates in their own column. Quick to scan; fits a little less.', layout: 'single', header: 'split', headerRule: 'none', contact: 'spread', icons: true, headline: true, nameStyle: 'bold', titles: 'rule', nameSize: 'large', fonts: { heading: 'Poppins', body: 'Inter' }, accent: '#1F6F6B', size: 10, spacing: 'balanced', margin: 0.6, dates: 'left', bullets: 'dot', skills: 'columns', sidebarTint: 'none', pageTint: 'none' },
+  modern: { label: 'Modern', note: 'A soft sidebar for contact, skills and education.', layout: 'sidebar-left', header: 'left', headerRule: 'none', contact: 'spread', icons: true, headline: true, nameStyle: 'split', titles: 'short', nameSize: 'xl', fonts: { heading: 'Poppins', body: 'Inter' }, accent: '#4A6B5C', size: 10, spacing: 'balanced', margin: 0.6, dates: 'right', bullets: 'dot', skills: 'list', sidebarTint: 'light', pageTint: 'none' },
+  executive: { label: 'Executive', note: 'Centered and formal, for senior roles.', layout: 'single', header: 'center', headerRule: 'none', contact: 'spread', icons: false, headline: true, nameStyle: 'bold', nameUpper: true, titles: 'center', nameSize: 'large', fonts: { heading: 'Lora', body: 'Source Sans 3' }, accent: '#1E1E1E', size: 10, spacing: 'balanced', margin: 0.7, dates: 'right', bullets: 'dot', skills: 'columns', sidebarTint: 'none', pageTint: 'none' },
+  minimal: { label: 'Minimal', note: 'Section names in the margin. Calm and airy.', layout: 'single', header: 'left', headerRule: 'none', contact: 'together', icons: false, headline: true, nameStyle: 'split', titles: 'gutter', nameSize: 'xl', fonts: { heading: 'Inter', body: 'Inter' }, accent: '#111111', size: 10, spacing: 'balanced', margin: 0.65, dates: 'right', bullets: 'dash', skills: 'inline', sidebarTint: 'none', pageTint: 'none' },
+  bold: { label: 'Bold', note: 'A deep color band across the top.', layout: 'single', header: 'band', headerRule: 'none', contact: 'spread', icons: true, headline: true, nameStyle: 'bold', titles: 'tint', nameSize: 'xl', fonts: { heading: 'Poppins', body: 'Inter' }, accent: '#1D3557', size: 10, spacing: 'balanced', margin: 0.55, dates: 'right', bullets: 'dot', skills: 'tags', sidebarTint: 'none', pageTint: 'none' },
+  editorial: { label: 'Editorial', note: 'Warm paper, big serif headings, a writer’s feel.', layout: 'single', header: 'left', headerRule: 'accent', contact: 'together', icons: false, headline: true, nameStyle: 'bold', titles: 'plain', nameSize: 'xl', fonts: { heading: 'Lora', body: 'Source Sans 3' }, accent: '#9C4A2F', size: 10, spacing: 'balanced', margin: 0.65, dates: 'below', bullets: 'dot', skills: 'inline', sidebarTint: 'none', pageTint: 'warm' },
+  twotone: { label: 'Two-tone', note: 'A dark sidebar with white text.', layout: 'sidebar-left', header: 'left', headerRule: 'none', contact: 'spread', icons: true, headline: true, nameStyle: 'split', titles: 'caps', nameSize: 'xl', fonts: { heading: 'Poppins', body: 'Inter' }, accent: '#24413B', size: 10, spacing: 'balanced', margin: 0.6, dates: 'below', bullets: 'dot', skills: 'list', sidebarTint: 'dark', pageTint: 'none' },
 };
+const RENAMED = { compact: 'timeline' };
 /** Every design setting a person can change (a template sets all of them). */
-export const DESIGN_KEYS = ['layout', 'header', 'contact', 'icons', 'titles', 'size', 'spacing', 'margin', 'dates', 'bullets', 'skills', 'sidebarTint', 'accent', 'order', 'hidden', 'sidebar', 'nameSize', 'nameUpper', 'fill'];
+export const DESIGN_KEYS = ['layout', 'header', 'headerRule', 'contact', 'icons', 'headline', 'nameStyle', 'titles', 'size', 'spacing', 'margin', 'dates', 'bullets', 'skills', 'sidebarTint', 'pageTint', 'accent', 'order', 'hidden', 'sidebar', 'nameSize', 'nameUpper', 'fill'];
 export const TEMPLATES = Object.fromEntries(Object.entries(PRESETS).map(([k, v]) => [k, { label: v.label, note: v.note, columns: v.layout === 'single' ? 1 : 2 }]));
 export const SECTIONS = { summary: 'Summary', experience: 'Experience', skills: 'Skills', education: 'Education', certifications: 'Certifications' };
-export const ACCENTS = ['#1F2A44', '#222222', '#1F4E79', '#0F5257', '#2E4A44', '#7A2E2E', '#5B3A8C', '#B5452A'];
+export const ACCENTS = ['#23395B', '#1E1E1E', '#1D3557', '#1F6F6B', '#4A6B5C', '#24413B', '#9C4A2F', '#6B4E8C'];
 // Space between sections, jobs and bullets (points), the gap under a section title, and line height.
-const SPACING = { compact: { sec: 10, role: 7, li: 1, h: 4, lh: 1.3 }, balanced: { sec: 16, role: 11, li: 2.2, h: 6, lh: 1.38 }, roomy: { sec: 20, role: 14, li: 3.2, h: 8, lh: 1.45 } };
-const NAME_SIZE = { standard: 2.4, large: 3.0, xl: 3.6 };
+const SPACING = { compact: { sec: 10, role: 7, li: 1, h: 4, lh: 1.28 }, balanced: { sec: 14, role: 9, li: 1.5, h: 6, lh: 1.3 }, roomy: { sec: 18, role: 12, li: 2.6, h: 8, lh: 1.42 } };
+const NAME_SIZE = { standard: 2.6, large: 3.2, xl: 3.8 };
+const PAPER = { none: '#FFFFFF', warm: '#FBF7F1', cool: '#F5F8FB' };
 
 /** Fill in every design setting: the template's choices first, then what the person changed. */
 export function normalizeDesign(d = {}) {
-  const preset = PRESETS[d.template] || PRESETS.classic;
-  const out = { ...preset, ...Object.fromEntries(Object.entries(d).filter(([, v]) => v !== undefined && v !== null)) };
+  const template = RENAMED[d.template] || d.template;
+  const preset = PRESETS[template] || PRESETS.classic;
+  const out = { ...preset, ...Object.fromEntries(Object.entries(d).filter(([, v]) => v !== undefined && v !== null)), template: PRESETS[template] ? template : 'classic' };
   out.fonts = { ...preset.fonts, ...(d.fonts || {}) };
   out.order = (d.order && d.order.length ? d.order : ['summary', 'experience', 'skills', 'education', 'certifications']).filter((k) => SECTIONS[k]);
   for (const k of Object.keys(SECTIONS)) if (!out.order.includes(k)) out.order.push(k);
   out.hidden = d.hidden || [];
   out.sidebar = d.sidebar || ['skills', 'education', 'certifications'];
-  out.size = Math.max(MIN.body, Number(out.size) || 10.5);
+  out.size = Math.max(MIN.body, Number(out.size) || 10);
   out.nameSize = NAME_SIZE[out.nameSize] ? out.nameSize : 'large';
   out.margin = Math.max(MIN.marginIn, Number(out.margin) || 0.6);
-  out.accent = /^#[0-9a-f]{6}$/i.test(out.accent) ? out.accent : '#1F2A44';
+  out.accent = /^#[0-9a-f]{6}$/i.test(out.accent) ? out.accent : '#23395B';
   out.sidebarTint = out.sidebarTint === true ? 'light' : out.sidebarTint === false ? 'none' : ['none', 'light', 'dark'].includes(out.sidebarTint) ? out.sidebarTint : 'none';
+  out.pageTint = PAPER[out.pageTint] ? out.pageTint : 'none';
   out.contact = out.contact === 'together' ? 'together' : 'spread';
+  out.headerRule = ['none', 'hairline', 'accent'].includes(out.headerRule) ? out.headerRule : 'none';
+  out.nameStyle = ['bold', 'light', 'split'].includes(out.nameStyle) ? out.nameStyle : 'bold';
+  if (out.header === 'split' && out.layout === 'single' && false) out.header = 'split';
+  if (out.dates === 'left' && out.titles === 'gutter') out.dates = 'right';
   out.icons = Boolean(out.icons);
+  out.headline = out.headline !== false;
   out.fill = out.fill !== false;
   return out;
 }
@@ -96,6 +106,13 @@ export function fontFaces(families, customFonts = [], fontBase, extraGoogle = []
   return { link, css };
 }
 
+/** Mix a color toward white (or another color): amount 0 = the color, 1 = the other. Solid, so it prints evenly. */
+function mix(hex, amount, toward = '#ffffff') {
+  const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const [a, b] = [p(hex), p(toward)];
+  return '#' + a.map((v, i) => Math.round(v + (b[i] - v) * amount).toString(16).padStart(2, '0')).join('');
+}
+
 // Small line icons for contact details. Drawn, not text, so hiring systems skip them.
 const ICON = {
   location: '<path d="M8 14.5s4.8-4.4 4.8-8A4.8 4.8 0 0 0 3.2 6.5c0 3.6 4.8 8 4.8 8z"/><circle cx="8" cy="6.4" r="1.7"/>',
@@ -105,44 +122,60 @@ const ICON = {
   website: '<circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c2.2 2.3 2.2 9.7 0 12M8 2c-2.2 2.3-2.2 9.7 0 12"/>',
 };
 const icon = (k) => `<svg class="ico" viewBox="0 0 16 16" aria-hidden="true">${ICON[k]}</svg>`;
-const contactItems = (c) => [['location', c.location], ['phone', c.phone], ['email', c.email], ['linkedin', c.linkedin?.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')], ['website', c.website?.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')]].filter(([, v]) => v);
+const clean = (u) => String(u || '').replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
+const contactItems = (c) => [['location', c.location], ['phone', c.phone], ['email', c.email], ['linkedin', clean(c.linkedin)], ['website', clean(c.website)]].filter(([, v]) => v);
 function contactHtml(c, d, cls) {
-  return `<div class="contact ${cls}">${contactItems(c).map(([k, v]) => `<span class="ci">${d.icons ? icon(k) : ''}<span>${esc(v)}</span></span>`).join(cls === 'c-together' ? '<span class="sepx"> · </span>' : ' ')}</div>`;
+  return `<div class="contact ${cls}">${contactItems(c).map(([k, v]) => `<span class="ci">${d.icons ? icon(k) : ''}<span>${esc(v)}</span></span>`).join(' ')}</div>`;
+}
+/** Headline under the name: what they set, else their most recent job title (always true to their history). */
+function headlineOf(resume) {
+  const c = resume.contact || {};
+  if (resume.headline != null && resume.headline !== '') return resume.headline;
+  if ('headline' in c) return c.headline || '';
+  return resume.roles?.[0]?.title || '';
+}
+function nameHtml(name, d) {
+  const parts = String(name || '').trim().split(/\s+/);
+  if (d.nameStyle === 'split' && parts.length > 1) return `<span class="n-light">${esc(parts.slice(0, -1).join(' '))}</span> <span class="n-bold">${esc(parts.at(-1))}</span>`;
+  return esc(name);
 }
 
 /** Name and contact at the top, for one-column layouts and letters. */
 function headerHtml(c, d, resume = {}) {
-  const head = d.header === 'split' || d.header === 'band' || d.header === 'center' ? d.header : 'left';
-  const name = `<div class="hd-name"><h1>${esc(c.name)}</h1>${resume.headline ? `<div class="headline">${esc(resume.headline)}</div>` : ''}</div>`;
+  const head = ['split', 'band', 'center'].includes(d.header) ? d.header : 'left';
+  const hl = d.headline ? headlineOf({ ...resume, contact: c }) : '';
+  const name = `<div class="hd-name"><h1>${nameHtml(c.name, d)}</h1>${hl ? `<div class="headline">${esc(hl)}</div>` : ''}</div>`;
   if (head === 'split') return `<header class="hd h-split">${name}${contactHtml(c, d, 'c-stack')}</header>`;
-  // Five items with icons don't fit on one line: an even 3-column grid instead of a ragged wrap.
-  const spread = d.icons && contactItems(c).length >= 5 ? 'c-grid' : 'c-spread';
-  return `<header class="hd h-${head}">${name}${contactHtml(c, d, d.contact === 'together' ? 'c-together' : spread)}</header>`;
+  const spread = d.contact === 'together' ? 'c-together' : d.icons && contactItems(c).length >= 5 ? 'c-grid' : 'c-spread';
+  return `<header class="hd h-${head} rule-${d.headerRule}">${name}${contactHtml(c, d, spread)}</header>`;
 }
 
 function headerCss(d, f, nameSize, m) {
   const a = d.accent;
+  const nameWeight = d.nameStyle === 'light' ? 300 : d.nameUpper ? 600 : 700;
   return `.hd{margin-bottom:calc(var(--k) * ${d.spacing === 'compact' ? 10 : 16}pt)}
-h1{font-family:${f.head};font-size:${nameSize}pt;margin:0;color:${d.header === 'band' ? '#fff' : 'var(--name)'};letter-spacing:${d.nameUpper ? '.1em' : nameSize >= 30 ? '-.025em' : '-.015em'};line-height:1;font-weight:${d.nameUpper ? 600 : 700};${d.nameUpper ? 'text-transform:uppercase;' : ''}}
-.headline{font-size:${d.size + 1.5}pt;color:var(--ink2);margin-top:5pt;letter-spacing:.01em}
-.hd-name{margin-bottom:${Math.round(nameSize * 0.32)}pt}
+h1{font-family:${f.head};font-size:${nameSize}pt;margin:0;color:var(--name);letter-spacing:${d.nameUpper ? '.14em' : nameSize >= 34 ? '-.03em' : '-.02em'};line-height:1.02;font-weight:${nameWeight};${d.nameUpper ? 'text-transform:uppercase;' : ''}}
+.n-light{font-weight:300}.n-bold{font-weight:700}
+.headline{font-family:${f.body};font-size:${d.size}pt;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--acc-text);margin-top:${Math.round(nameSize * 0.24)}pt}
+.hd-name{margin-bottom:${Math.round(nameSize * 0.34)}pt}
 .contact{font-size:${MIN.body}pt;color:var(--ink2);line-height:1.4}
 .ci{white-space:nowrap;display:inline-flex;align-items:center}
-.ico{width:.85em;height:.85em;margin-right:3.5pt;flex:none;fill:none;stroke:var(--icon);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+.ico{width:.9em;height:.9em;margin-right:4pt;flex:none;fill:none;stroke:var(--icon);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 .c-spread{display:flex;justify-content:space-between;flex-wrap:wrap;gap:3pt 10pt}
-.c-grid{display:grid;grid-template-columns:repeat(3,auto);justify-content:space-between;gap:4pt 14pt}
+.c-grid{display:grid;grid-template-columns:repeat(3,auto);justify-content:space-between;gap:5pt 14pt}
 .c-together{display:flex;flex-wrap:wrap;align-items:center;row-gap:3pt}
-.sepx{color:var(--muted);margin:0 6pt}
-.c-stack{display:flex;flex-direction:column;gap:3.5pt}
+.c-together .ci + .ci::before{content:"";display:inline-block;width:.75pt;height:.95em;background:var(--rule-strong);margin:0 9pt}
+.c-stack{display:flex;flex-direction:column;gap:4pt}
+.rule-hairline .contact{border-top:.75pt solid var(--rule);padding-top:8pt}
+.rule-accent .hd-name::after{content:"";display:block;width:34pt;height:3pt;background:${a};margin-top:${Math.round(nameSize * 0.36)}pt}
 .h-center{text-align:center}
-.h-center .c-grid{justify-content:space-between}
-.h-center .contact{border-top:.75pt solid var(--rule);border-bottom:.75pt solid var(--rule);padding:5pt 2pt;justify-content:${d.contact === 'together' ? 'center' : 'space-between'}}
-.h-split{display:flex;justify-content:space-between;align-items:flex-end;gap:20pt;border-bottom:1.25pt solid ${a};padding-bottom:9pt}
+.h-center .contact{border-top:.75pt solid var(--rule);border-bottom:.75pt solid var(--rule);padding:6pt 2pt}
+.h-center .c-together{justify-content:center}
+.h-split{display:flex;justify-content:space-between;align-items:flex-end;gap:24pt;border-bottom:.75pt solid var(--rule);padding-bottom:12pt}
 .h-split .hd-name{margin:0}
 .h-split .c-stack{align-items:flex-end;text-align:right}
-.h-split .ci{flex-direction:row-reverse}.h-split .ico{margin:0 0 0 4.5pt}
-.h-band{background:${a};margin:-${m}in -${m}in calc(var(--k) * 18pt);padding:${Math.max(0.45, m * 0.85)}in ${m}in ${Math.max(0.3, m * 0.55)}in;--ink2:rgba(255,255,255,.92);--icon:rgba(255,255,255,.85);--muted:rgba(255,255,255,.6)}
-.h-band .headline{color:rgba(255,255,255,.85)}`;
+.h-split .ci{flex-direction:row-reverse}.h-split .ico{margin:0 0 0 5pt}
+.h-band{background:${a};margin:-${m}in -${m}in calc(var(--k) * 18pt);padding:${Math.max(0.45, m * 0.8)}in ${m}in ${Math.max(0.3, m * 0.5)}in;--name:#fff;--ink2:rgba(255,255,255,.9);--icon:${mix(a, 0.55)};--acc-text:${mix(a, 0.62)};--rule:rgba(255,255,255,.25);--rule-strong:rgba(255,255,255,.4)}`;
 }
 
 /** Resume HTML from the design settings. Reading order in the HTML = reading order for hiring systems. */
@@ -155,19 +188,28 @@ export function resumeHtml(resume, design, { fontBase } = {}) {
   const fb = (x) => (SERIF.has(x) ? 'Georgia, serif' : 'Arial, Helvetica, sans-serif');
   const f = { head: `"${head}",${fb(head)}`, body: `"${body}",${fb(body)}` };
   const sp = SPACING[d.spacing] || SPACING.balanced;
-  const a = d.accent, m = d.margin;
-  const nameSize = Math.max(MIN.name, Math.round(d.size * (NAME_SIZE[d.nameSize] || NAME_SIZE.large)));
-  const hs = Math.max(MIN.heading, d.size + 0.5);
+  const a = d.accent, m = d.margin, s = d.size;
+  const nameSize = Math.max(MIN.name, Math.round(s * (NAME_SIZE[d.nameSize] || NAME_SIZE.large)));
+  const hs = Math.max(MIN.heading, s + 1);
   const c = resume.contact || {};
   const sidebarOn = d.layout !== 'single';
   const titles = d.titles === 'gutter' && sidebarOn ? 'caps' : d.titles;
+  const timeline = d.dates === 'left' && !sidebarOn;
+  const dates = d.dates === 'left' && sidebarOn ? 'right' : d.dates;
   const inSide = (k) => sidebarOn && d.sidebar.includes(k);
+  const paper = PAPER[d.pageTint];
+  const dark = (x) => { const [r, g, b] = [1, 3, 5].map((i) => parseInt(x.slice(i, i + 2), 16)); return r * 0.3 + g * 0.59 + b * 0.11 < 70; };
+  // The accent as text: very dark accents read as ink; colorful ones keep their color.
+  const accText = a;
   const when = (r) => `${esc(fmtDate(r.start))}${r.end ? ` – ${esc(fmtDate(r.end))}` : ''}`;
-  const roles = (resume.roles || []).map((r) => `
-<div class="role">${d.dates === 'below'
-    ? `<div class="rt">${esc(r.title)}</div><div class="rc"><span class="co">${esc(r.company)}</span>${r.location ? `<span class="sepx"> · </span><span class="rl">${esc(r.location)}</span>` : ''}</div><div class="rd rd-below">${when(r)}</div>`
-    : `<div class="rh"><span class="rt">${esc(r.title)}</span><span class="rd">${when(r)}</span></div><div class="rc"><span class="co">${esc(r.company)}</span>${r.location ? `<span class="sepx"> · </span><span class="rl">${esc(r.location)}</span>` : ''}</div>`}
-<ul>${(r.bullets || []).map((b) => `<li>${esc(b.text)}</li>`).join('')}</ul></div>`).join('');
+  const whenStack = (r) => `<span>${esc(fmtDate(r.start))}${r.end ? ' –' : ''}</span>${r.end ? `<span>${esc(fmtDate(r.end))}</span>` : ''}`;
+  const coLine = (r) => `<div class="rc"><span class="co">${esc(r.company)}</span>${r.location ? `<span class="sepx"> · </span><span class="rl">${esc(r.location)}</span>` : ''}</div>`;
+  const bullets = (r) => `<ul>${(r.bullets || []).map((b) => `<li>${esc(b.text)}</li>`).join('')}</ul>`;
+  const roles = (resume.roles || []).map((r) => {
+    if (timeline) return `<div class="role tl"><div class="tl-when">${whenStack(r)}</div><div class="tl-body"><div class="rt">${esc(r.title)}</div>${coLine(r)}${bullets(r)}</div></div>`;
+    if (dates === 'below') return `<div class="role"><div class="rt">${esc(r.title)}</div>${coLine(r)}<div class="rd rd-below">${when(r)}</div>${bullets(r)}</div>`;
+    return `<div class="role"><div class="rh"><span class="rt">${esc(r.title)}</span><span class="rd">${when(r)}</span></div>${coLine(r)}${bullets(r)}</div>`;
+  }).join('');
   const skillList = resume.skills || [];
   const skills = (side) => {
     if (!skillList.length) return '';
@@ -177,101 +219,116 @@ export function resumeHtml(resume, design, { fontBase } = {}) {
     if (style === 'columns') return `<ul class="sk-cols">${skillList.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
     return `<p class="skills">${skillList.map((x) => `<span class="sk">${esc(x)}</span>`).join(' ')}</p>`;
   };
-  const edu = (side) => (resume.education || []).map((e) => {
-    const deg = `${esc(e.degree)}${e.field ? `, ${esc(e.field)}` : ''}`;
-    return side ? `<div class="ed"><div class="rt">${deg}</div><div class="rc">${esc(e.school)}</div>${e.year ? `<div class="rd">${esc(e.year)}</div>` : ''}</div>`
-      : `<div class="ed"><div class="rh"><span class="rt">${deg}</span>${e.year ? `<span class="rd">${esc(e.year)}</span>` : ''}</div><div class="rc">${esc(e.school)}</div></div>`;
-  }).join('');
-  const certs = (side) => (resume.certifications || []).map((x) => (side ? `<div class="ed"><div class="ct">${esc(x.name)}</div>${x.year ? `<div class="rd">${esc(x.year)}</div>` : ''}</div>`
-    : `<div class="ed"><div class="rh"><span class="ct">${esc(x.name)}</span>${x.year ? `<span class="rd">${esc(x.year)}</span>` : ''}</div></div>`)).join('');
-  const block = (k, side) => ({ summary: resume.summary ? `<p class="summary">${esc(resume.summary)}</p>` : '', experience: roles, skills: skills(side), education: edu(side), certifications: certs(side) })[k];
+  const yearRow = (main, sub, year, side) => {
+    if (side) return `<div class="ed"><div class="et">${main}</div>${sub ? `<div class="es">${sub}</div>` : ''}${year ? `<div class="rd">${esc(year)}</div>` : ''}</div>`;
+    if (timeline) return `<div class="ed tl"><div class="tl-when">${year ? `<span>${esc(year)}</span>` : ''}</div><div class="tl-body"><div class="et">${main}</div>${sub ? `<div class="es">${sub}</div>` : ''}</div></div>`;
+    return `<div class="ed"><div class="rh"><span class="et">${main}</span>${year ? `<span class="rd">${esc(year)}</span>` : ''}</div>${sub ? `<div class="es">${sub}</div>` : ''}</div>`;
+  };
+  const edu = (side) => (resume.education || []).map((e) => yearRow(`${esc(e.degree)}${e.field ? `, ${esc(e.field)}` : ''}`, esc(e.school), e.year, side)).join('');
+  const certs = (side) => (resume.certifications || []).map((x) => yearRow(esc(x.name), '', x.year, side)).join('');
+  const summary = resume.summary ? (timeline ? `<div class="tl"><div class="tl-when"></div><p class="summary tl-body">${esc(resume.summary)}</p></div>` : `<p class="summary">${esc(resume.summary)}</p>`) : '';
+  const skillsBlock = (side) => { const b = skills(side); return b && timeline && !side ? `<div class="tl"><div class="tl-when"></div><div class="tl-body">${b}</div></div>` : b; };
+  const block = (k, side) => ({ summary, experience: roles, skills: skillsBlock(side), education: edu(side), certifications: certs(side) })[k];
   const sec = (k, side) => { const b = block(k, side); return b && !d.hidden.includes(k) ? `<section class="sec sec-${k}"><h2><span>${SECTIONS[k]}</span></h2><div class="sec-body">${b}</div></section>` : ''; };
   const mainHtml = d.order.filter((k) => !inSide(k)).map((k) => sec(k, false)).join('');
   const sideHtml = d.order.filter(inSide).map((k) => sec(k, true)).join('');
 
+  const caps = (size, track) => `text-transform:uppercase;letter-spacing:${track}em;font-size:${size}pt;font-weight:700`;
   const titleCss = {
-    rule: `text-transform:uppercase;letter-spacing:.13em;font-size:${hs - 0.5}pt;color:var(--acc);border-bottom:.75pt solid var(--rule);padding-bottom:3.5pt`,
-    caps: `text-transform:uppercase;letter-spacing:.16em;font-size:${hs - 1}pt;color:var(--acc)`,
-    short: `text-transform:uppercase;letter-spacing:.15em;font-size:${hs - 1}pt;color:var(--acc)`,
-    bar: `color:var(--acc);border-left:3pt solid var(--acc);padding-left:7pt;text-transform:uppercase;letter-spacing:.1em;font-size:${hs - 0.5}pt;line-height:1.15`,
-    plain: `color:var(--acc);font-size:${hs + 3.5}pt;font-weight:700;letter-spacing:-.01em;line-height:1.15`,
-    center: `text-transform:uppercase;letter-spacing:.2em;font-size:${hs - 1}pt;color:var(--acc);display:flex;align-items:center;gap:12pt`,
-    gutter: `text-transform:uppercase;letter-spacing:.14em;font-size:${hs - 1.5}pt;color:var(--acc);margin:0 !important;padding-top:1.5pt;line-height:1.3`,
+    rule: `${caps(Math.max(MIN.body, hs - 1), 0.16)};color:var(--acc-text);border-bottom:.75pt solid var(--rule);padding-bottom:5pt`,
+    caps: `${caps(Math.max(MIN.body, hs - 1), 0.18)};color:var(--acc-text)`,
+    short: `${caps(Math.max(MIN.body, hs - 1), 0.18)};color:var(--acc-text)`,
+    bar: `${caps(Math.max(MIN.body, hs - 1), 0.14)};color:var(--acc-text);border-left:3pt solid ${a};padding-left:8pt;line-height:1.1`,
+    tint: `${caps(Math.max(MIN.body, hs - 1), 0.16)};color:${dark(a) ? a : mix(a, 0.2, '#000000')};background:${mix(a, 0.9)};padding:4pt 8pt;border-radius:2pt`,
+    plain: `color:var(--acc-text);font-size:${hs + 4}pt;font-weight:600;letter-spacing:-.01em;line-height:1.15`,
+    center: `${caps(Math.max(MIN.body, hs - 1), 0.24)};color:var(--acc-text);display:flex;align-items:center;gap:12pt`,
+    gutter: `${caps(Math.max(MIN.body, hs - 1), 0.07)};color:var(--acc-text);margin:0 !important;padding-top:2pt;line-height:1.3`,
   }[titles] || '';
   const extraTitle = titles === 'center' ? 'h2::before,h2::after{content:"";flex:1;border-top:.75pt solid var(--rule)}'
-    : titles === 'short' ? 'h2::after{content:"";display:block;width:20pt;height:2pt;background:var(--acc);margin-top:5pt}'
-      : titles === 'gutter' ? '.single .sec{display:grid;grid-template-columns:1.3in 1fr;column-gap:16pt}' : '';
-  const bulletCss = d.bullets === 'dash' ? 'ul.b,.role ul{list-style:none;padding-left:12pt}.role li{position:relative}.role li::before{content:"–";position:absolute;left:-11pt;color:var(--acc)}'
+    : titles === 'short' ? `h2::after{content:"";display:block;width:22pt;height:2pt;background:${a};margin-top:6pt}.side.dark h2::after{background:rgba(255,255,255,.7)}`
+      : titles === 'gutter' ? '.single .sec{display:grid;grid-template-columns:1.32in 1fr;column-gap:14pt}' : '';
+  const bulletCss = d.bullets === 'dash' ? '.role ul{list-style:none;padding-left:13pt}.role li{position:relative}.role li::before{content:"–";position:absolute;left:-12pt;color:var(--muted)}'
     : d.bullets === 'none' ? '.role ul{list-style:none;padding-left:0}'
-      : '.role ul{list-style:none;padding-left:11pt}.role li{position:relative}.role li::before{content:"";position:absolute;left:-9.5pt;top:.62em;width:3.2pt;height:3.2pt;border-radius:50%;background:var(--acc)}';
+      : `.role ul{list-style:none;padding-left:12pt}.role li{position:relative}.role li::before{content:"";position:absolute;left:-10.5pt;top:calc(${sp.lh / 2}em - 1.8pt);width:3.6pt;height:3.6pt;border-radius:50%;background:${a}}`;
 
-  // Columns (inches) for sidebar layouts: the tint runs edge to edge, full height, on every page.
-  const cw = page.wIn - 2 * m, gap = 0.42, sideW = +(cw * 0.31).toFixed(2);
+  // Sidebar layouts: the color runs edge to edge, full height, on every page.
+  const cw = page.wIn - 2 * m, gap = 0.45, sideW = +(cw * 0.32).toFixed(2);
   const stripW = (m + sideW + gap / 2).toFixed(3);
   const tint = d.sidebarTint;
-  const strip = sidebarOn && tint !== 'none' ? `<div class="strip" style="${d.layout === 'sidebar-left' ? 'left' : 'right'}:0;width:${stripW}in;background:${tint === 'dark' ? a : `${a}12`}"></div>` : '';
-  const sideNamecard = `<header class="hd-main"><h1>${esc(c.name)}</h1>${resume.headline ? `<div class="headline">${esc(resume.headline)}</div>` : ''}</header>`;
+  const sideBg = tint === 'dark' ? a : mix(a, 0.83, paper);
+  const strip = sidebarOn && tint !== 'none' ? `<div class="strip" style="${d.layout === 'sidebar-left' ? 'left' : 'right'}:0;width:${stripW}in;background:${sideBg}"></div>` : '';
+  const hl = d.headline ? headlineOf(resume) : '';
+  const sideNamecard = `<header class="hd-main"><h1>${nameHtml(c.name, d)}</h1>${hl ? `<div class="headline">${esc(hl)}</div>` : ''}</header>`;
   const contactSec = `<section class="sec sec-contact"><h2><span>Contact</span></h2><div class="sec-body">${contactHtml(c, d, 'c-stack')}</div></section>`;
   const layout = sidebarOn
     ? `<div class="cols ${d.layout}">${sideNamecard}<aside class="side ${tint === 'dark' ? 'dark' : ''}">${contactSec}${sideHtml}</aside><div class="main">${mainHtml}</div></div>`
     : `${headerHtml(c, d, resume)}<div class="single">${mainHtml}</div>`;
   const pagePx = Math.round(page.hIn * 96);
+  const rule = d.pageTint === 'warm' ? '#E3DACB' : '#DCDFE6';
 
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${esc(c.name)} Resume</title>${link}<style>
 ${css}
 @page{size:${page.w} ${page.h};margin:0}
 *{box-sizing:border-box}
-html{background:#fff}
-body{margin:0;--k:1;--acc:${a};--name:${titles === 'plain' || d.header === 'band' ? a : d.accent === '#111111' || d.accent === '#222222' ? '#111' : a};--ink:#1c2130;--ink2:#454c5c;--muted:#7a8091;--rule:#d3d7df;--icon:${a};font-family:${f.body};font-size:${d.size}pt;line-height:${sp.lh};color:var(--ink);-webkit-print-color-adjust:exact;print-color-adjust:exact;font-kerning:normal;text-rendering:optimizeLegibility;font-variant-numeric:lining-nums;-webkit-font-smoothing:antialiased}
+html{background:${paper}}
+body{margin:0;--k:1;--acc:${a};--acc-text:${accText};--name:${a};--ink:#1C2130;--ink2:#4A5163;--muted:#7D8396;--rule:${rule};--rule-strong:#B9BECB;--icon:${a};font-family:${f.body};font-size:${s}pt;line-height:${sp.lh};color:var(--ink);-webkit-print-color-adjust:exact;print-color-adjust:exact;font-kerning:normal;font-feature-settings:"kern","liga","calt";text-rendering:optimizeLegibility;font-variant-numeric:lining-nums;-webkit-font-smoothing:antialiased}
 .page{position:relative;z-index:1;width:${page.w};padding:${m}in;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 .strip{position:fixed;top:0;bottom:0;z-index:0}
 ${headerCss(d, f, nameSize, m)}
-h2{font-family:${f.head};font-size:${hs}pt;margin:0 0 calc(var(--k) * ${sp.h}pt);font-weight:700;break-after:avoid;line-height:1.2;${titleCss}}
+h2{font-family:${f.head};margin:0 0 calc(var(--k) * ${sp.h}pt);break-after:avoid;line-height:1.2;${titleCss}}
 ${extraTitle}
 .sec + .sec{margin-top:calc(var(--k) * ${sp.sec}pt)}
-.summary{color:var(--ink2)${titles === 'plain' ? ';font-size:' + (d.size + 0.5) + 'pt' : ''}}
+.summary{color:var(--ink2)}
 .role{break-inside:avoid-page}
 .role + .role{margin-top:calc(var(--k) * ${sp.role}pt)}
 .rh{display:flex;justify-content:space-between;gap:12pt;align-items:baseline}
-.rt{font-weight:700;color:var(--ink);font-size:${d.size + 0.5}pt;letter-spacing:-.003em}
-.rc{color:var(--ink2);margin-top:1pt}
-.co{font-weight:600;color:var(--acc)}
-.rl{color:var(--ink2)}
+.rt{font-weight:600;color:var(--ink);font-size:${s + 1}pt;letter-spacing:-.005em;line-height:1.3}
+.rc{color:var(--ink2);margin-top:1.5pt}
+.co{font-weight:600;color:var(--acc-text)}
+.sepx{color:var(--muted)}
 .rd{font-size:${MIN.body}pt;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
 .rd-below{margin-top:1pt${titles === 'plain' ? ';font-style:italic' : ''}}
-.role ul{margin:calc(var(--k) * 3.5pt) 0 0}
+.role ul{margin:calc(var(--k) * 3pt) 0 0;padding:0}
 .role li + li{margin-top:calc(var(--k) * ${sp.li}pt)}
 ${bulletCss}
 p{margin:0}
-.ed + .ed{margin-top:calc(var(--k) * 6pt)}
-.ct{font-weight:600;color:var(--ink)}
-.sk-list{list-style:none;margin:0;padding:0}.sk-list li + li{margin-top:calc(var(--k) * 3pt)}
-.sk-cols{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--k) * 3pt) 14pt}
-.sk-cols li{position:relative;padding-left:10pt}.sk-cols li::before{content:"";position:absolute;left:0;top:.6em;width:3pt;height:3pt;border-radius:50%;background:var(--acc)}
-.skills{line-height:1.6}
+.ed + .ed{margin-top:calc(var(--k) * 7pt)}
+.et{font-weight:600;color:var(--ink)}
+.es{color:var(--ink2)}
+.tl{display:grid;grid-template-columns:.88in 1fr;column-gap:14pt}
+.tl-when{display:flex;flex-direction:column;font-size:${MIN.body}pt;color:var(--muted);font-variant-numeric:tabular-nums;padding-top:1.5pt;line-height:1.35}
+.sk-list{list-style:none;margin:0;padding:0}.sk-list li + li{margin-top:calc(var(--k) * 3.5pt)}
+.sk-cols{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--k) * 4pt) 16pt}
+.sk-cols li{position:relative;padding-left:11pt}.sk-cols li::before{content:"";position:absolute;left:0;top:calc(${sp.lh / 2}em - 1.6pt);width:3.2pt;height:3.2pt;border-radius:50%;background:${a}}
+.skills{line-height:1.7}
 .sk{white-space:nowrap}
-.sk:not(:last-child)::after{content:"";display:inline-block;width:3pt;height:3pt;border-radius:50%;background:var(--muted);margin:0 7pt;vertical-align:middle;opacity:.7}
-.tags{display:flex;flex-wrap:wrap;gap:4pt}
-.tagx{border:.75pt solid var(--rule);background:${a}0A;border-radius:2.5pt;padding:1.5pt 6.5pt;font-size:${MIN.body}pt;color:var(--ink)}
+.sk.eol::after{display:none !important}
+.sk:not(:last-child)::after{content:"";display:inline-block;width:3pt;height:3pt;border-radius:50%;background:var(--rule-strong);margin:0 8pt;vertical-align:middle}
+.tags{display:flex;flex-wrap:wrap;gap:5pt}
+.tagx{background:${mix(a, 0.92, paper)};border-radius:3pt;padding:2pt 8pt;font-size:${MIN.body}pt;color:var(--ink)}
 .cols{display:grid;column-gap:${gap}in;grid-template-columns:${d.layout === 'sidebar-left' ? `${sideW}in 1fr` : `1fr ${sideW}in`};grid-template-rows:auto 1fr;grid-template-areas:${d.layout === 'sidebar-left' ? '"side head" "side main"' : '"head side" "main side"'}}
-.hd-main{grid-area:head;margin-bottom:calc(var(--k) * 18pt)}
+.hd-main{grid-area:head;margin-bottom:calc(var(--k) * 18pt);padding-top:2pt}
 .hd-main h1{color:var(--name)}
 .main{grid-area:main;min-width:0}
 .side{grid-area:side;min-width:0}
-.side .sec + .sec{margin-top:calc(var(--k) * ${sp.sec + 2}pt)}
-.side .c-stack{gap:6pt}.side .ci{white-space:normal;align-items:flex-start;word-break:break-word}.side .ico{margin-top:.2em}
-.side .rt{font-size:${d.size}pt}
-.side.dark{--ink:#fff;--ink2:rgba(255,255,255,.88);--muted:rgba(255,255,255,.68);--rule:rgba(255,255,255,.3);--acc:#fff;--icon:rgba(255,255,255,.85);color:#fff}
-.side.dark .tagx{background:rgba(255,255,255,.08)}
-@media screen{.page{min-height:${page.h}}}
+.side .sec + .sec{margin-top:calc(var(--k) * ${sp.sec + 4}pt)}
+.side .c-stack{gap:7pt}.side .ci{white-space:normal;align-items:flex-start;word-break:break-word}.side .ico{margin-top:.22em}
+.side .tagx{background:${tint === 'dark' ? 'rgba(255,255,255,.12)' : '#ffffff'}}
+.side.dark{--ink:#fff;--ink2:rgba(255,255,255,.86);--muted:rgba(255,255,255,.62);--rule:rgba(255,255,255,.25);--rule-strong:rgba(255,255,255,.4);--acc-text:#fff;--icon:${mix(a, 0.6)};color:#fff}
+@media screen{html,body{min-height:100%}.page{min-height:${page.h}}}
 </style></head><body>${strip}<div class="page">
 ${layout}
-</div>${d.fill && maxPages(d) === 1 ? fillScript(pagePx) : ''}</body></html>`;
+</div>${tidyScript()}${d.fill && maxPages(d) === 1 ? fillScript(pagePx) : ''}</body></html>`;
 }
 
-// When the resume is shorter than a page, open up the spacing (up to 1.6×) so it fills the page evenly.
+// No separator dot left hanging at the end of a line of skills.
+function tidyScript() {
+  return `<script>(function(){function t(){var s=document.querySelectorAll('.sk');for(var i=0;i<s.length;i++){s[i].classList.remove('eol');if(s[i+1]&&s[i+1].offsetTop>s[i].offsetTop+2)s[i].classList.add('eol');}}t();window.__tidy=t;if(document.fonts&&document.fonts.ready)document.fonts.ready.then(t);})();</script>`;
+}
+
+// When the resume is shorter than a page, open up the spacing (up to 1.5×) so it fills the page evenly.
 function fillScript(pagePx) {
-  return `<script>(function(){var r=document.documentElement,p=document.querySelector('.page');function fit(){r.style.setProperty('--k',1);p.style.minHeight='0';var H=${pagePx};if(p.scrollHeight>H-4){p.style.minHeight='';return;}var lo=1,hi=1.6;for(var i=0;i<9;i++){var m=(lo+hi)/2;r.style.setProperty('--k',m);if(p.scrollHeight<=H-6)lo=m;else hi=m;}r.style.setProperty('--k',lo);p.style.minHeight='';}fit();if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fit);})();</script>`;
+  return `<script>(function(){var r=document.documentElement,p=document.querySelector('.page');function fit(){r.style.setProperty('--k',1);p.style.minHeight='0';var H=${pagePx};if(p.scrollHeight>H-4){p.style.minHeight='';return;}var lo=1,hi=1.5;for(var i=0;i<9;i++){var m=(lo+hi)/2;r.style.setProperty('--k',m);if(p.scrollHeight<=H-6)lo=m;else hi=m;}r.style.setProperty('--k',lo);p.style.minHeight='';if(window.__tidy)window.__tidy();}fit();if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fit);})();</script>`;
 }
 
 export function letterHtml(letter, resumeContact, design, job, { fontBase, date = new Date() } = {}) {
@@ -297,7 +354,7 @@ ${css}
 @page{size:${page.w} ${page.h};margin:0}
 *{box-sizing:border-box}
 html{background:#fff}
-body{margin:0;--k:1;--acc:${design.accent};--name:${design.accent};--ink:#1c2130;--ink2:#454c5c;--muted:#7a8091;--rule:#d3d7df;--icon:${design.accent};font-family:${f.body};font-size:11pt;line-height:1.5;color:var(--ink);-webkit-print-color-adjust:exact;print-color-adjust:exact;font-kerning:normal;text-rendering:optimizeLegibility}
+body{margin:0;--k:1;--acc:${design.accent};--acc-text:${design.accent};--name:${design.accent};--ink:#1c2130;--ink2:#454c5c;--muted:#7a8091;--rule:#d3d7df;--rule-strong:#b9becb;--icon:${design.accent};font-family:${f.body};font-size:11pt;line-height:1.5;color:var(--ink);-webkit-print-color-adjust:exact;print-color-adjust:exact;font-kerning:normal;text-rendering:optimizeLegibility}
 .page{width:${page.w};padding:${m}in;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 ${headerCss(ld, f, 26, m)}
 .hd{margin-bottom:26pt}

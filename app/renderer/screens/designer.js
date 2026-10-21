@@ -49,12 +49,15 @@ ${(() => {
       return group('sections', 'Sections', lists.map(([name, list]) => `${name ? `<b class="small">${name}</b>` : ''}<div class="dz-sections">${rows(list) || '<span class="tiny muted">Nothing here yet.</span>'}</div>`).join('') + '<span class="tiny muted">Untick a section to hide it. Use the arrows to change the order.</span>', isOpen('sections', true));
     })()}
 ${own ? '' : group('look', 'Name, header and titles', `<b class="small">Name size</b>${seg('nameSize', d.nameSize, [['standard', 'Standard'], ['large', 'Large'], ['xl', 'Extra large']])}
+<b class="small">Name style</b>${seg('nameStyle', d.nameStyle, [['bold', 'Bold'], ['split', 'Light first name'], ['light', 'Light']])}
+<label class="radio" style="align-self:flex-start"><input type="checkbox" data-headline ${d.headline ? 'checked' : ''}>Headline under your name</label><span class="tiny muted">Set your headline in Profile, Your information. If it’s empty we use your most recent job title.</span>
 <label class="radio" style="align-self:flex-start"><input type="checkbox" data-upper ${d.nameUpper ? 'checked' : ''}>Name in capitals</label>
 ${sidebarOn ? '<span class="tiny muted">With a sidebar, your name sits above the main column and your contact details go in the sidebar.</span>' : `<b class="small">Name and contact</b>${seg('header', d.header, [['left', 'Left'], ['center', 'Centered'], ['split', 'Split'], ['band', 'Color band']])}
-${d.header === 'split' ? '' : `<b class="small">Contact line</b>${seg('contact', d.contact, [['spread', 'Spread across the page'], ['together', 'Grouped together']])}`}`}
+${d.header === 'split' ? '' : `<b class="small">Contact line</b>${seg('contact', d.contact, [['spread', 'Spread across the page'], ['together', 'Grouped together']])}`}
+${['left', 'center'].includes(d.header) ? `<b class="small">Under the name</b>${seg('headerRule', d.headerRule, [['none', 'Nothing'], ['hairline', 'Thin line'], ['accent', 'Short color bar']])}` : ''}`}
 <label class="radio" style="align-self:flex-start"><input type="checkbox" data-icons ${d.icons ? 'checked' : ''}>Small icons next to contact details</label>
-<b class="small">Section titles</b>${seg('titles', d.titles, [['rule', 'Underline'], ['caps', 'Capitals'], ['short', 'Short line'], ['bar', 'Side bar'], ['plain', 'Large'], ['center', 'Centered'], ['gutter', 'In the margin']])}`, isOpen('look', true))}
-${own ? '' : group('color', 'Color', `<div class="row">${d.accents.map((c) => `<button type="button" class="swatch ${d.accent.toLowerCase() === c.toLowerCase() ? 'on' : ''}" data-set="accent" data-val='"${c}"' style="background:${c}" aria-label="Color ${c}" aria-pressed="${d.accent.toLowerCase() === c.toLowerCase()}"></button>`).join('')}<label class="swatch custom" title="Pick any color"><input type="color" id="dz-color" value="${esc(d.accent)}" aria-label="Pick any color"></label></div><span class="tiny muted">Dark colors print and read best.</span>`, isOpen('color', false))}
+<b class="small">Section titles</b>${seg('titles', d.titles, [['rule', 'Underline'], ['caps', 'Capitals'], ['short', 'Short line'], ['tint', 'Color band'], ['bar', 'Side bar'], ['plain', 'Large'], ['center', 'Centered'], ['gutter', 'In the margin']])}`, isOpen('look', true))}
+${own ? '' : group('color', 'Color', `<b class="small">Paper</b>${seg('pageTint', d.pageTint, [['none', 'White'], ['warm', 'Warm cream'], ['cool', 'Cool gray']])}<b class="small">Accent</b><div class="row">${d.accents.map((c) => `<button type="button" class="swatch ${d.accent.toLowerCase() === c.toLowerCase() ? 'on' : ''}" data-set="accent" data-val='"${c}"' style="background:${c}" aria-label="Color ${c}" aria-pressed="${d.accent.toLowerCase() === c.toLowerCase()}"></button>`).join('')}<label class="swatch custom" title="Pick any color"><input type="color" id="dz-color" value="${esc(d.accent)}" aria-label="Pick any color"></label></div><span class="tiny muted">Dark colors print and read best.</span>`, isOpen('color', false))}
 ${own ? '' : group('fonts', 'Fonts', `<div class="dz-pairs">${FONT_PAIRS.filter(([h, b]) => fonts.includes(h) && fonts.includes(b)).map(([h, b, name]) => `<button type="button" class="dz-pair ${pairOn(h, b) ? 'on' : ''}" data-pair='${JSON.stringify([h, b])}' aria-pressed="${pairOn(h, b)}"><span style="font-family:'${h}',serif;font-weight:700;font-size:17px">${esc(h)}</span><span class="tiny muted" style="font-family:'${b}',sans-serif">${esc(name)} · ${esc(b)}</span></button>`).join('')}</div>
 <div class="row-l"><label class="field">Headings<select data-font="heading">${fonts.map((f) => `<option ${f === d.fonts.heading ? 'selected' : ''}>${esc(f)}</option>`).join('')}</select></label><label class="field">Body<select data-font="body">${fonts.map((f) => `<option ${f === d.fonts.body ? 'selected' : ''}>${esc(f)}</option>`).join('')}</select></label></div>
 <label class="btn small" style="align-self:flex-start">Upload your own font<input type="file" class="sr" id="dz-font" accept=".ttf,.otf,.woff,.woff2"></label><a class="tiny" href="#/help/custom-font">Help: adding a custom font</a>`, isOpen('fonts', false))}
@@ -63,7 +66,7 @@ ${own ? '' : group('text', 'Text and spacing', `<b class="small">Text size</b>${
 <b class="small">Margins</b>${seg('margin', d.margin, [[0.5, 'Narrow'], [0.6, 'Normal'], [0.75, 'Wide'], [1, 'Extra wide']])}
 <label class="radio" style="align-self:flex-start"><input type="checkbox" data-fill ${d.fill ? 'checked' : ''}>Spread out to fill the page</label>
 <span class="tiny muted">Text never goes below 10 point, so it stays readable.</span>`, isOpen('text', false))}
-${own ? '' : group('details', 'Details', `<b class="small">Dates</b>${seg('dates', d.dates, [['right', 'On the right'], ['below', 'Under the title']])}
+${own ? '' : group('details', 'Details', `<b class="small">Dates</b>${seg('dates', d.dates, [['right', 'On the right'], ['below', 'Under the title'], ['left', 'In their own column']])}
 <b class="small">Bullets</b>${seg('bullets', d.bullets, [['dot', '• Dots'], ['dash', '– Dashes'], ['none', 'None']])}
 <b class="small">Skills</b>${seg('skills', d.skills, [['inline', 'In a line'], ['columns', 'Columns'], ['list', 'A list'], ['tags', 'Boxes']])}`, isOpen('details', false))}
 ${group('page', 'Page', `<b class="small">Paper</b>${seg('paper', d.paper || 'letter', [['letter', 'US Letter'], ['a4', 'A4']])}
@@ -150,6 +153,7 @@ ${own ? '' : `<button type="button" class="btn small" data-reset style="align-se
     const t = e.target;
     if (t.dataset.side) return save({ sidebar: t.checked ? [...new Set([...d.sidebar, t.dataset.side])] : d.sidebar.filter((x) => x !== t.dataset.side) });
     if ('icons' in t.dataset) return save({ icons: t.checked });
+    if ('headline' in t.dataset) return save({ headline: t.checked });
     if ('fill' in t.dataset) return save({ fill: t.checked });
     if ('upper' in t.dataset) return save({ nameUpper: t.checked });
     if (t.dataset.show) return save({ hidden: t.checked ? d.hidden.filter((x) => x !== t.dataset.show) : [...d.hidden, t.dataset.show] });
