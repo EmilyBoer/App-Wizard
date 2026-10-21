@@ -101,6 +101,20 @@ ${(st.want.suggestedTitles || []).filter((x) => x.accepted == null).length ? `<b
     mount(el) { el.querySelectorAll('[data-d]').forEach((c) => (c.onclick = () => c.setAttribute('aria-pressed', c.getAttribute('aria-pressed') === 'true' ? 'false' : 'true'))); const d = el.querySelector('#deal'); d.onkeydown = (e) => { if (e.key === 'Enter' && d.value.trim()) { const c = document.createElement('button'); c.type = 'button'; c.className = 'chip'; c.dataset.d = d.value.trim(); c.textContent = d.value.trim(); c.setAttribute('aria-pressed', 'true'); c.onclick = () => c.setAttribute('aria-pressed', c.getAttribute('aria-pressed') === 'true' ? 'false' : 'true'); d.previousElementSibling.append(c); d.value = ''; } }; },
     next: (el) => call('want.save', { dealBreakers: [...el.querySelectorAll('[data-d][aria-pressed=true]')].map((c) => c.dataset.d) }) },
 
+  { id: 'writing', ask: 'Want your letters to sound like you?', help: 'Share something you wrote in your own words: a long email to friends, a cover letter you liked, a LinkedIn post. A couple of paragraphs is plenty. We only use it to learn how you write.', skip: 'Just use my resume',
+    body: (st) => `<div class="stack-s"><textarea id="wtext" placeholder="Paste something you wrote" style="min-height:160px"></textarea>
+<div class="row"><button class="btn secondary" data-act="addw" data-busy="Saving…">Add this</button><label class="btn">Or choose a file<input type="file" class="sr" id="wfile" accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg"></label></div></div>
+${st.voice.samples.length ? `<div class="list">${st.voice.samples.map((x) => `<div class="item">${tag('Your writing', 'info')}<div class="grow"><div>${esc(x.name)}</div><div class="small muted">${x.words} words</div></div><button class="btn small" data-act="rmw" data-id="${x.id}">Remove</button></div>`).join('')}</div>` : ''}
+<p class="tiny muted">No samples? We’ll learn from how your resume is written. You can add more any time in Profile.</p>`,
+    mount(el, st, ui) {
+      el.querySelector('#wfile').onchange = async (e) => { const [file] = await readFiles(e.target.files); try { await call('voice.addFile', { file }); ui.repaint(); } catch (ex) { toast(ex.message, true); } };
+      on(el, {
+        addw: (b) => act(b, async () => { const t = el.querySelector('#wtext').value.trim(); if (!t) throw new Error('Paste something first.'); await call('voice.addSample', { text: t, name: `Pasted writing (${t.split(/\s+/).slice(0, 5).join(' ')}…)` }); ui.repaint(); }),
+        rmw: async (b) => { await call('voice.removeSample', { id: b.dataset.id }); ui.repaint(); },
+      });
+    },
+    async next(el, st) { const t = el.querySelector('#wtext').value.trim(); if (t) await call('voice.addSample', { text: t, name: `Pasted writing (${t.split(/\s+/).slice(0, 5).join(' ')}…)` }); } },
+
   { id: 'rate', ask: 'Last one: rate a few real jobs.', help: 'These are live jobs we found with your answers. Every yes and no teaches Job Wizard what fits before your first morning batch.', skip: 'Skip for now', custom: true },
 
   { id: 'done', ask: 'Your job search is built.', help: 'Every morning, Job Wizard checks for new jobs that fit and gets your best matches ready to apply. Change any answer later in Profile.', custom: true },
@@ -249,11 +263,11 @@ ${card('where', 'Where', (w.where || []).map(esc).join(', '))}
 ${card('relocate', 'Would you move?', esc(answers.relocate))}
 ${card('start', 'When you could start', esc(answers.start))}
 ${card('never', 'Never show me', (w.dealBreakers || []).map(esc).join(', '))}
+${card('writing', 'Your writing style', st.voice.samples.length ? st.voice.samples.map((x) => esc(x.name)).join('<br>') : 'Learning from your resume', `<span class="tiny muted"><a href="#/setup/4">Fine-tune your style</a></span>`)}
 ${card('rate', 'Jobs you’ve rated', `${learning.summary.yes} yes · ${learning.summary.no} no`, `<span class="tiny muted"><a href="#/profile/learned">${learning.summary.rules} rule${learning.summary.rules === 1 ? '' : 's'} learned</a></span>`)}
 </div>
 <section class="stack"><h2>More</h2><div class="grid">
 <a class="card tight" href="#/setup/7" style="text-decoration:none;color:inherit"><b>Companies and job sites we watch</b><span class="small muted">${st.sites.length} watched. Companies from the jobs you added are watched automatically.</span></a>
-<a class="card tight" href="#/setup/4" style="text-decoration:none;color:inherit"><b>Your writing style</b><span class="small muted">How your letters and answers should sound.</span></a>
 <a class="card tight" href="#/setup/5" style="text-decoration:none;color:inherit"><b>Resume design</b><span class="small muted">Template, fonts, length. A bigger design update is coming.</span></a>
 <a class="card tight" href="#/profile/settings" style="text-decoration:none;color:inherit"><b>Claude and morning schedule</b><span class="small muted">API key, models, when the morning batch runs.</span></a>
 <a class="card tight" href="#/profile/extension" style="text-decoration:none;color:inherit"><b>Browser extension</b><span class="small muted">Fill applications in your browser, and the answers it uses.</span></a>

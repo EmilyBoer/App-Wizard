@@ -143,12 +143,22 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
 
     // ----- voice -----
     'voice.get': () => store().get('voice'),
+    'voice.useResume': ({ on }) => store().update('voice', (v) => { v.useResume = Boolean(on); }),
+    'voice.addFile': async ({ file }) => {
+      const prepared = prepareFile(file);
+      if (prepared.problem) throw new UserError(prepared.problem);
+      const text = prepared.text || (await ai.readMaterial(claude(), prepared)).text;
+      store().update('voice', (v) => { v.samples.push({ id: id('s_'), name: file.name, text }); });
+      return true;
+    },
     'voice.addSample': ({ text, name }) => store().update('voice', (v) => { v.samples.push({ id: id('s_'), name: name || 'Pasted writing', text }); }),
     'voice.removeSample': ({ id: sid }) => store().update('voice', (v) => { v.samples = v.samples.filter((s) => s.id !== sid); }),
     'voice.save': (patch) => store().update('voice', (v) => { if (patch.dials) v.dials = { ...v.dials, ...patch.dials }; if (patch.never) v.never = patch.never; }),
     'voice.generate': async () => {
       const v = store().get('voice');
-      const out = await ai.voiceGuide(claude(), { samples: v.samples, dials: v.dials, never: v.never, profile: store().get('profile'), edits: writingEdits(store().get('learning')) });
+      // No writing samples? Learn from how their resume is written.
+      const samples = v.samples.length ? v.samples : store().get('materials').list.filter((m) => m.kind === 'resume' && m.text).slice(0, 1).map((m) => ({ name: 'Your resume', text: m.text }));
+      const out = await ai.voiceGuide(claude(), { samples, dials: v.dials, never: v.never, profile: store().get('profile'), edits: writingEdits(store().get('learning')) });
       return store().update('voice', (x) => { x.guide = out.guide || []; x.sampleLine = out.sampleLine; x.sampleRating = null; });
     },
     'voice.rate': ({ rating, note }) => store().update('voice', (v) => {
@@ -256,6 +266,7 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
         profileStale: hasResume && mats.some((m) => ['resume', 'linkedin', 'review', 'portfolio'].includes(m.kind) && !m.inProfile),
         profile: { contact: p.contact, roles: p.roles.map((r) => ({ title: r.title, company: r.company, start: r.start, end: r.end, results: r.bullets.length })), skills: p.skills.map((x) => x.name), years: yearsOfExperience(p), checks: pendingCount(p) },
         interviewed: by('interviewed'), fit: by('fit'), reach: by('reach'),
+        voice: { samples: s.get('voice').samples.map((x) => ({ id: x.id, name: x.name, words: String(x.text || '').split(/\s+/).length })), sampleLine: s.get('voice').sampleLine || '', useResume: Boolean(s.get('voice').useResume) },
         want: { summary: w.summary, reachNote: w.reachNote || '', titles: w.titles, suggestedTitles: w.suggestedTitles, ambiguous: w.ambiguous, payFloor: w.payFloor, where: w.where, dealBreakers: w.dealBreakers },
         sites: s.get('sites').list,
         ready: hasResume && w.examples.filter((e) => e.kind !== 'reach').length >= 2,
