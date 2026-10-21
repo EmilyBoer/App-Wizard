@@ -18,6 +18,7 @@ export async function render(root, [jobId], app) {
   ${j.url ? `<a href="${esc(j.url)}" target="_blank" rel="noopener" class="small">Open the posting</a>` : ''}</div>
   ${j.hiddenBecause?.length ? `<div class="note att">Hidden from your matches: ${esc(j.hiddenBecause.join(' '))}</div>` : ''}
   ${!j.description ? `<section class="card featured"><h2>Paste the job description</h2><p class="muted">${j.fromAlert ? `${esc(j.fromAlert)} doesn’t let us read the job. ` : ''}Open the posting, copy the description, and paste it here so we can check the fit and write your application.</p>
+  ${j.searchUrl ? `<div class="row"><a class="btn secondary" href="${esc(j.searchUrl)}" target="_blank" rel="noopener">Find this job online</a>${j.alertPosted || j.alertPay ? `<span class="small muted">${esc([j.alertPay, j.alertPosted].filter(Boolean).join(' · '))}</span>` : ''}</div>` : ''}
   <div class="grid"><input type="text" id="tt" value="${esc(j.title)}" placeholder="Title"><input type="text" id="tc" value="${esc(j.company)}" placeholder="Company"><input type="text" id="tl" value="${esc(j.location || '')}" placeholder="Location"></div><textarea id="td" style="min-height:180px"></textarea><button class="btn primary" data-act="settext" style="align-self:flex-start">Save</button></section>` : ''}
 
   ${j.description ? `<section class="stack"><h2>Why it’s a match</h2>

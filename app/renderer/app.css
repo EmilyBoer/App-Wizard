@@ -234,3 +234,5 @@ details.fold > summary { list-style: none; cursor: pointer; display: flex; align
 details.fold > summary::-webkit-details-marker { display: none; }
 details.fold > summary::before { content: "▸"; font-size: 14px; color: var(--ink-muted); width: 14px; transition: transform .15s; }
 details.fold[open] > summary::before { transform: rotate(90deg); }
+
+.nav .soon { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-muted); border: 1px solid var(--line); border-radius: 999px; padding: 0 6px; margin-left: 2px; }

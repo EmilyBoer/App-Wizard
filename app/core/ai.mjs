@@ -354,3 +354,13 @@ Shape: {"title": string, "company": string, "location": string, "remote": "remot
   const out = await claude.json({ system, content: `${url ? `Link: ${url}\n` : ''}${String(text || '').slice(0, 8000)}`, maxTokens: 300, fast: true });
   return { title: String(out.title || '').slice(0, 120), company: String(out.company || '').slice(0, 120), location: String(out.location || ''), remote: out.remote || '', pay: out.pay || '', level: out.level || '' };
 }
+
+// ---------- Jobs from a screenshot of a job alert ----------
+
+export async function jobsFromImage(claude, file) {
+  const system = `Someone took a screenshot of a job alert or a list of jobs (LinkedIn, Indeed, Google, Glassdoor, a job board email...). List every job you can see.
+Only what is visible in the image. Leave anything you can't read empty. Never guess a company or a link.
+Shape: {"source": "LinkedIn|Indeed|Google|Glassdoor|ZipRecruiter|Other", "jobs": [{"title": string, "company": string, "location": string, "pay": string, "posted": "as shown, e.g. 2 days ago", "url": "only if a full link is visible"}]}`;
+  const out = await claude.json({ system, content: [fileBlock(file), { type: 'text', text: 'List the jobs in this screenshot.' }], maxTokens: 2500, fast: true });
+  return { source: out.source || 'Other', jobs: (out.jobs || []).filter((j) => j.title).slice(0, 40) };
+}

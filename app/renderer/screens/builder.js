@@ -1,6 +1,7 @@
 // Setup, TurboTax-style: one question per screen on first sign-in.
 // The answers build "Your setup", where every choice can be changed later.
 import { call, esc, tag, chip, radio, act, toast, on, readFiles, dropZone, modal, posted, sparkle, working } from '../lib.js';
+import { embed as embedPage } from './setup.js';
 
 const KIND = { resume: ['Resume', 'good'], linkedin: ['LinkedIn', 'good'], review: ['Review', 'good'], portfolio: ['Work sample', 'good'], writing: ['Your writing', 'info'], personality: ['Personality', 'muted'], job_posting: ['Job you want', 'att'], other: ['Other', 'muted'] };
 const NO_REASONS = ['Wrong kind of work', 'Too junior', 'Too senior', 'Pay too low', 'Location', 'Type of employer', 'Title was misleading', 'Something else'];
@@ -116,6 +117,8 @@ ${(st.want.suggestedTitles || []).filter((x) => x.accepted == null).length ? `<b
     body: (st) => st.want.ambiguous.map((a, i) => `<div class="stack-s"><b>“${esc(a.word)}”</b><div class="row">${[...a.meanings, 'Both', 'Neither, skip these'].map((m) => { const v = m === 'Both' ? 'both' : m.startsWith('Neither') ? 'skip' : m; return radio(`amb${i}`, v, m, a.choice === v); }).join('')}</div></div>`).join(''),
     mount(el, st) { el.querySelectorAll('input[name^=amb]').forEach((r) => (r.onchange = () => { st.want.ambiguous[Number(r.name.slice(3))].choice = r.value; call('want.save', { ambiguous: st.want.ambiguous }); })); } },
 
+  { id: 'design', ask: 'How should your resume look?', help: 'Pick a look, or bring your own Canva design. Every resume Job Wizard makes for you uses it. The preview below is built from your real experience.', custom: true },
+
   { id: 'rate', ask: 'Last one: rate a few real jobs.', help: 'These are live jobs we found with your answers. Every yes and no teaches Job Wizard what fits before your first morning batch.', skip: 'Skip for now', custom: true },
 
   { id: 'done', ask: 'Your job search is built.', help: 'Every morning, Job Wizard checks for new jobs that fit and gets your best matches ready to apply. Change any answer later in Profile.', custom: true },
@@ -155,6 +158,7 @@ export async function render(root, params, app) {
       try { st = await q.enter(); q._entered = true; } catch (e) { body.innerHTML = `<div class="note alert">${esc(e.message)}</div>`; foot.innerHTML = navButtons(q, idx); return; }
     }
     if (q.id === 'rate') return rateScreen(body, foot);
+    if (q.id === 'design') { body.innerHTML = working('Loading the preview…'); foot.innerHTML = navButtons(q, idx); await embedPage(body, 5, app, { title: false }); return; }
     if (q.id === 'done') return doneScreen(body, foot);
     body.innerHTML = q.body(st, ui);
     foot.innerHTML = navButtons(q, idx);
@@ -264,7 +268,8 @@ ${st.done ? '' : '<div class="note att row between"><span>Setup isn’t finished
 ${section('About you', [
     row('Name and contact', [c.name, c.email, c.phone, c.location].filter(Boolean).map(esc).join(' · ') + ([c.linkedin, c.website].some(Boolean) ? `<div class="small muted">${[c.linkedin, c.website].filter(Boolean).map(esc).join(' · ')}</div>` : ''), '#/build/found?back=1', 'Edit'),
     row('Experience', `${st.profile.roles.length} roles · ${st.profile.skills.length} skills · ${st.profile.years} years${st.profile.checks ? ` · <a href="#/setup/3">${st.profile.checks} things to check</a>` : ''}<div class="small muted">From ${st.materials.length} file${st.materials.length === 1 ? '' : 's'}. <a href="#/documents">Add more in Documents</a></div>`, '#/setup/3', 'Edit'),
-    row('Writing style', st.voice.samples.length ? `${st.voice.samples.length} writing sample${st.voice.samples.length === 1 ? '' : 's'}` : 'Learned from your resumes', '#/build/writing?back=1'),
+    row('Writing style', st.voice.samples.length ? `${st.voice.samples.length} writing sample${st.voice.samples.length === 1 ? '' : 's'}` : 'Learned from your resumes', '#/profile/style', 'Open'),
+    row('Resume design', 'Template, fonts and length', '#/profile/design', 'Open'),
   ])}
 ${section('What you’re looking for', [
     row('Job titles', w.titles.length ? pills(w.titles) : '', '#/build/sweetspot?back=1'),
@@ -285,9 +290,7 @@ ${section('Answers for applications', [
 ${section('How Job Wizard works for you', [
     row('Where you look', (hosts.length ? hosts.map(([h, n]) => `${esc(h)} <span class="muted">(${n})</span>`).join(' · ') : '<span class="muted">Learned from the job links you add</span>') + `<div class="small muted">${watched} compan${watched === 1 ? 'y' : 'ies'} checked for new jobs every day</div>`, '#/setup/7'),
     row('What it’s learned', `${learning.summary.yes} yes · ${learning.summary.no} no · ${learning.summary.rules} rule${learning.summary.rules === 1 ? '' : 's'}`, '#/profile/learned', 'See'),
-    row('Resume design', 'Template, fonts and length', '#/setup/5'),
-    row('Claude and morning schedule', 'API key, and when your morning batch runs', '#/profile/settings'),
-    row('Browser extension', 'Fill in applications in your browser', '#/profile/extension'),
+    row('Morning batch', `${st.schedule.on ? `Every day at ${st.schedule.hour}:00 AM, your best ${st.schedule.count} match${st.schedule.count === 1 ? '' : 'es'} made ready` : 'Turned off'}`, '#/profile/schedule'),
   ])}
 </div>`;
   // Jobs added before titles were pulled out: fix them quietly, then redraw.

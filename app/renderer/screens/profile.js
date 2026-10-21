@@ -1,7 +1,8 @@
 import { call, esc, tag, act, toast, on, modal, ago } from '../lib.js';
 import { dashboard as setupDashboard } from './builder.js';
+import { embed as embedPage } from './setup.js';
 
-const TABS = [['setup', 'Your choices'], ['learned', 'What we’ve learned'], ['settings', 'Claude and schedule'], ['extension', 'Browser extension']];
+const TABS = [['setup', 'Your choices'], ['style', 'Writing style'], ['design', 'Resume design'], ['learned', 'What we’ve learned']];
 
 export async function render(root, [tab = 'setup'], app) {
   if (!TAB[tab]) tab = 'setup';
@@ -18,6 +19,15 @@ export async function render(root, [tab = 'setup'], app) {
 
 const TAB = {
   async setup(el, app) { await setupDashboard(el, app, { embedded: true }); },
+  async style(el, app) { await embedPage(el, 4, app); },
+  async design(el, app) { await embedPage(el, 5, app); },
+  async schedule(el) {
+    const s = await call('settings.get');
+    el.innerHTML = `<section class="card" style="max-width:720px"><h2>Morning batch</h2><p class="muted">Every morning, Job Wizard checks for new jobs and gets your best matches ready to apply. The app needs to be open, even in the background.</p>
+<div class="row-l"><label class="field">Time<select id="hour" style="width:auto">${[5, 6, 7, 8, 9, 10].map((h) => `<option value="${h}" ${h === Number(s.morningHour) ? 'selected' : ''}>${h}:00 AM</option>`).join('')}</select></label><label class="field">How many to get ready<select id="count" style="width:auto">${[1, 2, 3, 5, 8].map((n) => `<option ${n === Number(s.morningCount) ? 'selected' : ''}>${n}</option>`).join('')}</select></label><label class="radio" style="align-self:flex-end"><input type="checkbox" id="mon" ${s.morningOn ? 'checked' : ''}>Turned on</label></div>
+${s.lastBatch ? `<p class="small muted">Last run ${esc(ago(s.lastBatch.at))}: ${s.lastBatch.made} made ready.</p>` : ''}<a href="#/profile" class="small">← Back to your choices</a></section>`;
+    el.querySelectorAll('select, input').forEach((i) => (i.onchange = () => call('settings.save', { morningHour: Number(el.querySelector('#hour').value), morningCount: Number(el.querySelector('#count').value), morningOn: el.querySelector('#mon').checked }).then(() => toast('Saved.'))));
+  },
   async experience(el) {
     const p = await call('profile.get');
     const w = await call('want.get');

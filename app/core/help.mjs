@@ -70,10 +70,10 @@ Text never gets smaller than 10 point. If it doesn't fit, we cut the least relev
 After Claude writes a draft, Job Wizard checks it in code: every resume line must come from a line in your profile, and every number must match. Anything that fails is swapped back to your own wording, and we tell you.` },
   { id: 'morning', title: 'What happens every morning?', tags: 'morning batch automatic daily schedule', body: `At the time you pick (7 AM by default), Job Wizard checks your job sites, finds new matches, and gets resumes and letters ready for the best few. You review and apply.
 
-The computer needs to be on with Job Wizard open (it can sit in the background). Change the time or number in Profile, Settings.` },
+The computer needs to be on with Job Wizard open (it can sit in the background). Change the time or number in Profile, Morning batch.` },
   { id: 'extension', title: 'Filling applications with the browser extension', tags: 'extension chrome edge autofill fill application form browser', body: `The Job Wizard extension fills in application forms using your profile and the answers you approved.
 
-1. In Profile, Settings, press Set up the extension and follow the steps.
+1. In the Extension tab and follow the steps.
 2. Open an application and press the Job Wizard button.
 3. Check everything, answer anything marked "needs you", and press submit yourself.
 
@@ -94,7 +94,7 @@ Company facts only come from those pages. If we couldn't read the company's site
 1. Go to https://console.anthropic.com and sign in (or create an account). This is separate from your regular Claude chat account, but you can use the same email.
 2. Add a little credit: Settings, Billing. Five dollars lasts most people a month or more.
 3. Open https://console.anthropic.com/settings/keys and press Create Key. Name it "Job Wizard".
-4. Copy the key (it starts with sk-ant-) and paste it into Job Wizard: Profile, Settings, then press Save and test.
+4. Copy the key (it starts with sk-ant-) and paste it into Job Wizard's Claude tab, then press Save and test.
 
 If the test fails, the message tells you why: usually the key was copied with a missing piece, or the account has no credit yet.` },
 ];

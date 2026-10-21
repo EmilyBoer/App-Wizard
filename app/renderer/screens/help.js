@@ -18,4 +18,4 @@ export async function render(root, [id], app) {
   on(root, { ask: () => app.openChat() });
   search(); q.focus();
 }
-const linkify = (s) => s.replace(/https?:\/\/[^\s<]+[^\s<.,)]/g, (u) => `<a href="${u}" target="_blank" rel="noopener">${u.replace(/^https:\/\//, '')}</a>`).replace(/(Profile, Settings|Setup, Job sites|Setup, Your materials|Profile, What we’ve learned|Profile, Resume design)/g, (m) => `<a href="#${{ 'Profile, Settings': '/profile/settings', 'Setup, Job sites': '/setup/7', 'Setup, Your materials': '/setup/2', 'Profile, What we’ve learned': '/profile/learned', 'Profile, Resume design': '/setup/5' }[m]}">${m}</a>`);
+const linkify = (s) => s.replace(/https?:\/\/[^\s<]+[^\s<.,)]/g, (u) => `<a href="${u}" target="_blank" rel="noopener">${u.replace(/^https:\/\//, '')}</a>`).replace(/(Profile, Settings|Setup, Job sites|Setup, Your materials|Profile, What we’ve learned|Profile, Resume design)/g, (m) => `<a href="#${{ 'Profile, Settings': '/claude', 'Setup, Job sites': '/setup/7', 'Setup, Your materials': '/setup/2', 'Profile, What we’ve learned': '/profile/learned', 'Profile, Resume design': '/profile/design' }[m]}">${m}</a>`);

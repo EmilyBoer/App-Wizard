@@ -31,6 +31,17 @@ export async function render(root, params, app) {
   await STEP_RENDER[step](ctx);
 }
 
+// Show one of these pages inside another screen (a Profile tab, or a setup question).
+export async function embed(el, step, app, { title = true } = {}) {
+  const ctx = {
+    app, el, step,
+    head(h1, intro) { return title ? `<div><h2>${h1}</h2><p class="muted" style="max-width:680px">${intro}</p></div>` : ''; },
+    foot() { return ''; },
+    async next() {},
+  };
+  await STEP_RENDER[step](ctx);
+}
+
 const STEP_RENDER = { 2: materials, 3: experience, 4: voice, 5: design, 6: want, 7: sites, 8: answers, 9: rateJobs };
 
 // ---------------- 2. Materials ----------------
@@ -39,7 +50,7 @@ async function materials(ctx) {
   const paint = async () => {
     const [list, settings] = await Promise.all([call('materials.list'), call('settings.get')]);
     el.innerHTML = `${ctx.head('Toss in everything about your work.', 'Resumes, your LinkedIn, reviews, screenshots. We read it all and sort it. You’ll check what we found on the next step.')}
-${settings.hasKey ? '<div class="note good"><b>✓ Claude is connected.</b> Your key is saved. Change it any time in Profile, Settings.</div>' : keyCard()}
+${settings.hasKey ? '<div class="note good"><b>✓ Claude is connected.</b> Your key is saved. Change it any time in the Claude tab.</div>' : keyCard()}
 <section class="drop" id="drop">
   ${sparkle(28)}
   <div style="font-family:var(--display);font-size:22px;font-weight:700">Drop anything here</div>

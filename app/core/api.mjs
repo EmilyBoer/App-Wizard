@@ -45,7 +45,7 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
   const claude = () => {
     const s = store().get('settings');
     const c = claudeFactory({ apiKey: s.claudeKey || process.env.ANTHROPIC_API_KEY, model: s.model, fastModel: s.fastModel, fetchImpl });
-    if (!c.ready) throw new UserError('Add your Claude API key in Profile, Settings to use this. (Help: Setting up your Claude API key)');
+    if (!c.ready) throw new UserError('Add your Claude API key in the Claude tab to use this. (Help: Setting up your Claude API key)');
     return c;
   };
   const claudeReady = () => { try { claude(); return true; } catch { return false; } };
@@ -306,6 +306,7 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
         interviewed: by('interviewed'), fit: by('fit'), reach: by('reach'),
         voice: { samples: s.get('voice').samples.map((x) => ({ id: x.id, name: x.name, words: String(x.text || '').split(/\s+/).length })), sampleLine: s.get('voice').sampleLine || '', useResume: Boolean(s.get('voice').useResume) },
         lookIn: w.lookIn || {},
+        schedule: { on: Boolean(settings.morningOn), hour: Number(settings.morningHour ?? 7), count: Number(settings.morningCount ?? 3) },
         want: { summary: w.summary, reachNote: w.reachNote || '', titles: w.titles, suggestedTitles: w.suggestedTitles, ambiguous: w.ambiguous, payFloor: w.payFloor, where: w.where, dealBreakers: w.dealBreakers },
         sites: s.get('sites').list,
         ready: hasResume && w.examples.filter((e) => e.kind !== 'reach').length >= 2,
@@ -412,6 +413,31 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
       }
       rerank(null);
       return { added: added.length, needText: store().get('jobs').list.filter((j) => added.includes(j.id) && j.needsText).length };
+    },
+    'jobs.addScreenshot': async ({ files = [] }) => {
+      const SITE_HOST = { LinkedIn: 'linkedin.com', Indeed: 'indeed.com', Google: 'google.com', Glassdoor: 'glassdoor.com', ZipRecruiter: 'ziprecruiter.com' };
+      let added = 0, dupes = 0; const sources = new Set();
+      for (const f of files) {
+        const prepared = prepareFile(f);
+        if (prepared.problem) throw new UserError(prepared.problem);
+        if (!prepared.mime.startsWith('image/') && prepared.mime !== 'application/pdf') throw new UserError('Add a screenshot (PNG or JPG) of the job alert.');
+        progress('jobs', `Reading ${f.name}…`);
+        const found = await ai.jobsFromImage(claude(), prepared);
+        sources.add(found.source);
+        const host = SITE_HOST[found.source];
+        if (host) store().update('want', (w) => { w.lookIn = w.lookIn || {}; w.lookIn[host] = (w.lookIn[host] || 0) + 1; });
+        const existing = store().get('jobs').list;
+        for (const j of found.jobs) {
+          const key = `${j.title}|${j.company}`.toLowerCase();
+          if (existing.some((x) => `${x.title}|${x.company}`.toLowerCase() === key)) { dupes++; continue; }
+          const search = `https://www.google.com/search?q=${encodeURIComponent(`${j.title} ${j.company} job`)}`;
+          const job = makeJob({ source: 'alert', board: found.source, jobId: key.replace(/\W+/g, '').slice(0, 40), company: j.company || '', title: j.title, location: j.location || '', url: /^https?:\/\//.test(j.url || '') ? j.url : search, description: '', postedAt: now().toISOString() }, now());
+          Object.assign(job, { fromAlert: found.source, needsText: true, alertPay: j.pay || '', alertPosted: j.posted || '', searchUrl: search });
+          saveJob(job); added++;
+        }
+      }
+      rerank(null);
+      return { added, dupes, sources: [...sources] };
     },
     'jobs.setText': ({ id: jid, text, title, company, location }) => { const j = jobById(jid); Object.assign(j, { description: text || j.description, title: title || j.title, company: company || j.company, location: location ?? j.location, needsText: !(text || j.description) }); delete j.match; saveJob(j); rerank(null); return slimJob(j); },
     'jobs.explain': ({ id: jid, force }) => once(`explain:${jid}`, async () => {
@@ -713,7 +739,7 @@ async function inBatches(items, size, fn) {
 export class UserError extends Error { constructor(m) { super(m); this.name = 'UserError'; } }
 
 function slimJob(j) {
-  return { id: j.id, title: j.title, company: j.company, location: j.location, url: j.url, source: j.source, postedAt: j.postedAt, ageDays: j.ageDays, freshness: j.freshness, score: j.score, bucket: j.score != null ? bucket(j.score) : null, scoreReasons: j.scoreReasons, hiddenBecause: j.hiddenBecause, pay: j.pay ? payLabel(j.pay) : '', rated: j.rated || null, ratedReasons: j.ratedReasons || [], verdict: j.match?.verdict || null, why: j.match?.why || '', needsText: j.needsText || !j.description, fromAlert: j.fromAlert || null, snippet: String(j.description || '').slice(0, 280) };
+  return { id: j.id, title: j.title, company: j.company, location: j.location, url: j.url, source: j.source, postedAt: j.postedAt, ageDays: j.ageDays, freshness: j.freshness, score: j.score, bucket: j.score != null ? bucket(j.score) : null, scoreReasons: j.scoreReasons, hiddenBecause: j.hiddenBecause, pay: j.pay ? payLabel(j.pay) : '', rated: j.rated || null, ratedReasons: j.ratedReasons || [], verdict: j.match?.verdict || null, why: j.match?.why || '', needsText: j.needsText || !j.description, fromAlert: j.fromAlert || null, addedBy: j.addedBy || null, snippet: String(j.description || '').slice(0, 280) };
 }
 function slimDoc(d) { return { id: d.id, jobId: d.jobId, kind: d.kind, version: d.version, created: d.created, file: d.file, checks: d.checks, status: d.status, company: d.company, title: d.title, cuts: d.cuts || [], readable: d.readable ?? null, pages: d.pages ?? null, edited: Boolean(d.edited), pdfPath: d.pdfPath || null }; }
 

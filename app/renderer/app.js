@@ -10,10 +10,12 @@ import * as profile from './screens/profile.js';
 import * as help from './screens/help.js';
 import * as chat from './screens/chat.js';
 import * as builder from './screens/builder.js';
+import * as claudePage from './screens/claude.js';
+import * as extensionPage from './screens/extension.js';
 
 const root = document.getElementById('app');
-const NAV = [['Profile', '#/profile'], ['Journey', '#/journey'], ['Interviews', '#/interviews'], ['Documents', '#/documents'], ['Help', '#/help']];
-const ROUTES = { login, setup, build: builder, journey: dashboard, dashboard, tracker: dashboard, job, interviews, interview: interviews, documents, doc: documents, profile, help };
+const NAV = [['Profile', '#/profile'], ['Journey', '#/journey'], ['Interviews', '#/interviews'], ['Documents', '#/documents'], ['Claude', '#/claude'], ['Extension', '#/extension'], ['Help', '#/help']];
+const ROUTES = { login, setup, build: builder, claude: claudePage, extension: extensionPage, journey: dashboard, dashboard, tracker: dashboard, job, interviews, interview: interviews, documents, doc: documents, profile, help };
 
 export const app = {
   overview: null,
@@ -50,7 +52,7 @@ function paintNav() {
   const badge = { Journey: o.newJobs };
   nav.innerHTML = NAV.map(([n, h]) => {
     const isOn = h.slice(2) === active;
-    return `<a href="${h}" class="${isOn ? 'on' : ''}" ${isOn ? 'aria-current="page"' : ''}>${n}${badge[n] ? `<span class="count">${badge[n]}</span>` : ''}</a>`;
+    return `<a href="${h}" class="${isOn ? 'on' : ''}" ${isOn ? 'aria-current="page"' : ''}>${n}${badge[n] ? `<span class="count">${badge[n]}</span>` : ''}${n === 'Extension' ? ' <span class="soon">soon</span>' : ''}${n === 'Claude' && !o.hasKey ? ' <span class="count">!</span>' : ''}</a>`;
   }).join('');
   const initials = String(o.account?.name || '?').split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
   const av = root.querySelector('.avatar');
@@ -68,7 +70,7 @@ async function route() {
   await app.refresh();
   const done = app.overview.setup.done.includes(10);
   let screen = ROUTES[name];
-  if (!screen || name === 'login' || (!done && !['build', 'help', 'setup', 'profile', 'documents'].includes(name))) {
+  if (!screen || name === 'login' || (!done && !['build', 'help', 'setup', 'profile', 'documents', 'claude', 'extension'].includes(name))) {
     return app.go(done ? '#/journey' : '#/build');
   }
   document.body.classList.toggle('building', name === 'build');

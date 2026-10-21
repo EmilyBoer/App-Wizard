@@ -325,3 +325,17 @@ test('pasted jobs get their details; links teach where you look', async () => {
   assert.ok(st.sites.some((x) => x.kind === 'alerts' && x.site === 'LinkedIn'), 'LinkedIn noted as a place they look');
   assert.ok(st.sites.some((x) => x.kind === 'board' && x.board === 'lumen'));
 });
+
+test('jobs from a screenshot of a job alert', async () => {
+  const { api } = newApi();
+  await api.call('auth.create', { name: 'Jordan Lee', email: 's@example.com', password: 'longenough' });
+  const png = Buffer.from('89504e470d0a1a0a', 'hex').toString('base64');
+  const r = await api.call('jobs.addScreenshot', { files: [{ name: 'alert.png', data: png }] });
+  assert.equal(r.added, 2); assert.deepEqual(r.sources, ['LinkedIn']);
+  const again = await api.call('jobs.addScreenshot', { files: [{ name: 'alert.png', data: png }] });
+  assert.equal(again.added, 0); assert.equal(again.dupes, 2);
+  const { jobs } = await api.call('jobs.list', { view: 'all' });
+  const j = await api.call('jobs.get', { id: jobs.find((x) => x.title === 'Content Manager').id });
+  assert.equal(j.needsText, true); assert.match(j.searchUrl, /google\.com\/search/);
+  assert.equal((await api.call('builder.status')).lookIn['linkedin.com'], 2);
+});
