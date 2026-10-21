@@ -117,11 +117,12 @@ ${ctx.foot({ next: 'Continue: build my work history' })}`;
 
 function keyCard() {
   return `<section class="card featured" id="keycard"><h2>First: connect Claude</h2><p class="muted">App Wizard uses Claude to read your files and write. During testing, paste your own Claude API key. <a href="#/help/api-key">How to get one</a></p>
-<div class="row"><input type="password" id="key" placeholder="sk-ant-…" style="flex:1 1 280px"><button class="btn secondary" data-act="savekey" data-busy="Checking…">Save and test</button></div></section>`;
+<div class="row"><a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" class="btn">Sign in to Claude Console to get a key</a><span class="small muted">Sign in, press Create Key, copy it, and paste it here.</span></div>
+<div class="row"><input type="password" id="key" placeholder="sk-ant-…" style="flex:1 1 280px"><button class="btn secondary" data-act="savekey" data-busy="Checking…">Save and test</button></div><div class="note alert hidden" id="keyerr" role="alert"></div></section>`;
 }
 function wireKey(el, after) {
   on(el.querySelector('#keycard') || document.createElement('div'), {
-    savekey: (b) => act(b, async () => { await call('settings.save', { claudeKey: el.querySelector('#key').value }); await call('settings.testKey'); after(); }, { done: 'Claude is connected.' }),
+    savekey: (b) => act(b, async () => { const err = el.querySelector('#keyerr'); err.classList.add('hidden'); try { await call('settings.save', { claudeKey: el.querySelector('#key').value }); await call('settings.testKey'); } catch (e) { err.textContent = e.message; err.classList.remove('hidden'); throw e; } after(); }, { done: 'Claude is connected.' }),
   });
 }
 

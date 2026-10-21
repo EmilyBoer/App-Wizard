@@ -6,7 +6,9 @@ export class ClaudeError extends Error {}
 export function makeClaude({ apiKey, model = 'claude-sonnet-5-5', fastModel = 'claude-haiku-5-5', fetchImpl = fetch } = {}) {
   async function send({ system, content, fast = false, maxTokens = 4000, temperature = 0.3 }) {
     if (!apiKey) throw new ClaudeError('Add your Claude API key in Profile, Settings first.');
-    const res = await fetchImpl('https://api.anthropic.com/v1/messages', {
+    if (!/^sk-ant-/.test(apiKey.trim())) throw new ClaudeError('That doesn’t look like a Claude API key. Keys start with sk-ant-. Copy it again from console.anthropic.com.');
+    let res;
+    try { res = await fetchImpl('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({
@@ -16,13 +18,17 @@ export function makeClaude({ apiKey, model = 'claude-sonnet-5-5', fastModel = 'c
         system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
         messages: Array.isArray(content) && content[0]?.role ? content : [{ role: 'user', content }],
       }),
-    });
+    }); } catch (e) { throw new ClaudeError(`Couldn't reach Claude. Check your internet connection. (${e.message})`); }
     const body = await res.json().catch(() => ({}));
     if (!res.ok) {
       const msg = body?.error?.message || res.statusText;
-      if (res.status === 401) throw new ClaudeError("Claude didn't accept the API key. Check it in Profile, Settings.");
+      if (res.status === 401) throw new ClaudeError("Claude didn't accept this API key. Copy it again from console.anthropic.com (it starts with sk-ant-) and make sure nothing is cut off.");
+      if (/credit balance/i.test(msg)) throw new ClaudeError('Your Claude Console account has no credit yet. In console.anthropic.com, go to Settings, Billing and add a few dollars, then try again.');
+      if (res.status === 403) throw new ClaudeError(`This API key isn't allowed to do that (${msg}). Check the key's workspace in console.anthropic.com.`);
+      if (res.status === 404 && /model/i.test(msg)) throw new ClaudeError(`Your account can't use the model "${fast ? fastModel : model}". Change it in Profile, Settings (try claude-sonnet-5-5).`);
       if (res.status === 429) throw new ClaudeError('Claude is busy or your usage limit was reached. Try again in a minute.');
-      throw new ClaudeError(`Claude error: ${msg}`);
+      if (res.status >= 500 || res.status === 529) throw new ClaudeError('Claude is having trouble right now. Try again in a few minutes.');
+      throw new ClaudeError(`Claude said: ${msg}`);
     }
     return (body.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('');
   }

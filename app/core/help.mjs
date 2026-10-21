@@ -89,13 +89,14 @@ Company facts only come from those pages. If we couldn't read the company's site
 2. Drop in the calendar invite file (.ics). Most invites have one attached; in Gmail, open the invite and download it.
 3. Calendar connections (Google, Outlook) are coming later.` },
   { id: 'privacy', title: 'Where is my information kept?', tags: 'privacy data secure stored computer', body: `Everything is kept on your computer. To write and match, App Wizard sends the needed parts of your profile and the job to Claude (by Anthropic) through your API key. Nothing is sold or shared.` },
-  { id: 'api-key', title: 'Setting up your Claude API key', tags: 'api key claude anthropic setup cost', body: `App Wizard uses Claude to read your files and write. During testing you use your own Claude API key:
+  { id: 'api-key', title: 'Setting up your Claude API key', tags: 'api key claude anthropic setup cost console sign in', body: `App Wizard uses Claude to read your files and write. During testing you use your own Claude API key. It takes about 3 minutes.
 
-1. Go to console.anthropic.com and sign in.
-2. Open API Keys and create a key.
-3. Paste it in Profile, Settings.
+1. Go to https://console.anthropic.com and sign in (or create an account). This is separate from your regular Claude chat account, but you can use the same email.
+2. Add a little credit: Settings, Billing. Five dollars lasts most people a month or more.
+3. Open https://console.anthropic.com/settings/keys and press Create Key. Name it "App Wizard".
+4. Copy the key (it starts with sk-ant-) and paste it into App Wizard: Profile, Settings, then press Save and test.
 
-Typical cost is a few dollars a month.` },
+If the test fails, the message tells you why: usually the key was copied with a missing piece, or the account has no credit yet.` },
 ];
 
 export function searchHelp(query) {

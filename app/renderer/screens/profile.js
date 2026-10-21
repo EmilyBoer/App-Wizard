@@ -43,14 +43,14 @@ ${l.edits.length ? `<section class="card"><h2>Your recent edits</h2><p class="mu
   },
   async settings(el, app, repaint) {
     const s = await call('settings.get');
-    el.innerHTML = `<section class="card"><h2>Claude</h2><p class="muted small">App Wizard uses Claude to read and write. <a href="#/help/api-key">How to get an API key</a></p>
-<label class="field">API key<div class="row"><input type="password" id="key" value="${esc(s.claudeKey)}" placeholder="sk-ant-…" style="flex:1 1 300px"><button class="btn secondary" data-act="key" data-busy="Checking…">Save and test</button></div></label>
+    el.innerHTML = `<section class="card"><h2>Claude</h2><p class="muted small">App Wizard uses Claude to read and write. <a href="#/help/api-key">Step-by-step help</a></p><div class="row"><a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" class="btn">Sign in to Claude Console to get a key</a></div>
+<label class="field">API key<div class="row"><input type="password" id="key" value="${esc(s.claudeKey)}" placeholder="sk-ant-…" style="flex:1 1 300px"><button class="btn secondary" data-act="key" data-busy="Checking…">Save and test</button></div></label><div class="note alert hidden" id="keyerr" role="alert"></div>
 <div class="row-l"><label class="field">Writing model<input type="text" id="model" value="${esc(s.model)}"></label><label class="field">Fast model<input type="text" id="fast" value="${esc(s.fastModel)}"></label></div></section>
 <section class="card"><h2>Every morning</h2><div class="row-l"><label class="field">Time<select id="hour" style="width:auto">${[5, 6, 7, 8, 9, 10].map((h) => `<option value="${h}" ${h === Number(s.morningHour) ? 'selected' : ''}>${h}:00 AM</option>`).join('')}</select></label><label class="field">How many to get ready<select id="count" style="width:auto">${[1, 2, 3, 5, 8].map((n) => `<option ${n === Number(s.morningCount) ? 'selected' : ''}>${n}</option>`).join('')}</select></label><label class="radio" style="align-self:flex-end"><input type="checkbox" id="mon" ${s.morningOn ? 'checked' : ''}>Turned on</label></div>
 ${s.lastBatch ? `<p class="small muted">Last run ${esc(ago(s.lastBatch.at))}: ${s.lastBatch.made} made ready.</p>` : ''}</section>`;
     const save = () => call('settings.save', { morningHour: Number(el.querySelector('#hour').value), morningCount: Number(el.querySelector('#count').value), morningOn: el.querySelector('#mon').checked, model: el.querySelector('#model').value, fastModel: el.querySelector('#fast').value }).then(() => toast('Saved.'));
     el.querySelectorAll('#hour,#count,#mon,#model,#fast').forEach((i) => (i.onchange = save));
-    on(el, { key: (b) => act(b, async () => { await call('settings.save', { claudeKey: el.querySelector('#key').value }); await call('settings.testKey'); repaint(); app.refresh(); }, { done: 'Claude is connected.' }) });
+    on(el, { key: (b) => act(b, async () => { const err = el.querySelector('#keyerr'); err.classList.add('hidden'); try { await call('settings.save', { claudeKey: el.querySelector('#key').value }); await call('settings.testKey'); } catch (e) { err.textContent = e.message; err.classList.remove('hidden'); throw e; } repaint(); app.refresh(); }, { done: 'Claude is connected.' }) });
   },
   async extension(el) {
     const token = await call('ext.token');
