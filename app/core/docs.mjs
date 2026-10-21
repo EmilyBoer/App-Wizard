@@ -25,11 +25,36 @@ export function matchFont(name) {
 }
 
 export const MIN = { body: 10, heading: 11, name: 18, marginIn: 0.5, lineHeight: 1.2 };
-export const TEMPLATES = {
-  classic: { label: 'Classic', note: 'One column. Safest for every hiring system.', columns: 1 },
-  modern: { label: 'Modern', note: 'Two columns with a sidebar.', columns: 2 },
-  compact: { label: 'Compact', note: 'Fits more on one page.', columns: 1 },
+// Templates are just good starting combinations of design settings. People can change any setting after.
+export const PRESETS = {
+  classic: { label: 'Classic', note: 'Clean and traditional. Safe everywhere.', layout: 'single', header: 'left', titles: 'rule', fonts: { heading: 'Inter', body: 'Inter' }, accent: '#1F2A44', size: 10.5, spacing: 'balanced', margin: 0.6, dates: 'right', bullets: 'dot', skills: 'inline', sidebarTint: false },
+  modern: { label: 'Modern', note: 'A sidebar for skills and education.', layout: 'sidebar-left', header: 'left', titles: 'caps', fonts: { heading: 'Montserrat', body: 'Open Sans' }, accent: '#1F4E79', size: 10, spacing: 'balanced', margin: 0.55, dates: 'right', bullets: 'dot', skills: 'list', sidebarTint: true },
+  executive: { label: 'Executive', note: 'Centered and polished, for senior roles.', layout: 'single', header: 'center', titles: 'rule', fonts: { heading: 'Playfair Display', body: 'Source Sans 3' }, accent: '#222222', size: 10.5, spacing: 'balanced', margin: 0.7, dates: 'right', bullets: 'dot', skills: 'inline', sidebarTint: false },
+  minimal: { label: 'Minimal', note: 'Lots of white space, nothing extra.', layout: 'single', header: 'left', titles: 'plain', fonts: { heading: 'Work Sans', body: 'Work Sans' }, accent: '#111111', size: 10.5, spacing: 'roomy', margin: 0.75, dates: 'right', bullets: 'dash', skills: 'inline', sidebarTint: false },
+  compact: { label: 'Compact', note: 'Fits a long history on one page.', layout: 'single', header: 'split', titles: 'caps', fonts: { heading: 'Roboto', body: 'Roboto' }, accent: '#2B3A55', size: 10, spacing: 'compact', margin: 0.5, dates: 'right', bullets: 'dot', skills: 'inline', sidebarTint: false },
+  bold: { label: 'Bold', note: 'A color band up top that stands out.', layout: 'single', header: 'band', titles: 'bar', fonts: { heading: 'Montserrat', body: 'Lato' }, accent: '#0F5257', size: 10.5, spacing: 'balanced', margin: 0.55, dates: 'right', bullets: 'dot', skills: 'tags', sidebarTint: false },
+  editorial: { label: 'Editorial', note: 'Serif headings with a writer’s feel.', layout: 'single', header: 'left', titles: 'rule', fonts: { heading: 'Merriweather', body: 'Lato' }, accent: '#7A2E2E', size: 10.5, spacing: 'balanced', margin: 0.65, dates: 'below', bullets: 'dot', skills: 'inline', sidebarTint: false },
+  twotone: { label: 'Two-tone', note: 'A tinted sidebar on the right.', layout: 'sidebar-right', header: 'left', titles: 'caps', fonts: { heading: 'Raleway', body: 'Lato' }, accent: '#2E5E4E', size: 10, spacing: 'balanced', margin: 0.55, dates: 'below', bullets: 'dot', skills: 'tags', sidebarTint: true },
 };
+export const TEMPLATES = Object.fromEntries(Object.entries(PRESETS).map(([k, v]) => [k, { label: v.label, note: v.note, columns: v.layout === 'single' ? 1 : 2 }]));
+export const SECTIONS = { summary: 'Summary', experience: 'Experience', skills: 'Skills', education: 'Education', certifications: 'Certifications' };
+export const ACCENTS = ['#1F2A44', '#222222', '#1F4E79', '#0F5257', '#2E5E4E', '#7A2E2E', '#5B3A8C', '#B5452A'];
+const SPACING = { compact: { sec: 7, role: 5, li: 1, lh: 1.2 }, balanced: { sec: 11, role: 8, li: 2, lh: 1.28 }, roomy: { sec: 15, role: 11, li: 3, lh: 1.38 } };
+
+/** Fill in every design setting: the template's choices first, then what the person changed. */
+export function normalizeDesign(d = {}) {
+  const preset = PRESETS[d.template] || PRESETS.classic;
+  const out = { ...preset, ...Object.fromEntries(Object.entries(d).filter(([, v]) => v !== undefined && v !== null)) };
+  out.fonts = { ...preset.fonts, ...(d.fonts || {}) };
+  out.order = (d.order && d.order.length ? d.order : ['summary', 'experience', 'skills', 'education', 'certifications']).filter((k) => SECTIONS[k]);
+  for (const k of Object.keys(SECTIONS)) if (!out.order.includes(k)) out.order.push(k);
+  out.hidden = d.hidden || [];
+  out.sidebar = d.sidebar || ['skills', 'education', 'certifications'];
+  out.size = Math.max(MIN.body, Number(out.size) || 10.5);
+  out.margin = Math.max(MIN.marginIn, Number(out.margin) || 0.6);
+  out.accent = /^#[0-9a-f]{6}$/i.test(out.accent) ? out.accent : '#1F2A44';
+  return out;
+}
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -62,80 +87,121 @@ function contactLine(c) {
   return [c.location, c.phone, c.email, c.linkedin?.replace(/^https?:\/\/(www\.)?/, ''), c.website?.replace(/^https?:\/\//, '')].filter(Boolean).map(esc).join('<span class="dot"> · </span>');
 }
 
-/** Resume HTML. Reading order in the HTML = reading order for hiring systems. */
+function headerHtml(c, d) {
+  const items = [c.location, c.phone, c.email, c.linkedin?.replace(/^https?:\/\/(www\.)?/, ''), c.website?.replace(/^https?:\/\//, '')].filter(Boolean).map(esc);
+  if (d.header === 'split') return `<header class="h-split"><h1>${esc(c.name)}</h1><div class="contact">${items.map((x) => `<div>${x}</div>`).join('')}</div></header>`;
+  return `<header class="h-${d.header}"><h1>${esc(c.name)}</h1><div class="contact">${items.join('<span class="dot"> · </span>')}</div></header>`;
+}
+
+function headerCss(d, head, fb, nameSize) {
+  const a = d.accent;
+  return `header{margin-bottom:${d.spacing === 'compact' ? 6 : 10}pt}
+h1{font-family:"${head}",${fb};font-size:${nameSize}pt;margin:0 0 3pt;color:${a};letter-spacing:-.01em;line-height:1.1;font-weight:700}
+.contact{font-size:${MIN.body}pt;color:#3b4256}
+.h-center{text-align:center}
+.h-split{display:flex;justify-content:space-between;align-items:flex-end;gap:16pt;border-bottom:1.5pt solid ${a};padding-bottom:6pt}
+.h-split .contact{text-align:right;line-height:1.35}
+.h-band{background:${a};color:#fff;padding:12pt 14pt;border-radius:3pt}
+.h-band h1{color:#fff}
+.h-band .contact{color:#fff;opacity:.92}
+.h-band .dot{color:#fff;opacity:.6}`;
+}
+
+/** Resume HTML from the design settings. Reading order in the HTML = reading order for hiring systems. */
 export function resumeHtml(resume, design, { fontBase } = {}) {
-  const t = design.template || 'classic';
-  const page = pageSize(design);
-  const { link, css } = fontFaces(design, fontBase);
-  const head = design.fonts?.heading || 'Inter', body = design.fonts?.body || 'Inter';
-  const fallback = (f) => (SERIF.has(f) ? 'Georgia, serif' : 'Arial, sans-serif');
-  const compact = t === 'compact';
-  const accent = design.accent || '#14213D';
-  const size = Math.max(MIN.body, compact ? 10 : 10.5);
+  const d = normalizeDesign(design);
+  const page = pageSize(d);
+  const { link, css } = fontFaces(d, fontBase);
+  const head = d.fonts.heading || 'Inter', body = d.fonts.body || 'Inter';
+  const fb = (f) => (SERIF.has(f) ? 'Georgia, serif' : 'Arial, sans-serif');
+  const sp = SPACING[d.spacing] || SPACING.balanced;
+  const a = d.accent;
+  const nameSize = Math.max(MIN.name, Math.round(d.size * 2.1));
+  const hSize = Math.max(MIN.heading, d.size + 0.5);
   const c = resume.contact || {};
+  const sidebarOn = d.layout !== 'single';
+  const when = (r) => `${esc(fmtDate(r.start))}${r.end ? ` – ${esc(fmtDate(r.end))}` : ''}`;
   const roles = (resume.roles || []).map((r) => `
-<section class="role">
-  <div class="role-head"><div><span class="title">${esc(r.title)}</span><span class="co"> · ${esc(r.company)}</span></div><div class="when">${esc(fmtDate(r.start))}${r.end ? ` – ${esc(fmtDate(r.end))}` : ''}</div></div>
-  ${r.location ? `<div class="where">${esc(r.location)}</div>` : ''}
+<div class="role">
+  ${d.dates === 'below'
+    ? `<div class="title">${esc(r.title)}</div><div class="co">${esc(r.company)}</div><div class="when">${when(r)}${r.location ? ` · ${esc(r.location)}` : ''}</div>`
+    : `<div class="role-head"><div><span class="title">${esc(r.title)}</span><span class="co"> · ${esc(r.company)}</span></div><div class="when">${when(r)}</div></div>${r.location ? `<div class="where">${esc(r.location)}</div>` : ''}`}
   <ul>${(r.bullets || []).map((b) => `<li>${esc(b.text)}</li>`).join('')}</ul>
-</section>`).join('');
-  const edu = (resume.education || []).map((e) => `<div class="edu"><strong>${esc(e.degree)}${e.field ? `, ${esc(e.field)}` : ''}</strong><br>${esc(e.school)}${e.year ? ` · ${esc(e.year)}` : ''}</div>`).join('');
-  const certs = (resume.certifications || []).map((x) => `<div class="edu">${esc(x.name)}${x.year ? ` · ${esc(x.year)}` : ''}</div>`).join('');
-  const skills = (resume.skills || []).length ? `<p class="skills">${resume.skills.map(esc).join(t === 'modern' ? '<br>' : ' · ')}</p>` : '';
-  const main = `${resume.summary ? `<section><h2>Summary</h2><p class="summary">${esc(resume.summary)}</p></section>` : ''}<section><h2>Experience</h2>${roles}</section>`;
-  const side = `${skills ? `<section><h2>Skills</h2>${skills}</section>` : ''}${edu ? `<section><h2>Education</h2>${edu}</section>` : ''}${certs ? `<section><h2>Certifications</h2>${certs}</section>` : ''}`;
-  const layout = t === 'modern'
-    ? `<div class="grid"><div class="main">${main}</div><aside class="side">${side}</aside></div>`
-    : `${main}${side}`;
+</div>`).join('');
+  const skillList = resume.skills || [];
+  const inSide = (k) => sidebarOn && d.sidebar.includes(k);
+  const skillsStyle = d.skills === 'inline' && inSide('skills') ? 'list' : d.skills;
+  const blocks = {
+    summary: resume.summary ? `<p class="summary">${esc(resume.summary)}</p>` : '',
+    experience: roles,
+    skills: skillList.length ? (skillsStyle === 'tags' ? `<div class="tags">${skillList.map((x) => `<span class="tagx">${esc(x)}</span>`).join(' ')}</div>` : skillsStyle === 'list' ? `<div class="skill-list">${skillList.map((x) => `<div>${esc(x)}</div>`).join('')}</div>` : `<p class="skills">${skillList.map(esc).join(' · ')}</p>`) : '',
+    education: (resume.education || []).map((e) => `<div class="edu"><strong>${esc(e.degree)}${e.field ? `, ${esc(e.field)}` : ''}</strong><br>${esc(e.school)}${e.year ? ` · ${esc(e.year)}` : ''}</div>`).join(''),
+    certifications: (resume.certifications || []).map((x) => `<div class="edu">${esc(x.name)}${x.year ? ` · ${esc(x.year)}` : ''}</div>`).join(''),
+  };
+  const sec = (k) => (blocks[k] && !d.hidden.includes(k) ? `<section class="sec-${k}"><h2>${SECTIONS[k]}</h2>${blocks[k]}</section>` : '');
+  const mainHtml = d.order.filter((k) => !inSide(k)).map(sec).join('');
+  const sideHtml = d.order.filter((k) => inSide(k)).map(sec).join('');
+  const titleCss = {
+    rule: `text-transform:uppercase;letter-spacing:.08em;color:${a};border-bottom:1px solid #c9ceda;padding-bottom:2pt`,
+    caps: `text-transform:uppercase;letter-spacing:.12em;color:${a}`,
+    bar: `color:${a};border-left:3.5pt solid ${a};padding-left:6pt;text-transform:uppercase;letter-spacing:.06em`,
+    plain: `color:${a};font-size:${hSize + 1}pt`,
+  }[d.titles] || '';
+  const bulletCss = d.bullets === 'dash' ? `ul{list-style:none;padding-left:12pt}li{position:relative}li::before{content:"–";position:absolute;left:-10pt;color:${a}}` : d.bullets === 'none' ? 'ul{list-style:none;padding-left:0}' : `ul{padding-left:14pt}li::marker{color:${a}}`;
+  const grid = sidebarOn ? `<div class="cols ${d.layout}"><div class="main">${mainHtml}</div><aside class="side">${sideHtml}</aside></div>` : mainHtml + sideHtml;
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${esc(c.name)} Resume</title>${link}<style>
 ${css}
-@page{size:${page.w} ${page.h};margin:${MIN.marginIn}in}
+@page{size:${page.w} ${page.h};margin:${d.margin}in}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:#fff}
-body{font-family:"${body}",${fallback(body)};font-size:${size}pt;line-height:${compact ? 1.2 : 1.28};color:#1d2333}
-.page{width:calc(${page.w} - ${MIN.marginIn * 2}in)}
-header{${t === 'modern' ? `border-bottom:2px solid ${accent};padding-bottom:6pt;` : ''}margin-bottom:${compact ? 6 : 10}pt}
-h1{font-family:"${head}",${fallback(head)};font-size:${compact ? 19 : 22}pt;margin:0 0 2pt;color:${accent};letter-spacing:-.01em;line-height:1.1}
-.contact{font-size:${Math.max(MIN.body, 10)}pt;color:#3b4256}
-h2{font-family:"${head}",${fallback(head)};font-size:${MIN.heading}pt;text-transform:uppercase;letter-spacing:.08em;color:${accent};margin:${compact ? 7 : 11}pt 0 ${compact ? 3 : 5}pt;${t === 'classic' ? 'border-bottom:1px solid #c9ceda;padding-bottom:2pt;' : ''}break-after:avoid}
-section{break-inside:auto}
-.role{margin-bottom:${compact ? 5 : 8}pt;break-inside:avoid-page}
+body{font-family:"${body}",${fb(body)};font-size:${d.size}pt;line-height:${sp.lh};color:#1d2333;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.page{width:calc(${page.w} - ${d.margin * 2}in)}
+${headerCss(d, head, fb(head), nameSize)}
+h2{font-family:"${head}",${fb(head)};font-size:${hSize}pt;margin:${sp.sec}pt 0 ${Math.round(sp.sec / 2)}pt;font-weight:700;break-after:avoid;${titleCss}}
+.role{margin-bottom:${sp.role}pt;break-inside:avoid-page}
 .role-head{display:flex;justify-content:space-between;gap:8pt;align-items:baseline}
 .title{font-weight:700}.co{font-weight:600}
-.when,.where{font-size:${MIN.body}pt;color:#4a5168;white-space:nowrap}
-ul{margin:${compact ? 2 : 3}pt 0 0;padding-left:14pt}
-li{margin:0 0 ${compact ? 1 : 2}pt}
+.when,.where{font-size:${MIN.body}pt;color:#4a5168}
+.role-head .when{white-space:nowrap}
+ul{margin:${Math.max(1, sp.li + 1)}pt 0 0}
+li{margin:0 0 ${sp.li}pt}
+${bulletCss}
 p{margin:0}
 .edu{margin-bottom:4pt}
-.grid{display:grid;grid-template-columns:${t === 'modern' ? '1fr 30%' : '1fr'};gap:16pt}
-.side{order:${t === 'modern' ? 2 : 0}}
+.skill-list div{margin-bottom:2pt}
+.tags{display:flex;flex-wrap:wrap;gap:4pt}
+.tagx{border:1px solid ${a}55;border-radius:3pt;padding:1pt 5pt;font-size:${MIN.body}pt}
+.cols{display:grid;gap:18pt;grid-template-columns:${d.layout === 'sidebar-left' ? '30% 1fr' : '1fr 30%'};grid-template-areas:${d.layout === 'sidebar-left' ? '"side main"' : '"main side"'}}
+.main{grid-area:main;min-width:0}.side{grid-area:side;min-width:0${d.sidebarTint ? `;background:${a}12;padding:4pt 10pt 10pt;border-radius:4pt` : ''}}
+.side h2:first-child{margin-top:${d.sidebarTint ? 6 : 0}pt}
+.main section:first-child h2{margin-top:${sidebarOn ? 0 : sp.sec}pt}
 .dot{color:#9aa1b3}
-@media screen{body{padding:${MIN.marginIn}in}}
+@media screen{body{padding:${d.margin}in}}
 </style></head><body><div class="page">
-<header><h1>${esc(c.name)}</h1><div class="contact">${contactLine(c)}</div></header>
-${layout}
+${headerHtml(c, d)}
+${grid}
 </div></body></html>`;
 }
 
 export function letterHtml(letter, resumeContact, design, job, { fontBase, date = new Date() } = {}) {
+  design = normalizeDesign(design);
   const page = pageSize(design);
   const { link, css } = fontFaces(design, fontBase);
-  const head = design.fonts?.heading || 'Inter', body = design.fonts?.body || 'Inter';
+  const head = design.fonts.heading || 'Inter', body = design.fonts.body || 'Inter';
   const fb = (f) => (SERIF.has(f) ? 'Georgia, serif' : 'Arial, sans-serif');
-  const accent = design.accent || '#14213D';
   const c = resumeContact || {};
   const d = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${esc(c.name)} Cover Letter</title>${link}<style>
 ${css}
 @page{size:${page.w} ${page.h};margin:0.8in}
-body{margin:0;font-family:"${body}",${fb(body)};font-size:11pt;line-height:1.45;color:#1d2333}
-h1{font-family:"${head}",${fb(head)};font-size:22pt;margin:0 0 2pt;color:${accent};line-height:1.1}
-.contact{font-size:10pt;color:#3b4256;margin-bottom:22pt}
+body{margin:0;font-family:"${body}",${fb(body)};font-size:11pt;line-height:1.45;color:#1d2333;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+${headerCss(design, head, fb(head), 22)}
+header{margin-bottom:22pt}
 p{margin:0 0 10pt}
 .to{margin-bottom:14pt}
 @media screen{body{padding:0.8in}}
 </style></head><body>
-<h1>${esc(c.name)}</h1><div class="contact">${contactLine(c)}</div>
+${headerHtml(c, design)}
 <p>${esc(d)}</p>
 <p class="to">${esc(job.company)}<br>Re: ${esc(job.title)}</p>
 <p>${esc(letter.greeting)}</p>

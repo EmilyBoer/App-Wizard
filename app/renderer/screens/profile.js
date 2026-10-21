@@ -2,13 +2,13 @@ import { call, esc, tag, act, toast, on, modal, ago } from '../lib.js';
 import { dashboard as setupDashboard } from './builder.js';
 import { embed as embedPage } from './setup.js';
 
-const TABS = [['setup', 'Your choices'], ['style', 'Writing style'], ['design', 'Resume design'], ['learned', 'What we’ve learned']];
+const TABS = [['setup', 'Your information'], ['style', 'Writing style'], ['design', 'Resume design'], ['learned', 'What we’ve learned']];
 
 export async function render(root, [tab = 'setup'], app) {
   if (!TAB[tab]) tab = 'setup';
   const paint = async () => {
     root.innerHTML = `<div class="page">
-<div class="head"><div><h1>Profile</h1><p class="muted">Every choice you made in setup, and how Job Wizard works for you. Change anything and your matches update.</p></div></div>
+<div class="head"><div><h1>Profile</h1><p class="muted">Everything Job Wizard knows about you and your search. Change anything and your matches update.</p></div></div>
 <nav class="row" aria-label="Profile sections">${TABS.map(([k, l]) => `<a class="chip" aria-pressed="${k === tab}" href="#/profile/${k}" style="text-decoration:none">${l}</a>`).join('')}</nav>
 <div id="tab"></div></div>`;
     const el = root.querySelector('#tab');

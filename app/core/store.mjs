@@ -11,7 +11,7 @@ const DEFAULTS = {
   profile: { contact: {}, roles: [], education: [], skills: [], conflicts: [], underselling: [], certifications: [] },
   want: { examples: [], titles: [], suggestedTitles: [], work: [], places: {}, ambiguous: [], payFloor: null, where: [], level: [], jobType: [], dealBreakers: [], summary: null, keywords: [] },
   voice: { samples: [], dials: { formal: 2, detail: 2, confidence: 2, color: 2 }, never: ['passionate', 'synergy', 'rockstar', 'results-driven'], approvedLines: [], notes: [] },
-  design: { template: 'classic', fonts: { heading: 'Inter', body: 'Inter' }, customFonts: [], paper: 'letter', length: 'one', yearsBack: 15, accent: '#14213D', canva: null },
+  design: { template: 'classic', customFonts: [], paper: 'letter', length: 'one', yearsBack: 15, canva: null },
   sites: { list: [] },
   answers: { list: [] },
   materials: { list: [] },

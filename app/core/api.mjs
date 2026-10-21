@@ -12,7 +12,7 @@ import { mergeProfile, settleConflict, decideUnderselling, addBullet, pendingCou
 import { rankJobs, parsePay, payLabel, bucket, EMPLOYER_TYPES, WORK_TYPES } from './match.mjs';
 import { recordEvent, learnFromNo, learnFromYes, learnFromEdit, writingEdits, mergeRules, learningSummary } from './learn.mjs';
 import { addToTracker, setStatus, findDuplicate, dueFollowUps, toCsv, STATUSES, STATUS_LABEL } from './tracker.mjs';
-import { resumeHtml, letterHtml, fileName, resumeText, letterText, matchFont, FONTS, TEMPLATES, cutOnce, expectedText, readableCheck, maxPages, pageSize } from './docs.mjs';
+import { resumeHtml, letterHtml, fileName, resumeText, letterText, matchFont, FONTS, TEMPLATES, PRESETS, SECTIONS, ACCENTS, normalizeDesign, cutOnce, expectedText, readableCheck, maxPages, pageSize } from './docs.mjs';
 import { jobsFromAlertEmail, parseIcs, researchCompany } from './intake.mjs';
 import { ARTICLES, searchHelp } from './help.mjs';
 import { identifyWebsite, fetchAll, checkJobLink, readSource, parseJobUrl, makeJob } from '../../engine/src/index.mjs';
@@ -184,8 +184,17 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
     }),
 
     // ----- design -----
-    'design.get': () => ({ ...store().get('design'), fonts_available: FONTS, templates: TEMPLATES, years: yearsOfExperience(store().get('profile')) }),
-    'design.save': (patch) => store().update('design', (d) => { for (const k of ['template', 'paper', 'length', 'yearsBack', 'accent']) if (k in patch) d[k] = patch[k]; if (patch.fonts) d.fonts = { ...d.fonts, ...patch.fonts }; }),
+    'design.get': () => ({ ...normalizeDesign(store().get('design')), raw: store().get('design'), fonts_available: FONTS, templates: TEMPLATES, presets: PRESETS, sections: SECTIONS, accents: ACCENTS, years: yearsOfExperience(store().get('profile')) }),
+    'design.save': (patch) => store().update('design', (d) => {
+      for (const k of ['template', 'paper', 'length', 'yearsBack', 'accent', 'layout', 'header', 'titles', 'size', 'spacing', 'margin', 'dates', 'bullets', 'skills', 'sidebarTint', 'order', 'hidden', 'sidebar']) if (k in patch) d[k] = patch[k];
+      if (patch.fonts) d.fonts = { ...(d.fonts || {}), ...patch.fonts };
+    }),
+    // Pick a template: take all its settings, keep page size, length, history and uploaded fonts.
+    'design.applyPreset': ({ id: pid }) => store().update('design', (d) => {
+      if (!PRESETS[pid]) throw new UserError('Unknown template.');
+      for (const k of ['layout', 'header', 'titles', 'size', 'spacing', 'margin', 'dates', 'bullets', 'skills', 'sidebarTint', 'accent', 'order', 'hidden', 'sidebar']) delete d[k];
+      d.template = pid; d.fonts = { ...PRESETS[pid].fonts };
+    }),
     'design.uploadFont': ({ name, data }) => {
       const info = fontInfo(data);
       const family = info.family || name.replace(/\.(ttf|otf|woff2?)$/i, '').replace(/[-_](Regular|Bold|Italic|Medium|Light|SemiBold).*/i, '');
@@ -202,15 +211,23 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
       const heading = matchFont(fontsFound[0]), body = matchFont(fontsFound[1] || fontsFound[0]);
       const missing = fontsFound.filter((f) => !FONTS.some((x) => x.toLowerCase() === String(f).toLowerCase()));
       const template = look.columns === 2 ? 'modern' : look.looksLike === 'compact' ? 'compact' : 'classic';
-      store().update('design', (d) => { d.template = template; d.fonts = { heading, body }; d.accent = /^#[0-9a-f]{6}$/i.test(look.accent) ? look.accent : d.accent; d.canva = { name, base64: prepared.base64, fontsFound, missing, decorations: look.decorations || [], sections: look.sections || [], imported: now().toISOString(), approved: false }; });
+      store().update('design', (d) => { d.template = template; d.layout = look.columns === 2 ? (look.sidebar === 'right' ? 'sidebar-right' : 'sidebar-left') : 'single'; d.fonts = { heading, body }; d.accent = /^#[0-9a-f]{6}$/i.test(look.accent) ? look.accent : d.accent; d.canva = { name, base64: prepared.base64, fontsFound, missing, decorations: look.decorations || [], sections: look.sections || [], imported: now().toISOString(), approved: false }; });
       return { template, fonts: { heading, body }, fontsFound, missing, decorations: look.decorations || [] };
     },
     'design.approveCanva': ({ approved }) => store().update('design', (d) => { if (d.canva) d.canva.approved = approved; if (!approved) d.canva = null; }),
-    'design.preview': () => {
+    'design.preview': ({ override } = {}) => {
       const p = store().get('profile');
-      const resume = { contact: p.contact, summary: p.summary, roles: p.roles.slice(0, 4).map((r) => ({ ...r, bullets: r.bullets.slice(0, 4) })), skills: p.skills.slice(0, 10).map((s) => s.name), education: p.education, certifications: p.certifications };
+      const resume = { contact: p.contact, summary: p.summary, roles: p.roles.slice(0, 4).map((r) => ({ ...r, bullets: r.bullets.slice(0, 4) })), skills: p.skills.slice(0, 12).map((s) => s.name), education: p.education, certifications: p.certifications };
       if (!resume.roles.length) Object.assign(resume, SAMPLE_RESUME(p.contact));
-      return { html: resumeHtml(resume, store().get('design')), resume };
+      const design = override ? { ...store().get('design'), ...override } : store().get('design');
+      return { html: resumeHtml(resume, design), resume };
+    },
+    'design.thumbnails': () => {
+      const p = store().get('profile');
+      const resume = { contact: p.contact, summary: p.summary, roles: p.roles.slice(0, 3).map((r) => ({ ...r, bullets: r.bullets.slice(0, 3) })), skills: p.skills.slice(0, 10).map((s) => s.name), education: p.education, certifications: p.certifications };
+      if (!resume.roles.length) Object.assign(resume, SAMPLE_RESUME(p.contact));
+      const keep = store().get('design');
+      return Object.fromEntries(Object.keys(PRESETS).map((k) => [k, resumeHtml(resume, { template: k, paper: keep.paper, customFonts: keep.customFonts })]));
     },
 
     // ----- what you want -----
@@ -282,9 +299,7 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
         for (const t of out.employerTypes || []) if (EMPLOYER_TYPES[t] && !x.places[t]) x.places[t] = 'Love';
         const prev = new Map((x.suggestedTitles || []).map((t) => [t.title, t]));
         x.suggestedTitles = (out.suggestedTitles || []).filter((t) => !x.titles.includes(t)).map((t) => prev.get(t) || { title: t, accepted: null });
-        const choices = new Map((x.ambiguous || []).map((a) => [a.word.toLowerCase(), a.choice]));
-        const JUNK = /^(cms|gtm|seo|crm|api|ui|ux|manager|lead|senior|operations|catalog|migration|agency|sensors?)$/i;
-        x.ambiguous = (out.ambiguous || []).filter((a) => a.word && !JUNK.test(a.word.trim())).slice(0, 3).map((a) => ({ ...a, choice: choices.get(a.word.toLowerCase()) ?? null }));
+        x.ambiguous = (x.ambiguous || []).filter((a) => a.choice);
         if (!x.payFloor && out.payRange) { const p = parsePay(out.payRange.replace(/k/g, 'k ')); if (p) x.payFloor = p.min; }
         if (!x.level.length && ['mid', 'senior', 'lead', 'manager'].includes(out.level)) x.level = [out.level[0].toUpperCase() + out.level.slice(1)];
       });
@@ -303,7 +318,8 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
         hasResume, profileBuilt: p.roles.length > 0,
         profileStale: hasResume && mats.some((m) => ['resume', 'linkedin', 'review', 'portfolio'].includes(m.kind) && !m.inProfile),
         profile: { contact: p.contact, roles: p.roles.map((r) => ({ title: r.title, company: r.company, start: r.start, end: r.end, results: r.bullets.length })), skills: p.skills.map((x) => x.name), years: yearsOfExperience(p), checks: pendingCount(p) },
-        interviewed: by('interviewed'), fit: by('fit'), reach: by('reach'),
+        interviewed: [...by('interviewed'), ...s.get('tracker').list.filter((t) => ['interviewing', 'offer'].includes(t.status) && !w.examples.some((e) => e.kind === 'interviewed' && String(e.company).toLowerCase() === String(t.company).toLowerCase())).map((t) => ({ id: t.id, title: t.title, company: t.company, fromJourney: true }))],
+        fit: by('fit'), reach: by('reach'),
         voice: { samples: s.get('voice').samples.map((x) => ({ id: x.id, name: x.name, words: String(x.text || '').split(/\s+/).length })), sampleLine: s.get('voice').sampleLine || '', useResume: Boolean(s.get('voice').useResume) },
         lookIn: w.lookIn || {},
         schedule: { on: Boolean(settings.morningOn), hour: Number(settings.morningHour ?? 7), count: Number(settings.morningCount ?? 3) },

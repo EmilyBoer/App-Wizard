@@ -114,9 +114,7 @@ test('jobs flow: refresh from a live list, filter, rate, learn, tracker', async 
   await setUpUser(api);
   await api.call('want.save', { titles: ['Website Manager', 'Web Producer'], payFloor: 85000, where: ['Remote'], dealBreakers: ['Sales targets'], work: ['Running the website'] });
   await api.call('want.analyze');
-  const want = await api.call('want.get');
-  want.ambiguous[0].choice = 'Building software';
-  await api.call('want.save', { ambiguous: want.ambiguous });
+  await api.call('want.save', { ambiguous: [{ word: 'Development', meanings: ['Fundraising', 'Building software'], choice: 'Building software' }] });
   const site = await api.call('sites.add', { url: 'https://boards.greenhouse.io/lumen' });
   assert.equal(site.kind, 'board');
   const r = await api.call('jobs.refresh');
@@ -243,7 +241,7 @@ test('design: Canva import picks a layout and swaps fonts', async () => {
   assert.deepEqual(r.missing, ['Brice']);
   const prev = await api.call('design.preview');
   assert.match(prev.html, /Montserrat/);
-  assert.match(prev.html, /grid-template-columns:1fr 30%/);
+  assert.match(prev.html, /grid-template-columns:30% 1fr/);
 });
 
 test('missing API key gives a plain message', async () => {

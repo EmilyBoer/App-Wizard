@@ -1,4 +1,5 @@
 import { call, esc, tag, chip, radio, act, toast, on, readFiles, dropZone, modal, working, posted, sparkle } from '../lib.js';
+import { renderDesigner } from './designer.js';
 
 const STEPS = ['Your account', 'Your materials', 'Your experience', 'Your voice', 'Resume design', 'What you want', 'Job sites', 'Standard answers', 'Rate 10 real jobs', 'All set'];
 const MINUTES_LEFT = { 2: 25, 3: 20, 4: 17, 5: 14, 6: 11, 7: 8, 8: 5, 9: 3, 10: 0 };
@@ -207,7 +208,7 @@ async function voice(ctx) {
 ${v.samples.map((s) => `<div class="row">${tag('Added', 'good')}<span class="grow">${esc(s.name)} <span class="small muted">· ${esc(s.text.slice(0, 80))}…</span></span><button class="btn small" data-act="delsample" data-id="${s.id}">Remove</button></div>`).join('')}
 <div class="row"><button class="btn secondary" data-act="paste">Paste writing</button><label class="btn">Add a file<input type="file" class="sr" id="wfile" accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg"></label></div></section>
 <section class="card"><h2>Quick dials</h2>${dial('formal', 'Formal', 'Relaxed')}${dial('detail', 'Short', 'Detailed')}${dial('confidence', 'Modest', 'Confident')}${dial('color', 'Plain', 'Colorful')}</section>
-<section class="card"><h2>Words you’d never say</h2><div class="row">${v.never.map((w) => `<button class="chip" aria-pressed="true" data-act="delword" data-w="${esc(w)}">${esc(w)} ×</button>`).join('')}<input type="text" id="word" placeholder="Add your own" style="width:200px"></div></section>
+<section class="card"><h3>Words or phrases to leave out</h3><p class="small muted" style="margin-top:-8px">We’ll never use these in your letters or answers.</p><div class="leave-out">${v.never.map((w) => `<span class="word">${esc(w)}<button type="button" data-act="delword" data-w="${esc(w)}" aria-label="Remove ${esc(w)}">×</button></span>`).join('')}<input type="text" id="word" placeholder="Add a word or phrase" style="width:220px;font-size:14px;padding:5px 10px"></div></section>
 <section class="card featured"><h2>Does this sound like you?</h2>
 ${v.sampleLine ? `<p class="muted">A line we wrote from your experience, in your voice.</p><blockquote style="margin:0;padding:16px 20px;border-left:4px solid var(--spark);background:var(--panel);border-radius:8px;font-size:18px;line-height:28px">${esc(v.sampleLine)}</blockquote>
 ${v.sampleRating ? `<div class="note ${v.sampleRating === 'yes' ? 'good' : 'muted'}">${v.sampleRating === 'yes' ? 'Great. We’ll write like this.' : 'Thanks. We’ve noted what to change.'}</div>` : ''}
@@ -235,49 +236,9 @@ ${ctx.foot()}`;
 // ---------------- 5. Resume design ----------------
 async function design(ctx) {
   const { el } = ctx;
-  const paint = async () => {
-    const [d, prev] = await Promise.all([call('design.get'), call('design.preview')]);
-    const fonts = [...d.fonts_available, ...d.customFonts.map((f) => f.family)];
-    const fontSel = (k) => `<select data-font="${k}" style="width:auto">${fonts.map((f) => `<option ${f === d.fonts[k] ? 'selected' : ''}>${esc(f)}</option>`).join('')}</select>`;
-    const tpl = (key, label, note, extra = '') => `<button class="pick ${d.template === key && !(d.canva?.approved && key !== d.template) ? 'on' : ''}" data-act="tpl" data-t="${key}"><div style="height:110px;border:1px solid var(--line);border-radius:8px;background:#fff;padding:10px;display:flex;${key === 'modern' ? 'gap:8px' : 'flex-direction:column;gap:5px'}">${key === 'modern' ? '<div style="width:30%;background:var(--panel);border-radius:3px"></div><div style="flex:1;display:flex;flex-direction:column;gap:5px">' : ''}<div style="height:9px;width:50%;background:#14213D;border-radius:3px"></div>${[90, 70, 85, 60, 80, 50].slice(0, key === 'compact' ? 6 : 5).map((w) => `<div style="height:5px;border-radius:3px;background:#D9DCE6;width:${w}%"></div>`).join('')}${key === 'modern' ? '</div>' : ''}</div><b style="margin-top:6px">${label}</b>${extra}<span class="small muted">${note}</span></button>`;
-    el.innerHTML = `${ctx.head('How should your resume look?', 'Pick a template or bring your own Canva design. Every resume we make for you uses this look.')}
-<section class="card"><h2>Pick a look</h2><div class="grid-s">
-${tpl('classic', 'Classic', 'One column. Safest for every hiring system.')}${tpl('modern', 'Modern', 'Two columns with a sidebar.')}${tpl('compact', 'Compact', 'Fits more on one page.')}
-</div>
-<div class="row"><label class="btn secondary">Import from Canva (PDF)<input type="file" class="sr" id="canva" accept=".pdf"></label><span class="small muted">In Canva: Share, Download, PDF Standard. Then pick it here.</span><span data-progress class="small muted"></span></div></section>
-${d.canva ? `<section class="card featured"><h2>Your design, rebuilt</h2><p class="muted">Check that it looks close enough.${d.canva.decorations?.length ? ` ${esc(d.canva.decorations.join(', '))} became plain text so hiring systems can read them.` : ''}</p>
-<div class="row">${tag(d.canva.approved ? 'Using your design' : 'Check it', d.canva.approved ? 'good' : 'att')}<span class="small muted">Imported ${esc(d.canva.name)}. Layout: ${d.template === 'modern' ? 'two columns' : 'one column'}. Fonts found: ${esc((d.canva.fontsFound || []).join(', ') || 'none')}.</span></div>
-${d.canva.approved ? '' : '<div class="row"><button class="btn primary" data-act="canva-ok">Looks right</button><button class="btn" data-act="canva-no">Not close enough, use a template</button></div>'}</section>` : ''}
-<section class="card"><h2>Preview</h2><p class="muted small">${prev.resume.roles?.[0]?.bullets?.[0]?.text?.startsWith('Your strongest') ? 'Sample text. Your real resumes use your profile.' : 'Built from your profile.'}</p><div class="paper-wrap"><iframe class="docframe" id="pv" title="Resume preview" style="height:720px;max-width:820px;display:block;margin:0 auto"></iframe></div></section>
-<section class="card"><h2>Fonts</h2><p class="muted">We include 12 free Google Fonts that are safe to put in PDFs.</p>
-${(d.canva?.missing || []).length ? `<div class="note att"><b>Your design uses ${esc(d.canva.missing.join(' and '))}, which we don’t include.</b> We swapped in the closest match. You can keep it, pick another, or upload your own font file.</div>` : ''}
-<div class="row-l"><label class="field">Headings ${fontSel('heading')}</label><label class="field">Body text ${fontSel('body')}</label></div>
-<div class="row"><label class="btn">Upload my own font (.ttf, .otf, .woff, .woff2)<input type="file" class="sr" id="font" accept=".ttf,.otf,.woff,.woff2"></label><a class="small" href="#/help/custom-font">Help: Adding a custom font</a></div>
-${d.customFonts.map((f) => `<div class="item" style="padding:8px 0">${f.embeddable ? tag('Uploaded', 'good') : tag('Can’t embed', 'alert')}<div class="grow"><div>${esc(f.family)}</div><div class="small muted">${f.embeddable ? 'Ready to use. Stays on your computer.' : 'This font file says it can’t be placed inside PDFs. The PDF may show a different font on other computers.'}</div></div><button class="btn small" data-act="delfont" data-f="${esc(f.family)}">Remove</button></div>`).join('')}
-<p class="tiny muted">Uploading your own font? You need the right to use it; check where you got it.</p></section>
-<div class="grid">
-<section class="card"><h2>Length and size</h2>
-<div class="stack-s"><b class="small">Paper</b><div class="row">${radio('paper', 'letter', 'US Letter', d.paper !== 'a4')}${radio('paper', 'a4', 'A4', d.paper === 'a4')}</div></div>
-<div class="stack-s"><b class="small">Length</b><div class="row">${radio('length', 'one', 'One page', d.length !== 'one-half')}${radio('length', 'one-half', 'Up to 1½ pages', d.length === 'one-half')}</div>${d.years >= 10 ? `<span class="small muted">Recommended for you: you have ${d.years} years of experience.</span>` : ''}</div>
-<div class="stack-s"><b class="small">How far back to go</b><div class="row">${[10, 15, 50].map((y) => radio('years', y, y === 50 ? 'Everything' : `${y} years`, Number(d.yearsBack) === y)).join('')}</div></div>
-<p class="tiny muted">Text never gets smaller than 10 point. If it doesn’t fit, we trim the least relevant lines from your oldest roles first and show you what we cut.</p></section>
-<section class="card"><h2>Downloads</h2><p class="muted">Every resume and cover letter comes as:</p><div class="row">${tag('PDF', 'good')}${tag('Plain text', 'good')}</div><p class="tiny muted">File names look like <span style="font-family:var(--mono)">First_Last_Resume_Company_Role.pdf</span></p><div class="note muted">Need to edit? Change any line inside Job Wizard before you download, or copy the plain text into Word or Google Docs.</div></section>
-</div>
-${ctx.foot()}`;
-    el.querySelector('#pv').srcdoc = prev.html;
-    el.querySelectorAll('[data-font]').forEach((s) => (s.onchange = async () => { await call('design.save', { fonts: { [s.dataset.font]: s.value } }); paint(); }));
-    el.querySelectorAll('input[name=paper],input[name=length],input[name=years]').forEach((r) => (r.onchange = async () => { await call('design.save', r.name === 'years' ? { yearsBack: Number(r.value) } : { [r.name]: r.value }); paint(); }));
-    el.querySelector('#canva').onchange = async (e) => { const [f] = await readFiles(e.target.files); el.querySelector('[data-progress]').innerHTML = '<span class="spin"></span> Looking at your design…'; try { await call('design.importCanva', f); } catch (ex) { toast(ex.message, true); } paint(); };
-    el.querySelector('#font').onchange = async (e) => { const [f] = await readFiles(e.target.files); try { const r = await call('design.uploadFont', f); if (r.warning) toast(r.warning, true); else toast(`${r.family} is ready. Pick it under Headings or Body text.`); } catch (ex) { toast(ex.message, true); } paint(); };
-  };
-  on(el, {
-    tpl: async (b) => { await call('design.save', { template: b.dataset.t }); paint(); },
-    'canva-ok': async () => { await call('design.approveCanva', { approved: true }); paint(); },
-    'canva-no': async () => { await call('design.approveCanva', { approved: false }); await call('design.save', { template: 'classic' }); paint(); },
-    delfont: async (b) => { await call('design.removeFont', { family: b.dataset.f }); paint(); },
-    next: () => ctx.next(),
-  });
-  await paint();
+  el.innerHTML = `${ctx.head('How should your resume look?', 'Pick a template, then change anything: layout, sidebar, section order, colors, fonts and spacing. Every resume Job Wizard makes for you uses this design.')}<div id="dz"></div>${ctx.foot()}`;
+  await renderDesigner(el.querySelector('#dz'), { dark: document.body.classList.contains('building') });
+  on(el, { next: () => ctx.next() });
 }
 
 // ---------------- 6. What you want ----------------

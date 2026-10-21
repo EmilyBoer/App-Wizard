@@ -24,7 +24,7 @@ ${st.materials.length ? `<p class="small"><b>${st.materials.length} file${st.mat
     },
     next(el, st) { if (!st.hasResume) { toast('Add at least one resume or your LinkedIn PDF to continue.', true); return false; } call('builder.prepareProfile').catch(() => {}); } },
 
-  { id: 'interviewed', ask: 'Which jobs got you interviews lately?', help: 'Even if they didn’t work out. These are the strongest sign of where you fit, because an employer already said yes.', skip: 'I haven’t had interviews lately',
+  { id: 'interviewed', ask: 'Where have you interviewed recently?', help: 'Even if they didn’t work out. These are the strongest sign of where you fit, because an employer already said yes.', skip: 'I haven’t had interviews lately',
     body: (st) => jobAdder(st.interviewed, 'interviewed'), mount: (el, st, ui) => wireAdder(el, 'interviewed', ui) },
 
   { id: 'fit', ask: 'Add 4 jobs that really suit your background.', help: 'Real postings you’d apply to tomorrow. Paste a link or the job’s text, or drop a file.',
@@ -113,11 +113,7 @@ ${(st.want.suggestedTitles || []).filter((x) => x.accepted == null).length ? `<b
     },
     next(el, st) { if (!st.want.titles.length) { toast('Keep at least one job title.', true); return false; } } },
 
-  { id: 'words', when: (st) => (st.want.ambiguous || []).length > 0, ask: 'Quick check: these words mean two things.', help: 'Job posts use them in different ways. Which do you mean?',
-    body: (st) => st.want.ambiguous.map((a, i) => `<div class="stack-s"><b>“${esc(a.word)}”</b><div class="row">${[...a.meanings, 'Both', 'Neither, skip these'].map((m) => { const v = m === 'Both' ? 'both' : m.startsWith('Neither') ? 'skip' : m; return radio(`amb${i}`, v, m, a.choice === v); }).join('')}</div></div>`).join(''),
-    mount(el, st) { el.querySelectorAll('input[name^=amb]').forEach((r) => (r.onchange = () => { st.want.ambiguous[Number(r.name.slice(3))].choice = r.value; call('want.save', { ambiguous: st.want.ambiguous }); })); } },
-
-  { id: 'design', ask: 'How should your resume look?', help: 'Pick a look, or bring your own Canva design. Every resume Job Wizard makes for you uses it. The preview below is built from your real experience.', custom: true },
+  { id: 'design', ask: 'How should your resume look?', help: 'Pick a template, then make it yours: layout, sidebar, section order, color, fonts and spacing. The preview is your real resume and changes as you go.', custom: true },
 
   { id: 'rate', ask: 'Last one: rate a few real jobs.', help: 'These are live jobs we found with your answers. Every yes and no teaches Job Wizard what fits before your first morning batch.', skip: 'Skip for now', custom: true },
 
@@ -158,7 +154,7 @@ export async function render(root, params, app) {
       try { st = await q.enter(); q._entered = true; } catch (e) { body.innerHTML = `<div class="note alert">${esc(e.message)}</div>`; foot.innerHTML = navButtons(q, idx); return; }
     }
     if (q.id === 'rate') return rateScreen(body, foot);
-    if (q.id === 'design') { body.innerHTML = working('Loading the preview…'); foot.innerHTML = navButtons(q, idx); await embedPage(body, 5, app, { title: false }); return; }
+    if (q.id === 'design') { root.querySelector('.page').style.maxWidth = '1280px'; body.innerHTML = working('Loading the preview…'); foot.innerHTML = navButtons(q, idx); await embedPage(body, 5, app, { title: false }); return; }
     if (q.id === 'done') return doneScreen(body, foot);
     body.innerHTML = q.body(st, ui);
     foot.innerHTML = navButtons(q, idx);
@@ -259,14 +255,13 @@ export async function dashboard(root, app, { embedded = false } = {}) {
   const row = (label, value, href, action = 'Change') => `<div class="choice"><div class="choice-label">${label}</div><div class="choice-value">${value || none}</div>${href ? `<a class="btn small" href="${href}">${action}</a>` : '<span></span>'}</div>`;
   const jobs = (l) => (l.length ? l.map((x) => `<div>${esc(x.title || 'Job')}${x.company ? ` <span class="muted">· ${esc(x.company)}</span>` : ''}</div>`).join('') : '');
   const pills = (l) => `<div class="row">${l.map((t) => `<span class="pill">${esc(t)}</span>`).join('')}</div>`;
-  const words = (w.ambiguous || []).filter((a) => a.choice);
   const hosts = Object.entries(st.lookIn || {}).sort((a, b) => b[1] - a[1]);
   const watched = st.sites.filter((x) => x.kind === 'board' || x.kind === 'webpage').length;
   const section = (title, rows) => `<section class="choices"><h2>${title}</h2><div class="choice-list">${rows.join('')}</div></section>`;
   root.innerHTML = `<div class="${embedded ? 'stack' : 'page'}" style="gap:32px;max-width:960px">
 ${st.done ? '' : '<div class="note att row between"><span>Setup isn’t finished yet.</span><a class="btn primary" href="#/build">Finish setup</a></div>'}
 ${section('About you', [
-    row('Name and contact', [c.name, c.email, c.phone, c.location].filter(Boolean).map(esc).join(' · ') + ([c.linkedin, c.website].some(Boolean) ? `<div class="small muted">${[c.linkedin, c.website].filter(Boolean).map(esc).join(' · ')}</div>` : ''), '#/build/found?back=1', 'Edit'),
+    `<div class="choice"><div class="choice-label">Contact details</div><div class="choice-value"><div class="contact-grid">${[['name', 'Full name'], ['email', 'Email'], ['phone', 'Phone'], ['location', 'City and state'], ['linkedin', 'LinkedIn'], ['website', 'Portfolio or website']].map(([k, l]) => `<label class="field small">${l}<input type="text" data-contact="${k}" value="${esc(c[k] || '')}" placeholder="${{ linkedin: 'linkedin.com/in/…', website: 'yoursite.com', location: 'e.g. Portland, OR' }[k] || ''}"></label>`).join('')}</div><span class="tiny muted">Saved as you type. These go at the top of every resume and letter.</span></div><span></span></div>`,
     row('Experience', `${st.profile.roles.length} roles · ${st.profile.skills.length} skills · ${st.profile.years} years${st.profile.checks ? ` · <a href="#/setup/3">${st.profile.checks} things to check</a>` : ''}<div class="small muted">From ${st.materials.length} file${st.materials.length === 1 ? '' : 's'}. <a href="#/documents">Add more in Documents</a></div>`, '#/setup/3', 'Edit'),
     row('Writing style', st.voice.samples.length ? `${st.voice.samples.length} writing sample${st.voice.samples.length === 1 ? '' : 's'}` : 'Learned from your resumes', '#/profile/style', 'Open'),
     row('Resume design', 'Template, fonts and length', '#/profile/design', 'Open'),
@@ -274,10 +269,9 @@ ${section('About you', [
 ${section('What you’re looking for', [
     row('Job titles', w.titles.length ? pills(w.titles) : '', '#/build/sweetspot?back=1'),
     row('Your sweet spot', w.summary ? `<div class="clamp">${esc(w.summary)}</div>` : '', '#/build/sweetspot?back=1'),
-    row('Got you interviews', jobs(st.interviewed), '#/build/interviewed?back=1'),
+    row('Where you’ve interviewed recently', st.interviewed.length ? st.interviewed.map((x) => `<div>${esc(x.title || 'Job')}${x.company ? ` <span class="muted">· ${esc(x.company)}</span>` : ''}${x.fromJourney ? ' <span class="tiny muted">from Journey</span>' : ''}</div>`).join('') : '', '#/build/interviewed?back=1'),
     row('Suit you', jobs(st.fit), '#/build/fit?back=1'),
     row('Your reach', jobs(st.reach), '#/build/reach?back=1'),
-    ...(words.length || (w.ambiguous || []).length ? [row('Words that mean two things', words.length ? words.map((a) => `${esc(a.word)}: <span class="muted">${esc(a.choice === 'skip' ? 'skip these' : a.choice === 'both' ? 'both' : a.choice)}</span>`).join('<br>') : '', '#/build/words?back=1')] : []),
     row('Where', (w.where || []).map(esc).join(' · '), '#/build/where?back=1'),
     row('Lowest salary', w.payFloor ? `$${Number(w.payFloor).toLocaleString()} a year` : '', '#/build/pay?back=1'),
     row('Never show me', (w.dealBreakers || []).length ? pills(w.dealBreakers) : '<span class="muted">Nothing</span>', '#/build/never?back=1'),
@@ -293,6 +287,7 @@ ${section('How Job Wizard works for you', [
     row('Morning batch', `${st.schedule.on ? `Every day at ${st.schedule.hour}:00 AM, your best ${st.schedule.count} match${st.schedule.count === 1 ? '' : 'es'} made ready` : 'Turned off'}`, '#/profile/schedule'),
   ])}
 </div>`;
+  root.querySelectorAll('[data-contact]').forEach((i) => (i.onchange = () => call('profile.setContact', { [i.dataset.contact]: i.value.trim() }).then(() => toast('Saved.'))));
   // Jobs added before titles were pulled out: fix them quietly, then redraw.
   if ([...st.interviewed, ...st.fit, ...st.reach].some((x) => !x.company || /^(job description|about the job|overview|job)$/i.test(String(x.title).trim()))) {
     call('want.fillMissing').then((n) => { if (n && root.isConnected) dashboard(root, app, { embedded }); }).catch(() => {});

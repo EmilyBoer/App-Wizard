@@ -112,9 +112,8 @@ These postings are what they WANT or were considered for, never their experience
 Find what the interviewed and fit postings have in common: the day-to-day work, kind of employer, level, pay, location.
 Say in one plain sentence what the reach adds (more senior? new field?).
 Suggest up to 5 other job titles that describe the same work AND fit their real experience.
-List at most 3 words that would send a job search into the WRONG FIELD because they name very different kinds of jobs (e.g. "development" = fundraising or software engineering; "producer" = web, audio or video). Only words that appear in job TITLES. Never tools, acronyms, product names, seniority words (manager, lead) or everyday words (operations, catalog, migration). Most searches have none: return [] when nothing fits.
 Pick 10 to 20 keywords that signal the right job.
-Shape: {"summary": "one or two sentences: 'Your sweet spot: ...'", "reach": "one sentence or empty", "titles": ["the titles of the interviewed and fit postings, cleaned up"], "suggestedTitles": [string], "ambiguous": [{"word": string, "meanings": [string]}], "keywords": [string], "level": "mid|senior|lead|manager|unclear", "payRange": "e.g. $85k to $105k or empty", "employerTypes": ["Nonprofit|Public media|Health|Education|Government|Tech company|Agency|Finance that appear in interviewed or fit postings"]}`;
+Shape: {"summary": "one or two sentences: 'Your sweet spot: ...'", "reach": "one sentence or empty", "titles": ["the titles of the interviewed and fit postings, cleaned up"], "suggestedTitles": [string], "keywords": [string], "level": "mid|senior|lead|manager|unclear", "payRange": "e.g. $85k to $105k or empty", "employerTypes": ["Nonprofit|Public media|Health|Education|Government|Tech company|Agency|Finance that appear in interviewed or fit postings"]}`;
   const content = `Titles they already picked: ${titles.join(', ') || 'none'}
 Their roles: ${(profile.roles || []).map((r) => `${r.title} at ${r.company}`).join('; ')}
 Postings:
