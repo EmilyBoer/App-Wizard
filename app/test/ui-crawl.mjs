@@ -9,7 +9,7 @@ let where = '';
 p.on('pageerror', (e) => problems.push(`${where}: page error ${e.message}`));
 p.on('dialog', (d) => d.dismiss());
 const SKIP = /del|rm|remove|reset|logout|me$|rate|dash|next|apply|run|batch|find|sample|retry|rebuild|fix|again|undo|copy|key|review|prev|later|skip|status|move|archive|pdf|save|done|approve|build|addsite|addjob|refresh|fetch|check/i;
-const routes = ['#/profile', '#/profile/setup', '#/profile/design', '#/profile/style', '#/profile/learned', '#/profile/schedule', '#/journey', '#/interviews', '#/documents', '#/claude', '#/extension', '#/help',
+const routes = ['#/profile', '#/profile/setup', '#/profile/design', '#/profile/style', '#/profile/vault', '#/profile/schedule', '#/journey', '#/interviews', '#/documents', '#/claude', '#/extension', '#/help',
   '#/setup/2', '#/setup/3', '#/setup/4', '#/setup/5', '#/setup/6', '#/setup/7', '#/setup/8', '#/build'];
 // a job and a document, if any
 await p.goto(B + '#/journey'); await p.waitForTimeout(1500);

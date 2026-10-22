@@ -53,6 +53,7 @@ async function viewer(root, docId, app) {
   <div class="paper-wrap"><iframe class="docframe" id="frame" title="${isResume ? 'Resume' : 'Cover letter'}" style="max-width:${limits.page.w};margin:0 auto;display:block"></iframe></div>
 </section>
 <aside class="side stack">
+  ${isResume ? `<section class="card tight"><h3>New wordings</h3><p class="small muted">See which lines are new wording and which came straight from your library. Approved wordings are saved for future resumes.</p><button class="btn small secondary" data-act="review" style="align-self:flex-start">Review lines</button></section>` : ''}
   <section class="card quiet tight"><h3>Edit a line</h3><p class="small muted">Click any line in the ${isResume ? 'resume' : 'letter'} to change it. Your edits teach Job Wizard how you like things written.</p></section>
   ${(doc.checks || []).length ? `<section class="card tight"><h3>We checked it</h3><ul class="small" style="margin:0;padding-left:18px">${doc.checks.map((c) => `<li>${esc(c)}</li>`).join('')}</ul></section>` : `<section class="card tight"><h3>We checked it</h3><p class="small">Every ${isResume ? 'line' : 'fact'} comes from your profile. Numbers match.</p></section>`}
   ${isResume && (doc.cuts || []).length ? `<section class="card tight"><h3>To fit ${limits.maxPages === 1 ? 'one page' : '1½ pages'}, we cut</h3><ul class="small" style="margin:0;padding-left:18px">${doc.cuts.map((c) => `<li>${esc(c)}</li>`).join('')}</ul><button class="btn small" data-act="uncut">Put everything back</button></section>` : ''}
@@ -62,9 +63,13 @@ async function viewer(root, docId, app) {
     frame.srcdoc = doc.html;
     frame.onload = () => afterLoad(frame);
   };
+  let autoReviewed = false;
   async function afterLoad(frame) {
+    if (isResume && !doc.reviewed && doc.status !== 'final' && !autoReviewed) { autoReviewed = true; call('docs.review', { id: doc.id }).then((r) => { if (r.open) reviewLines(); }).catch(() => {}); }
     const d = frame.contentDocument;
-    const pageH = inchesToPx(limits.page.h) - (isResume ? 96 : 154); // minus margins
+    // Resume pages hold their own margins, so the whole paper height is the limit.
+    const pageH = inchesToPx(limits.page.h) - (isResume ? 0 : 154);
+    const used = () => { const pg = d.querySelector('.page'); if (!pg) return d.documentElement.scrollHeight; const mh = pg.style.minHeight; pg.style.minHeight = '0'; const v = pg.scrollHeight; pg.style.minHeight = mh; return v; };
     frame.style.height = Math.max(d.documentElement.scrollHeight + 24, 600) + 'px';
     // click-to-edit
     const lines = isResume ? [...d.querySelectorAll('li, .summary')] : [...d.querySelectorAll('p')].slice(3, -1);
@@ -83,8 +88,8 @@ async function viewer(root, docId, app) {
     // fit to page: cut until it fits (max 20 steps)
     const fitEl = root.querySelector('#fit');
     const maxH = pageH * limits.maxPages;
-    let h = d.querySelector('.page').scrollHeight, steps = 0;
-    while (h > maxH && steps < 20) {
+    let h = used(), steps = 0;
+    while (h > maxH + 2 && steps < 20) {
       fitEl.innerHTML = '<span class="spin"></span> Fitting to the page…';
       const r = await call('docs.cutOnce', { id: doc.id });
       if (r.done) break;
@@ -92,13 +97,41 @@ async function viewer(root, docId, app) {
       doc = await call('docs.get', { id: doc.id });
       d.open(); d.write(doc.html); d.close();
       await new Promise((res) => setTimeout(res, 60));
-      h = d.querySelector('.page').scrollHeight;
+      h = used();
     }
     const pages = Math.max(1, Math.round((h / pageH) * 10) / 10);
     const check = await call('docs.check', { id: doc.id, extracted: d.body.innerText, pages });
     doc = await call('docs.get', { id: doc.id });
     if (steps) { paint(); return; }
     fitEl.textContent = `${pages <= 1 ? 'Fits on one page' : `About ${pages} pages`}. ${check.ok ? 'Hiring systems can read every line in order.' : `Some lines may be hard for hiring systems to read: ${check.missing.slice(0, 2).join('; ')}. Try the Classic layout for uploads.`}`;
+  }
+  // Line-by-line review: what's straight from your library, and new wordings to approve, edit or turn down.
+  async function reviewLines() {
+    const r = await call('docs.review', { id: doc.id });
+    const news = r.jobs.flatMap((j) => j.lines).filter((l) => l.kind === 'new');
+    modal(`<h2>Review your new resume</h2><p class="muted">We reworded ${news.length} line${news.length === 1 ? '' : 's'} for this job. Facts and numbers always match your original. Approve the ones you like and they’re saved to your bullet library for next time.</p><div id="rv" class="stack"></div>
+<div class="row"><button class="btn primary" data-done>Approve the rest and finish</button><button class="btn" data-close>Finish later</button></div>`, { wide: true, onMount: (m, close) => {
+      const box = m.querySelector('#rv');
+      const draw = (res) => {
+        box.innerHTML = res.jobs.map((j) => { const lib = j.lines.filter((l) => l.kind === 'library').length; const nw = j.lines.filter((l) => l.kind === 'new'); return `<section class="stack-s"><h3>${esc(j.title)} <span class="muted" style="font-weight:400">· ${esc(j.company)}</span></h3>
+${lib ? `<p class="small muted">${lib} line${lib === 1 ? '' : 's'} straight from your library.</p>` : ''}
+${nw.map((l) => `<div class="card tight rv-line ${l.decision || ''}" data-path="${l.path}"><div class="row between"><span class="tag ${l.decision === 'approved' ? 'good' : l.decision === 'rejected' ? 'muted' : 'info'}">${l.decision === 'approved' ? 'Approved' : l.decision === 'rejected' ? 'Using your original' : 'New wording'}</span></div>
+<div class="rv-new">${esc(l.text)}</div><div class="small muted"><b>Your original:</b> ${esc(l.original)}</div>
+<div class="rv-edit hidden"><textarea rows="3">${esc(l.text)}</textarea></div>
+<div class="row"><button class="btn small secondary" data-rv="approve">Approve</button><button class="btn small" data-rv="edit">Edit</button><button class="btn small" data-rv="reject">Use my original</button></div></div>`).join('')}</section>`; }).join('') || '<p class="muted">Every line came straight from your library. Nothing new to review.</p>';
+      };
+      draw(r);
+      box.addEventListener('click', async (e) => {
+        const b = e.target.closest('[data-rv]'); if (!b) return;
+        const card = b.closest('[data-path]'), path = card.dataset.path;
+        if (b.dataset.rv === 'edit' && card.querySelector('.rv-edit').classList.contains('hidden')) { card.querySelector('.rv-edit').classList.remove('hidden'); b.textContent = 'Save edit'; card.querySelector('textarea').focus(); return; }
+        try {
+          await call('docs.reviewLine', { id: doc.id, path, decision: b.dataset.rv, text: card.querySelector('textarea').value });
+          draw(await call('docs.review', { id: doc.id }));
+        } catch (ex) { toast(ex.message, true); }
+      });
+      m.querySelector('[data-done]').onclick = async () => { await call('docs.reviewDone', { id: doc.id, approveRest: true }); close(); doc = await call('docs.get', { id: doc.id }); paint(); toast('Reviewed. Approved wordings are saved to your bullet library.'); };
+    } });
   }
   function editLine(path, text) {
     modal(`<h2>Edit this line</h2><p class="muted small">Keep it true: change the wording, not the facts. To change a fact, fix it in your profile.</p><textarea id="lt" style="min-height:120px">${esc(text.trim())}</textarea><div class="row"><button class="btn primary" id="ls">Save</button><button class="btn" data-close>Cancel</button></div>`, {
@@ -120,7 +153,7 @@ async function viewer(root, docId, app) {
           const design = await call('design.get');
           const r = await aw.pdf({ html: doc.html, fileName: doc.file, paper: design.paper, ask: false });
           if (r.canceled) return;
-          await call('docs.pdfSaved', { id: doc.id, file: r.file });
+          { const saved = await call('docs.pdfSaved', { id: doc.id, file: r.file }); if (saved.addedToLibrary) toast(`${saved.addedToLibrary} new wording${saved.addedToLibrary > 1 ? 's' : ''} added to your bullet library.`); }
           if (isResume) await call('docs.check', { id: doc.id, extracted: r.text, pages: r.pages });
           toast(`Saved to ${r.file}`);
           aw.reveal?.(r.file);
@@ -136,7 +169,8 @@ async function viewer(root, docId, app) {
       app.refresh();
     },
     copy: async () => { const t = await call('docs.text', { id: doc.id }); await navigator.clipboard.writeText(t).then(() => toast('Copied. Paste it into Word, Google Docs or a form.'), () => modal(`<h2>Plain text</h2><textarea style="min-height:360px">${esc(t)}</textarea><button class="btn" data-close>Close</button>`)); },
-    approve: async () => { await call('docs.approve', { id: doc.id }); doc = await call('docs.get', { id: doc.id }); paint(); toast('Marked final.'); },
+    review: () => reviewLines(),
+    approve: async () => { const r = await call('docs.approve', { id: doc.id }); doc = await call('docs.get', { id: doc.id }); paint(); toast(r.addedToLibrary ? `Marked final. ${r.addedToLibrary} new wording${r.addedToLibrary > 1 ? 's' : ''} added to your bullet library.` : 'Marked final.'); },
     uncut: async () => { await call('docs.resetCuts', { id: doc.id }); doc = await call('docs.get', { id: doc.id }); paint(); },
   });
   paint();

@@ -165,6 +165,10 @@ ${(st.want.suggestedTitles || []).filter((x) => x.accepted == null).length ? `<b
   { id: 'done', ask: 'Your job search is built.', help: 'Every morning, Job Wizard checks for new jobs that fit and gets your best matches ready to apply. Change any answer later in Profile.', custom: true },
 ];
 
+// Setup sections, shown above each question (the bar shows overall progress).
+const SECTIONS = [['Your background', ['resume', 'linkedin', 'keep', 'fonts']], ['Jobs you want', ['interviewed', 'fit', 'reach']], ['Your answers', ['pay', 'salary', 'where', 'relocate', 'start', 'never']], ['Your voice', ['writing', 'connect']], ['Your results', ['found', 'sweetspot', 'design', 'rate', 'done']]];
+const sectionOf = (qid) => { const i = SECTIONS.findIndex(([, ids]) => ids.includes(qid)); return i < 0 ? '' : `${SECTIONS[i][0]} · Part ${i + 1} of ${SECTIONS.length}`; };
+
 export async function render(root, params, app) {
   document.body.classList.add('building');
   const [rawId] = params;
@@ -198,7 +202,7 @@ export async function render(root, params, app) {
     call('setup.go', { step: app.overview.setup.step, at: q.id }).catch(() => {});
     const pct = Math.round((idx / (list.length - 1)) * 100);
     root.innerHTML = `<div class="page" style="max-width:760px;padding-top:32px">
-<div class="stack-s"><div class="row between"><span class="eyebrow">${back ? 'Profile' : `Question ${idx + 1} of ${list.length}`}</span>${back ? '<a href="#/profile" class="small">Back to Profile</a>' : '<button class="btn link small" data-act="later" style="color:var(--ink-muted)">Finish later</button>'}</div>
+<div class="stack-s"><div class="row between"><span class="eyebrow">${back ? 'Profile' : sectionOf(q.id)}</span>${back ? '<a href="#/profile" class="small">Back to Profile</a>' : ''}</div>
 <div style="height:8px;border-radius:999px;background:var(--line);overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--spark-deep);border-radius:999px"></div></div></div>
 <div><h1 style="margin-top:24px">${typeof q.ask === 'function' ? q.ask(st) : q.ask}</h1><p class="muted" style="font-size:18px;line-height:28px">${typeof q.help === 'function' ? q.help(st) : q.help}</p></div>
 <div id="qbody" class="stack"></div>
@@ -326,6 +330,7 @@ export async function dashboard(root, app, { embedded = false } = {}) {
 ${st.done ? '' : '<div class="note att row between"><span>Setup isn’t finished yet.</span><a class="btn primary" href="#/build">Finish setup</a></div>'}
 ${section('About you', [
     `<div class="choice"><div class="choice-label">Contact details</div><div class="choice-value"><div class="contact-grid">${[['name', 'Full name'], ['headline', 'Headline (under your name)'], ['email', 'Email'], ['phone', 'Phone'], ['location', 'City and state'], ['linkedin', 'LinkedIn'], ['website', 'Portfolio or website']].map(([k, l]) => `<label class="field small">${l}<input type="text" data-contact="${k}" value="${esc(k === 'headline' && !('headline' in c) ? (st.profile.roles[0]?.title || '') : c[k] || '')}" placeholder="${{ linkedin: 'linkedin.com/in/…', website: 'yoursite.com', location: 'e.g. Portland, OR', headline: 'e.g. Content Strategist' }[k] || ''}"></label>`).join('')}</div><span class="tiny muted">Saved as you type. These go at the top of every resume and letter.</span></div><span></span></div>`,
+    `<div class="choice"><div class="choice-label">Summary<div class="tiny muted" style="font-weight:400">The short paragraph at the top of your resume</div></div><div class="choice-value stack-s"><textarea id="summary" rows="4" placeholder="${st.hasKey ? 'Writing one from your experience…' : 'Two or three sentences about the work you do. Once Claude is connected, we’ll write one from your experience.'}">${esc(st.profile.summary || '')}</textarea><span class="tiny muted" id="sumnote">${st.profile.summary ? 'Written from your experience, in your voice. Edit it any way you like; it saves when you click away.' : ''}</span></div><button type="button" class="btn small" data-act="rewrite" data-busy="Writing…" ${st.hasKey ? '' : 'disabled'}>Write a new one</button></div>`,
     row('LinkedIn', `${c.linkedin ? esc(c.linkedin.replace(/^https?:\/\/(www\.)?/, '')) : '<span class="muted">No link yet</span>'}<div class="small muted">${st.materials.some((m) => m.kind === 'linkedin') ? 'Profile PDF added' : 'No profile PDF yet'}</div>`, 'edit:linkedin'),
     row('Experience', `${st.profile.roles.length} roles · ${st.profile.skills.length} skills · ${st.profile.years} years${st.profile.checks ? ` · <a href="#/setup/3">${st.profile.checks} things to check</a>` : ''}<div class="small muted">From ${st.materials.length} file${st.materials.length === 1 ? '' : 's'}. <a href="#/documents">Add more in Documents</a></div>`, '#/setup/3', 'Edit'),
     row('Writing style', st.voice.samples.length ? `${st.voice.samples.length} writing sample${st.voice.samples.length === 1 ? '' : 's'}` : 'Learned from your resumes', '#/profile/style', 'Open'),
@@ -348,11 +353,19 @@ ${section('Answers for applications', [
   ])}
 ${section('How Job Wizard works for you', [
     row('Where you look', (hosts.length ? hosts.map(([h, n]) => `${esc(h)} <span class="muted">(${n})</span>`).join(' · ') : '<span class="muted">Learned from the job links you add</span>') + `<div class="small muted">${watched} compan${watched === 1 ? 'y' : 'ies'} checked for new jobs every day</div>`, '#/setup/7'),
-    row('What it’s learned', `${learning.summary.yes} yes · ${learning.summary.no} no · ${learning.summary.rules} rule${learning.summary.rules === 1 ? '' : 's'}`, '#/profile/learned', 'See'),
+    row('What it’s learned', `${learning.summary.yes} yes · ${learning.summary.no} no · ${learning.summary.rules} rule${learning.summary.rules === 1 ? '' : 's'}`, '#/profile/vault', 'See'),
     row('Morning batch', `${st.schedule.on ? `Every day at ${st.schedule.hour}:00 AM, your best ${st.schedule.count} match${st.schedule.count === 1 ? '' : 'es'} made ready` : 'Turned off'}`, '#/profile/schedule'),
   ])}
 </div>`;
   root.querySelectorAll('[data-contact]').forEach((i) => (i.onchange = () => (i.dataset.contact === 'linkedin' ? call('profile.setLinkedIn', { value: i.value }) : call('profile.setContact', { [i.dataset.contact]: i.value.trim() })).then(() => toast('Saved.'), (e) => toast(e.message, true))));
+  const sum = root.querySelector('#summary');
+  if (sum) {
+    sum.onchange = () => call('profile.setSummary', { text: sum.value.trim() }).then(() => toast('Summary saved.'));
+    const write = (replace) => call('profile.writeSummary', { replace }).then((t) => { sum.value = t; root.querySelector('#sumnote').textContent = 'Written from your experience, in your voice. Edit it any way you like; it saves when you click away.'; });
+    root.querySelector('[data-act=rewrite]').onclick = (e) => act(e.currentTarget, () => write(true), { done: 'New summary written.' });
+    // First time: write one automatically from what they've added.
+    if (!sum.value.trim() && st.hasKey && st.profile.roles.length) write(false).catch(() => {});
+  }
   root.querySelectorAll('[data-edit]').forEach((b) => (b.onclick = () => editAnswer(b.dataset.edit, () => dashboard(root, app, { embedded }))));
   // Jobs added before titles were pulled out: fix them quietly, then redraw.
   if ([...st.interviewed, ...st.fit, ...st.reach].some((x) => !x.company || /^(job description|about the job|overview|job)$/i.test(String(x.title).trim()))) {

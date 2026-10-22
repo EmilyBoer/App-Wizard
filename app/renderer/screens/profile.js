@@ -2,7 +2,7 @@ import { call, esc, tag, act, toast, on, modal, ago } from '../lib.js';
 import { dashboard as setupDashboard } from './builder.js';
 import { embed as embedPage } from './setup.js';
 
-const TABS = [['setup', 'Your information'], ['design', 'Resume design'], ['style', 'Writing style'], ['learned', 'What we’ve learned']];
+const TABS = [['setup', 'Your information'], ['design', 'Resume design'], ['style', 'Writing style'], ['vault', 'Bullet vault']];
 
 export async function render(root, [tab = 'setup'], app) {
   if (!TAB[tab]) tab = 'setup';
@@ -10,7 +10,7 @@ export async function render(root, [tab = 'setup'], app) {
     root.innerHTML = `<div class="page">
 <div class="head"><div><h1>Profile</h1><p class="muted">Everything Job Wizard knows about you and your search. Change anything and your matches update.</p></div></div>
 <nav class="tabs" aria-label="Profile sections">${TABS.map(([k, l]) => `<a class="tab ${k === tab ? 'on' : ''}" ${k === tab ? 'aria-current="page"' : ''} href="#/profile/${k}">${l}</a>`).join('')}</nav>
-<div id="tab"></div></div>`;
+<div id="tab" class="tab-body"></div></div>`;
     const el = root.querySelector('#tab');
     await TAB[tab]?.(el, app, paint);
   };
@@ -40,6 +40,33 @@ ${s.lastBatch ? `<p class="small muted">Last run ${esc(ago(s.lastBatch.at))}: ${
 <a class="card" href="#/setup/7" style="text-decoration:none;color:inherit"><h2>Job sites</h2><p class="muted">Where we look every morning.</p><span class="small">Add or remove sites →</span></a>
 <a class="card" href="#/setup/8" style="text-decoration:none;color:inherit"><h2>Standard answers</h2><p class="muted">The questions every application asks.</p><span class="small">Change your answers →</span></a>
 </div>`;
+  },
+  // Every bullet for every job, original wordings with the alternatives saved from approved resumes beneath.
+  async vault(el, app, repaint) {
+    const p = await call('profile.get');
+    const fmt = (d) => (!d ? '' : /present/i.test(d) ? 'Present' : String(d).replace(/^(\d{4})-(\d{2}).*/, (_, y, m) => `${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][Number(m) - 1]} ${y}`));
+    const total = p.roles.reduce((n, r) => n + r.bullets.length, 0);
+    const line = (b, alt) => `<div class="vault-line ${alt ? 'alt' : ''}" data-b="${b.id}"><div class="vault-text" tabindex="0" role="button" aria-label="Edit this bullet">${esc(b.text)}</div><div class="row vault-meta"><span class="tiny muted">${alt ? (b.fromResume ? 'Saved from a resume you approved' : 'Another wording') : b.manual || (b.sources || []).includes('you') ? 'You added this' : 'From your files'}</span><button class="btn small" data-act="editb" data-id="${b.id}">Edit</button><button class="btn small danger" data-act="delb" data-id="${b.id}">Delete</button></div></div>`;
+    el.innerHTML = `<div class="stack" style="gap:var(--s6)">
+<div><h2>Bullet vault</h2><p class="muted" style="max-width:680px">Every result we know about, under each job: ${total} in all. Each tailored resume picks the best few for that job; the rest stay here. Edit anything, add what’s missing. Approved new wordings from your resumes are saved under the line they came from.</p></div>
+${p.roles.length ? p.roles.map((r) => { const mains = r.bullets.filter((b) => !b.variantOf); const alts = (id) => r.bullets.filter((b) => b.variantOf === id); return `<section class="card vault-job"><div class="row between"><div><h3>${esc(r.title)} <span class="muted" style="font-weight:500">· ${esc(r.company)}</span></h3><div class="small muted">${esc(fmt(r.start))}${r.end ? ` – ${esc(fmt(r.end))}` : ''}${r.location ? ` · ${esc(r.location)}` : ''} · ${r.bullets.length} bullet${r.bullets.length === 1 ? '' : 's'}</div></div></div>
+<div class="stack-s">${mains.map((b) => `${line(b, false)}${alts(b.id).length ? `<div class="vault-alts"><span class="tiny muted">Other wordings (${alts(b.id).length})</span>${alts(b.id).map((x) => line(x, true)).join('')}</div>` : ''}`).join('') || '<p class="small muted">No bullets yet.</p>'}</div>
+<div class="row"><input type="text" placeholder="Add a result for this job (real numbers only)" data-addto="${esc(r.company)}" style="flex:1 1 320px"><button class="btn small secondary" data-act="addb" data-company="${esc(r.company)}">Add</button></div></section>`; }).join('') : '<div class="note muted">No jobs yet. Add your resume in Documents and we’ll fill this in.</div>'}
+<div id="learned"></div></div>`;
+    const edit = (bid) => {
+      const row = el.querySelector(`[data-b="${bid}"]`); const t = row.querySelector('.vault-text');
+      if (row.querySelector('textarea')) return;
+      const ta = document.createElement('textarea'); ta.value = t.textContent; ta.rows = 3; t.replaceWith(ta); ta.focus();
+      ta.onblur = async () => { const v = ta.value.trim(); if (v && v !== t.textContent) { await call('profile.updateBullet', { bulletId: bid, text: v }); toast('Saved.'); } repaint(); };
+      ta.onkeydown = (e) => { if (e.key === 'Escape') repaint(); };
+    };
+    el.querySelectorAll('.vault-text').forEach((t) => { t.onclick = () => edit(t.closest('[data-b]').dataset.b); t.onkeydown = (e) => { if (e.key === 'Enter') edit(t.closest('[data-b]').dataset.b); }; });
+    on(el, {
+      editb: (b) => edit(b.dataset.id),
+      delb: (b) => modal('<h2>Delete this bullet?</h2><p class="muted">It won’t be used on future resumes. Resumes you already made don’t change.</p><div class="row"><button class="btn primary" data-yes>Delete</button><button class="btn" data-close>Keep it</button></div>', { onMount: (m, close) => { m.querySelector('[data-yes]').onclick = async () => { await call('profile.removeBullet', { bulletId: b.dataset.id }); close(); repaint(); }; } }),
+      addb: async (b) => { const inp = el.querySelector(`[data-addto="${CSS.escape(b.dataset.company)}"]`); const v = inp.value.trim(); if (!v) return toast('Write the result first.', true); await call('profile.addBullet', { company: b.dataset.company, text: v }); toast('Added.'); repaint(); },
+    });
+    await TAB.learned(el.querySelector('#learned'), app, repaint);
   },
   async learned(el, app, repaint) {
     const l = await call('learning.get');

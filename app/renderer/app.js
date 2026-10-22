@@ -70,7 +70,8 @@ async function route() {
   await app.refresh();
   const done = app.overview.setup.done.includes(10);
   let screen = ROUTES[name];
-  if (!screen || name === 'login' || (!done && !['build', 'help', 'setup', 'profile', 'documents', 'claude', 'extension'].includes(name))) {
+  // Until setup is finished, setup is the only place to be.
+  if (!screen || name === 'login' || (!done && name !== 'build')) {
     return app.go(done ? '#/journey' : '#/build');
   }
   // Setup only runs the first time. After that, answers are changed in Profile.

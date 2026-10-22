@@ -273,8 +273,9 @@ details.fold[open] > summary::before { transform: rotate(90deg); }
 .dz-thumbs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .dz-thumb { border: 1px solid var(--line); border-radius: 10px; padding: 6px; background: var(--paper); text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: 2px; color: var(--ink); }
 .dz-thumb.on { border: 2px solid var(--ink); padding: 5px; box-shadow: 3px 3px 0 0 var(--spark); }
-.dz-mini { height: 190px; overflow: hidden; border-radius: 6px; background: #fff; border: 1px solid var(--line); position: relative; }
-.dz-mini iframe { width: 816px; height: 1056px; border: 0; transform: scale(0.181); transform-origin: 0 0; pointer-events: none; position: absolute; left: 0; top: 0; }
+.dz-mini { aspect-ratio: 8.5 / 11; overflow: hidden; border-radius: 6px; background: #fff; border: 1px solid var(--line); position: relative; box-shadow: 0 1px 2px rgba(20,33,61,.08); }
+.dz-mini img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.dz-mini iframe { width: 816px; height: 1056px; border: 0; transform: scale(var(--mini-scale, .17)); transform-origin: 0 0; pointer-events: none; position: absolute; left: 0; top: 0; }
 .dz-sections { display: flex; flex-direction: column; gap: 4px; }
 .dz-sec { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 8px; background: var(--panel); font-size: 14px; }
 .dz-sec.off .grow { opacity: .5; text-decoration: line-through; }
@@ -338,3 +339,23 @@ body.building .nav, body.building .ask { visibility: hidden; }
 .dz-pal span { height: 26px; }
 .dz-pal b { grid-column: 1 / -1; padding: 4px 6px; text-align: left; font-weight: 600; }
 .dz-pal.on { border-color: var(--ink); box-shadow: 0 0 0 1.5px var(--ink); }
+
+.rv-line { gap: var(--s2); }
+.rv-new { font-size: 16px; line-height: 25px; }
+.rv-line.approved { border-color: var(--good); }
+.rv-line.rejected { opacity: .75; }
+
+/* ---- Bullet vault ---- */
+.vault-job { gap: var(--s4); }
+.vault-line { display: flex; flex-direction: column; gap: 2px; padding: var(--s2) var(--s3); border-radius: var(--r-sm); }
+.vault-line:hover { background: var(--panel); }
+.vault-text { cursor: text; line-height: 24px; }
+.vault-text:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 4px; }
+.vault-meta { gap: var(--s2); }
+.vault-meta .tiny { margin-right: auto; }
+.vault-alts { margin-left: var(--s5); padding-left: var(--s3); border-left: 2px solid var(--line); display: flex; flex-direction: column; gap: 2px; }
+.vault-line.alt .vault-text { color: var(--ink-2); }
+
+/* Tab contents stack with the same rhythm as a page. */
+.tab-body { display: flex; flex-direction: column; gap: var(--s5); }
+.tab-body > div:first-child > h2 + p { margin-top: var(--s1); }

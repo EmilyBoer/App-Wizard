@@ -282,7 +282,7 @@ export function resumeHtml(resume, design, { fontBase } = {}) {
     caps: `${caps(Math.max(MIN.body, hs - 1), 0.18)};color:var(--acc-text)`,
     short: `${caps(Math.max(MIN.body, hs - 1), 0.18)};color:var(--acc-text)`,
     bar: `${caps(Math.max(MIN.body, hs - 1), 0.14)};color:var(--acc-text);border-left:3pt solid ${a2};padding-left:8pt;line-height:1.1`,
-    tint: `${caps(Math.max(MIN.body, hs - 1), 0.16)};color:${dark(a) ? a : mix(a, 0.2, '#000000')};background:${mix(a2, 0.8, paper)};padding:4pt 8pt;border-radius:2pt`,
+    tint: `${caps(Math.max(MIN.body, hs - 1), 0.16)};color:${dark(a) ? a : mix(a, 0.2, '#000000')};background:${mix(a2, 0.87, paper)};padding:4pt 8pt;border-radius:2pt`,
     plain: `color:var(--acc-text);font-size:${hs + 3}pt;font-weight:600;letter-spacing:-.01em;line-height:1.15`,
     center: `${caps(Math.max(MIN.body, hs - 1), 0.24)};color:var(--acc-text);display:flex;align-items:center;gap:12pt`,
     gutter: `${caps(Math.max(MIN.body, hs - 1), 0.07)};color:var(--acc-text);margin:0 !important;padding-top:2pt;line-height:1.3`,
@@ -316,7 +316,7 @@ ${css}
 @page{size:${page.w} ${page.h};margin:0}
 *{box-sizing:border-box}
 html{background:${paper}}
-body{margin:0;--k:1;--acc:${a};--acc-text:${accText};--hl:${lum(a2) < 160 ? a2 : a};--name:${a};--ink:#1C2130;--ink2:#4A5163;--muted:#7D8396;--rule:${rule};--rule-strong:#B9BECB;--icon:${a};font-family:${f.body};font-size:${s}pt;line-height:${sp.lh};color:var(--ink);-webkit-print-color-adjust:exact;print-color-adjust:exact;font-kerning:normal;font-feature-settings:"kern","liga","calt";text-rendering:optimizeLegibility;font-variant-numeric:lining-nums;-webkit-font-smoothing:antialiased}
+body{margin:0;--k:1;--tight:3pt;--acc:${a};--acc-text:${accText};--hl:${lum(a2) < 160 ? a2 : a};--name:${a};--ink:#1C2130;--ink2:#4A5163;--muted:#7D8396;--rule:${rule};--rule-strong:#B9BECB;--icon:${a};font-family:${f.body};font-size:${s}pt;line-height:${sp.lh};color:var(--ink);-webkit-print-color-adjust:exact;print-color-adjust:exact;font-kerning:normal;font-feature-settings:"kern","liga","calt";text-rendering:optimizeLegibility;font-variant-numeric:lining-nums;-webkit-font-smoothing:antialiased}
 .page{position:relative;z-index:1;width:${page.w};padding:${m}in;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 .strip{position:fixed;top:0;bottom:0;z-index:0}
 ${headerCss(d, f, nameSize, m)}
@@ -331,16 +331,19 @@ ${numberCss}
 .rh-l{min-width:0}
 .rh-l .co{font-size:${s + 1}pt}
 .rt{font-weight:600;color:var(--ink);font-size:${s + 1}pt;letter-spacing:-.005em;line-height:1.3}
-.rc{color:var(--ink2);margin-top:1.5pt}
+.rc{color:var(--ink2);margin-top:var(--tight)}
 .co{font-weight:600;color:var(--ink2)}
 .sepx{color:var(--muted)}
 .rd{font-size:${MIN.body}pt;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
 .rd-below{${titles === 'plain' ? 'font-style:italic' : ''}}
-.role ul{margin:calc(var(--k) * ${sp.li + 2}pt) 0 0;padding:0}
+.role ul{margin:calc(var(--k) * ${sp.li + 3}pt) 0 0;padding:0}
 .role li + li{margin-top:calc(var(--k) * ${sp.li}pt)}
 ${bulletCss}
 p{margin:0}
 .ed + .ed{margin-top:calc(var(--k) * ${sp.role}pt)}
+/* Lines stacked inside one block (job title, company, school, year) always sit the same small distance apart. */
+.ed > * + *,.tl-body > .rt{margin-top:var(--tight)}
+.et,.es,.ct{line-height:1.35}
 .et{font-weight:600;color:var(--ink)}
 .es{color:var(--ink2)}
 /* timeline: a slim rail with a dot for each job, dates above the title */
@@ -349,7 +352,7 @@ p{margin:0}
 .role.tl .tl-rail::before{content:"";position:absolute;left:50%;top:.75em;bottom:calc(-1 * var(--k) * ${sp.role}pt - .75em);width:1pt;background:${mix(a2, 0.55, paper)};transform:translateX(-50%)}
 .role.tl:last-child .tl-rail::before{display:none}
 .role.tl .tl-rail::after{content:"";position:absolute;left:50%;top:.32em;width:7pt;height:7pt;border-radius:50%;background:${a2};box-shadow:0 0 0 2.5pt ${paper};transform:translateX(-50%)}
-.tl-when{font-size:${MIN.body}pt;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--hl, var(--acc-text));margin-bottom:1.5pt;font-variant-numeric:tabular-nums}
+.tl-when{font-size:${MIN.body}pt;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--hl, var(--acc-text));font-variant-numeric:tabular-nums}
 .tl-when .sepx{color:var(--muted)}
 .sk-list{list-style:none;margin:0;padding:0}.sk-list li + li{margin-top:calc(var(--k) * ${sp.li}pt)}
 .sk-cols{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--k) * ${sp.li}pt) 16pt}
@@ -360,17 +363,17 @@ p{margin:0}
 .sk:not(:last-child)::after{content:"";display:inline-block;width:3pt;height:3pt;border-radius:50%;background:var(--rule-strong);margin:0 8pt;vertical-align:middle}
 .tags{display:flex;flex-wrap:wrap;gap:5pt 5pt}
 .sk-comma{line-height:1.6;color:var(--ink2)}
-.tagx{background:${mix(a2, 0.82, paper)};border-radius:999px;padding:2.5pt 9pt;font-size:${MIN.body}pt;line-height:1.35;color:var(--ink)}
+.tagx{background:transparent;border:.9pt solid ${mix(a2, 0.35, paper)};border-radius:999px;padding:2pt 9pt;font-size:${MIN.body}pt;line-height:1.35;color:var(--ink)}
 .cols{display:grid;column-gap:${gap}in;grid-template-columns:${d.layout === 'sidebar-left' ? `${sideW}in 1fr` : `1fr ${sideW}in`};grid-template-rows:auto 1fr;grid-template-areas:${d.layout === 'sidebar-left' ? '"side head" "side main"' : '"head side" "main side"'}}
 .hd-main{grid-area:head;margin-bottom:calc(var(--k) * ${sp.sec + 3}pt)}
-.hd-main h1{color:var(--name)}
+.hd-main h1{color:var(--name);margin-top:${d.mono === 'circle' || d.mono === 'square' ? '-.17em' : '-.09em'}}
 .main{grid-area:main;min-width:0}
 .side{grid-area:side;min-width:0}
 .side .sec + .sec{margin-top:calc(var(--k) * ${sp.sec}pt)}
 .side .c-stack{gap:7pt}.side .ci{white-space:normal;align-items:flex-start;word-break:break-word}.side .ico{margin-top:.22em}
 .side-mono{width:58pt;height:58pt;font-size:21pt;margin-bottom:calc(var(--k) * ${sp.sec}pt)}
 .side.dark .mono-circle{border-color:${a2};color:#fff}
-.side .tagx{background:${tint === 'dark' ? 'rgba(255,255,255,.14)' : '#ffffff'};${tint === 'none' ? `border:.75pt solid var(--rule)` : ''}}
+.side .tagx{background:${tint === 'dark' ? 'rgba(255,255,255,.12)' : '#ffffff'};border-color:${tint === 'dark' ? 'transparent' : mix(a2, 0.6, paper)}}
 .side.dark{--ink:#fff;--ink2:rgba(255,255,255,.86);--muted:rgba(255,255,255,.62);--rule:rgba(255,255,255,.25);--rule-strong:rgba(255,255,255,.4);--acc-text:${lum(a2) > 110 ? a2 : '#fff'};--icon:${lum(a2) > 110 ? a2 : '#fff'};color:#fff}
 @media screen{html,body{min-height:100%}.page{min-height:${page.h}}}
 </style></head><body>${strip}<div class="page">
@@ -411,7 +414,7 @@ ${css}
 @page{size:${page.w} ${page.h};margin:0}
 *{box-sizing:border-box}
 html{background:#fff}
-body{margin:0;--k:1;--acc:${design.accent};--acc-text:${design.accent};--name:${design.accent};--ink:#1c2130;--ink2:#454c5c;--muted:#7a8091;--rule:#d3d7df;--rule-strong:#b9becb;--icon:${design.accent};font-family:${f.body};font-size:11pt;line-height:1.5;color:var(--ink);-webkit-print-color-adjust:exact;print-color-adjust:exact;font-kerning:normal;text-rendering:optimizeLegibility}
+body{margin:0;--k:1;--tight:3pt;--acc:${design.accent};--acc-text:${design.accent};--name:${design.accent};--ink:#1c2130;--ink2:#454c5c;--muted:#7a8091;--rule:#d3d7df;--rule-strong:#b9becb;--icon:${design.accent};font-family:${f.body};font-size:11pt;line-height:1.5;color:var(--ink);-webkit-print-color-adjust:exact;print-color-adjust:exact;font-kerning:normal;text-rendering:optimizeLegibility}
 .page{width:${page.w};padding:${m}in;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 ${headerCss(ld, f, 26, m)}
 .hd{margin-bottom:26pt}

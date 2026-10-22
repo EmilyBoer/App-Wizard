@@ -337,3 +337,30 @@ test('jobs from a screenshot of a job alert', async () => {
   assert.equal(j.needsText, true); assert.match(j.searchUrl, /google\.com\/search/);
   assert.equal((await api.call('builder.status')).lookIn['linkedin.com'], 2);
 });
+
+test('review: new wordings are approved, edited or turned down; approved ones join the bullet vault', async () => {
+  const { api } = newApi();
+  await setUpUser(api);
+  await api.call('want.save', { titles: ['Website Manager'] });
+  await api.call('sites.add', { url: 'https://boards.greenhouse.io/lumen' });
+  await api.call('jobs.refresh');
+  const job = (await api.call('jobs.list')).jobs.find((j) => j.title === 'Website Manager');
+  const made = await api.call('docs.make', { jobId: job.id });
+  const id = made.resume.id;
+  let r = await api.call('docs.review', { id });
+  assert.ok(r.jobs[0].lines.every((l) => l.kind === 'library'), 'unchanged lines are from the library');
+  // A new wording that keeps the facts is saved to the vault under the same job.
+  await api.call('docs.reviewLine', { id, path: '0.1', decision: 'edit', text: 'Ran the publishing calendar across 6 programs.' });
+  let p = await api.call('profile.get');
+  const alt = p.roles[0].bullets.find((b) => b.text === 'Ran the publishing calendar across 6 programs.');
+  assert.ok(alt && alt.variantOf, 'saved as another wording of the original');
+  // A number that isn't in the original is refused.
+  await assert.rejects(api.call('docs.reviewLine', { id, path: '0.2', decision: 'edit', text: 'Wrote 50 weekly stories.' }), /isn’t in your original/);
+  // Turning one down puts the original wording back.
+  r = await api.call('docs.review', { id });
+  await api.call('docs.reviewLine', { id, path: '0.1', decision: 'reject' });
+  const doc = await api.call('docs.get', { id });
+  assert.equal(doc.data.roles[0].bullets[1].text, 'Run the publishing calendar for 6 programs.');
+  const done = await api.call('docs.reviewDone', { id, approveRest: true });
+  assert.equal(done.reviewed, true);
+});

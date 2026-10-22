@@ -197,6 +197,9 @@ export function verifyResume(draft, profile, voice = {}) {
     for (const b of r.bullets || []) {
       const src = byId.get(b.from);
       if (!src) { notes.push(`Dropped a line with no source: "${trim(b.text)}"`); continue; }
+      // Never the same result twice in one job (an original and its saved rewording).
+      const root = src.variantOf || src.id;
+      if (bullets.some((x) => x.root === root)) continue;
       let text = String(b.text || '').trim();
       const srcNums = new Set(nums(src.text));
       const extra = nums(text).filter((n) => !srcNums.has(n));
@@ -204,7 +207,7 @@ export function verifyResume(draft, profile, voice = {}) {
       const bad = never.find((w) => text.toLowerCase().includes(w));
       if (bad) { notes.push(`Used your original wording to avoid "${bad}".`); text = src.text; }
       text = text.replace(/\s*[—–]\s*/g, ', ');
-      bullets.push({ from: b.from, text, relevance: Number(b.relevance) || 3 });
+      bullets.push({ from: b.from, root, text, relevance: Number(b.relevance) || 3 });
     }
     outRoles.push({ roleId: role.id, company: role.company, title: role.title, start: role.start, end: role.end, location: role.location, bullets });
   }
@@ -422,4 +425,18 @@ export async function compareDesign(claude, { file, docx, fonts, current, snapsh
     { type: 'text', text: `Your current rebuild:\n<info>${JSON.stringify({ margin: current.margin, fontRoles: current.fontRoles })}</info>\n<css>${current.css}</css>\n<template>${current.template}</template>\n<background>${current.background || ''}</background>\n<letterhead>${current.letterHead || ''}</letterhead>${notes ? `\n\nThe person says: "${notes}". Fix that first.` : ''}` },
   ];
   return readTagged(await claude.send({ system, content, maxTokens: 16000 }));
+}
+
+// ---------- A summary from their own history, in their voice ----------
+export async function writeSummary(claude, { profile, voice }) {
+  const system = `Write the 2 to 3 sentence summary at the top of this person's resume, in their voice.
+Use only facts from their work history below: their real titles, kinds of work, employers' fields and results. Never add a skill, number, title or claim that isn't there. No buzzwords ("results-driven", "passionate", "dynamic"), no "I am a". Plain, specific, confident.
+${(voice?.guide || []).length ? `How they write: ${voice.guide.join(' ')}` : ''}${(voice?.never || []).length ? `\nNever use: ${voice.never.join(', ')}` : ''}
+Shape: {"summary": string}`;
+  const out = await claude.json({ system, content: `Work history:\n${JSON.stringify(slimProfile(profile)).slice(0, 12000)}`, maxTokens: 400 });
+  let text = String(out.summary || '').trim().replace(/\s*[—–]\s*/g, ', ');
+  // Any number must already be in their bullets.
+  const known = new Set(allBullets(profile).flatMap((b) => nums(b.text)));
+  if (nums(text).some((n) => !known.has(n))) text = text.split(/(?<=[.!?])\s+/).filter((sent) => nums(sent).every((n) => known.has(n))).join(' ');
+  return text;
 }

@@ -139,7 +139,9 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
       const draft = await ai.buildProfile(claude(), mats, store().get('profile'));
       const merged = mergeProfile(store().get('profile'), draft);
       store().set('profile', merged);
-      return merged;
+      // First build: write their summary from this history, in their voice. They can edit it in Your information.
+      if (!merged.summary && merged.roles.length) { try { await methods['profile.writeSummary']({ replace: false }); } catch { /* they can write one later */ } }
+      return store().get('profile');
     }),
     'profile.settle': ({ conflictId, value }) => store().set('profile', settleConflict(store().get('profile'), conflictId, value)),
     'profile.undersell': ({ itemId, decision, text }) => store().set('profile', decideUnderselling(store().get('profile'), itemId, decision, text)),
@@ -155,6 +157,16 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
       return url;
     },
     'profile.setContact': (c) => store().update('profile', (p) => { p.contact = { ...p.contact, ...c }; }),
+    // A summary written from their history (only facts that are there), in their voice. They can edit it.
+    'profile.writeSummary': async ({ replace = true } = {}) => {
+      const p = store().get('profile');
+      if (!p.roles.length) throw new UserError('Add your work history first.');
+      if (!replace && p.summary) return p.summary;
+      const text = await ai.writeSummary(claude(), { profile: p, voice: store().get('voice') });
+      if (!text) throw new UserError('We couldn’t write a summary from your history yet. Write your own here.');
+      store().update('profile', (x) => { x.summary = text; x.summaryApproved = false; x.summaryWritten = now().toISOString(); });
+      return text;
+    },
     'profile.setSummary': ({ text }) => store().update('profile', (p) => { p.summary = text; p.summaryApproved = true; }),
     'profile.addRole': (r) => store().update('profile', (p) => { p.roles.unshift({ id: id('r_'), company: r.company, title: r.title, start: r.start, end: r.end || 'present', location: r.location || '', bullets: [], sources: ['you'], manual: true }); }),
     'profile.updateRole': ({ roleId, ...patch }) => store().update('profile', (p) => { const r = p.roles.find((x) => x.id === roleId); if (r) for (const k of ['company', 'title', 'start', 'end', 'location']) if (k in patch) { r[k] = patch[k]; r.settled = { ...(r.settled || {}), [k]: patch[k] }; } }),
@@ -305,14 +317,14 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
       const design = override ? { ...store().get('design'), ...override } : store().get('design');
       return { html: resumeHtml(resume, design), resume };
     },
+    // Template cards use pictures that ship with the app; only your own design needs drawing.
     'design.thumbnails': () => {
-      const p = store().get('profile');
-      const resume = { contact: p.contact, summary: p.summary, roles: p.roles.slice(0, 3).map((r) => ({ ...r, bullets: r.bullets.slice(0, 3) })), skills: p.skills.slice(0, 10).map((s) => s.name), education: p.education, certifications: p.certifications };
-      if (!resume.roles.length) Object.assign(resume, SAMPLE_RESUME(p.contact));
       const keep = store().get('design');
-      const out = Object.fromEntries(Object.keys(PRESETS).map((k) => [k, resumeHtml(resume, { template: k, paper: keep.paper, customFonts: keep.customFonts })]));
-      if (keep.own?.template) out.own = resumeHtml(resume, { ...keep, mode: 'own' });
-      return out;
+      if (!keep.own?.template) return {};
+      const p = store().get('profile');
+      const resume = { contact: p.contact, summary: p.summary, roles: p.roles.slice(0, 3).map((r) => ({ ...r, bullets: r.bullets.slice(0, 3) })), skills: p.skills.slice(0, 10).map((x) => x.name), education: p.education, certifications: p.certifications };
+      if (!resume.roles.length) Object.assign(resume, SAMPLE_RESUME(p.contact));
+      return { own: resumeHtml(resume, { ...keep, mode: 'own' }) };
     },
 
     // ----- what you want -----
@@ -403,7 +415,7 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
         keep: s.get('design').keep ?? null, ownBuilt: Boolean(s.get('design').own?.template), ownFonts: (s.get('design').own?.fonts || []).length,
         hasResume, profileBuilt: p.roles.length > 0,
         profileStale: hasResume && mats.some((m) => ['resume', 'linkedin', 'review', 'portfolio'].includes(m.kind) && !m.inProfile),
-        profile: { contact: p.contact, roles: p.roles.map((r) => ({ title: r.title, company: r.company, start: r.start, end: r.end, results: r.bullets.length })), skills: p.skills.map((x) => x.name), years: yearsOfExperience(p), checks: pendingCount(p) },
+        profile: { contact: p.contact, summary: p.summary || '', roles: p.roles.map((r) => ({ title: r.title, company: r.company, start: r.start, end: r.end, results: r.bullets.length })), skills: p.skills.map((x) => x.name), years: yearsOfExperience(p), checks: pendingCount(p) },
         interviewed: [...by('interviewed'), ...s.get('tracker').list.filter((t) => ['interviewing', 'offer'].includes(t.status) && !w.examples.some((e) => e.kind === 'interviewed' && String(e.company).toLowerCase() === String(t.company).toLowerCase())).map((t) => ({ id: t.id, title: t.title, company: t.company, fromJourney: true }))],
         fit: by('fit'), reach: by('reach'),
         voice: { samples: s.get('voice').samples.map((x) => ({ id: x.id, name: x.name, words: String(x.text || '').split(/\s+/).length })), sampleLine: s.get('voice').sampleLine || '', useResume: Boolean(s.get('voice').useResume) },
@@ -636,6 +648,50 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
     'docs.text': ({ id: did }) => { const d = docById(did); const j = store().get('jobs').list.find((x) => x.id === d.jobId); return d.kind === 'resume' ? resumeText(d.data) : letterText(d.data, j); },
     'docs.approve': ({ id: did }) => { const d = docById(did); d.status = 'final'; saveDoc(d); return slimDoc(d); },
     'docs.pdfSaved': ({ id: did, file }) => { const d = docById(did); d.pdfPath = file; d.status = d.status === 'draft' ? 'final' : d.status; saveDoc(d); return slimDoc(d); },
+    // Review a new resume line by line: what came straight from your library, and what's new wording.
+    'docs.review': ({ id: did }) => {
+      const d = docById(did);
+      if (d.kind !== 'resume') return { jobs: [] };
+      const all = new Map(store().get('profile').roles.flatMap((r) => r.bullets.map((b) => [b.id, b])));
+      const norm = (t) => String(t).toLowerCase().replace(/[^a-z0-9%$]+/g, ' ').trim();
+      const jobs = (d.data.roles || []).map((r, ri) => ({ title: r.title, company: r.company, lines: (r.bullets || []).map((b, bi) => {
+        const src = all.get(b.from);
+        const path = `${ri}.${bi}`;
+        const same = !src || norm(src.text) === norm(b.text);
+        return { path, text: b.text, original: src?.text || '', kind: same ? 'library' : 'new', decision: d.review?.[path] || null };
+      }) }));
+      const open = jobs.flatMap((j) => j.lines).filter((l) => l.kind === 'new' && !l.decision).length;
+      return { jobs, open, reviewed: Boolean(d.reviewed) };
+    },
+    'docs.reviewLine': ({ id: did, path: p, decision, text }) => {
+      const d = docById(did);
+      const [ri, bi] = String(p).split('.').map(Number);
+      const b = d.data.roles?.[ri]?.bullets?.[bi];
+      if (!b) throw new UserError('Line not found.');
+      const prof = store().get('profile');
+      const src = prof.roles.flatMap((r) => r.bullets).find((x) => x.id === b.from);
+      if (decision === 'reject') { if (src) b.text = src.text; }
+      else {
+        if (decision === 'edit') {
+          text = String(text || '').trim();
+          if (!text) throw new UserError('Write the line first.');
+          const nums = (t) => (String(t).match(/\$?\d[\d,.]*\s*(%|k|m|x)?/gi) || []).map((n) => n.replace(/[\s,]/g, '').toLowerCase());
+          const extra = src ? nums(text).filter((n) => !nums(src.text).includes(n)) : [];
+          if (extra.length) throw new UserError(`The number ${extra[0]} isn’t in your original line. Change the wording, not the facts; fix facts in your profile.`);
+          b.text = text;
+        }
+        learnLine(b, d.id);
+      }
+      d.review = { ...(d.review || {}), [p]: decision === 'reject' ? 'rejected' : 'approved' };
+      saveDoc(d);
+      return { html: renderDoc(d) };
+    },
+    'docs.reviewDone': ({ id: did, approveRest = false }) => {
+      const d = docById(did);
+      if (approveRest) for (const job of methods['docs.review']({ id: did }).jobs) for (const l of job.lines) if (l.kind === 'new' && !l.decision) methods['docs.reviewLine']({ id: did, path: l.path, decision: 'approve' });
+      const fresh = docById(did); fresh.reviewed = true; saveDoc(fresh);
+      return slimDoc(fresh);
+    },
     'docs.limits': () => { const d = store().get('design'); return { maxPages: maxPages(d), page: pageSize(d) }; },
 
     // ----- morning batch -----
@@ -822,6 +878,21 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
     if (m.original) return { docx: docxLayoutXml(m.original) };
     return { file: { name: m.name, mime: m.mime, base64: m.raw } };
   }
+  // An approved new wording joins the bullet library under the same job, with the same sources.
+  // Its facts were already checked against the original line, so only the wording is new.
+  function learnLine(line, docId) {
+    let added = false;
+    store().update('profile', (p) => {
+      const norm = (t) => String(t).toLowerCase().replace(/[^a-z0-9%$]+/g, ' ').trim();
+      for (const r of p.roles) {
+        const src = r.bullets.find((x) => x.id === line.from);
+        if (!src || r.bullets.some((x) => norm(x.text) === norm(line.text))) continue;
+        r.bullets.push({ id: id('b_'), text: line.text, sources: src.sources || [], variantOf: src.variantOf || src.id, fromResume: docId, confirmed: true, added: now().toISOString() });
+        added = true;
+      }
+    });
+    return added;
+  }
   const docById = (did) => { const d = store().get('documents').list.find((x) => x.id === did); if (!d) throw new UserError('Document not found.'); return d; };
   const saveDoc = (d) => store().update('documents', (x) => { const i = x.list.findIndex((y) => y.id === d.id); if (i >= 0) x.list[i] = d; });
   const renderDoc = (d) => {
@@ -864,7 +935,7 @@ function cleanSample(x) {
     roles: x.roles.slice(0, 12).map((r) => ({ title: str(r.title), company: str(r.company), location: str(r.location), start: str(r.start), end: str(r.end), bullets: (r.bullets || []).slice(0, 12).map((b) => ({ text: str(b.text ?? b) })) })),
     skills: (x.skills || []).slice(0, 60).map(str), education: (x.education || []).slice(0, 6).map((e) => ({ degree: str(e.degree), field: str(e.field), school: str(e.school), year: str(e.year) })), certifications: (x.certifications || []).slice(0, 10).map((c) => ({ name: str(c.name), year: str(c.year) })) };
 }
-function slimDoc(d) { return { id: d.id, jobId: d.jobId, kind: d.kind, version: d.version, created: d.created, file: d.file, checks: d.checks, status: d.status, company: d.company, title: d.title, cuts: d.cuts || [], readable: d.readable ?? null, pages: d.pages ?? null, edited: Boolean(d.edited), pdfPath: d.pdfPath || null }; }
+function slimDoc(d) { return { id: d.id, jobId: d.jobId, kind: d.kind, version: d.version, created: d.created, file: d.file, checks: d.checks, status: d.status, company: d.company, title: d.title, cuts: d.cuts || [], readable: d.readable ?? null, pages: d.pages ?? null, edited: Boolean(d.edited), pdfPath: d.pdfPath || null, reviewed: Boolean(d.reviewed) }; }
 
 function readIfExists(file) {
   try { return file && fs.existsSync(file) ? fs.readFileSync(file).toString('base64') : null; } catch { return null; }
