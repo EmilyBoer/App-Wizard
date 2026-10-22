@@ -94,6 +94,11 @@ ${li.length ? `<div class="list">${li.map((m) => `<div class="item">${tag('Linke
       return call('want.save', { where, jobType: [...el.querySelectorAll('[data-t][aria-pressed=true]')].map((c) => c.dataset.t) });
     } },
 
+  // Not asked in setup (default: the past 2 weeks); changed in Profile.
+  { id: 'recent', when: () => false, ask: 'How recent should jobs be?', help: 'Fresh postings get more attention from employers, and older ones are often already filled or closed. Jobs that don’t show a date always show up.',
+    body: (st) => { const v = st.want.maxAgeDays ?? 14; return `<div class="row">${[[3, 'Past 3 days'], [7, 'Past week'], [14, 'Past 2 weeks'], [30, 'Past month'], [0, 'Any time']].map(([n, l]) => radio('age', String(n), l, Number(v) === n)).join('')}</div>`; },
+    next: (el) => call('want.save', { maxAgeDays: Number(el.querySelector('input[name=age]:checked')?.value ?? 14) }) },
+
   { id: 'relocate', ask: 'Would you move for the right job?', help: 'Applications often ask. We’ll answer the same way every time.',
     body: (st, ui) => `<div class="row">${['No', 'Yes', 'Possibly, for the right role'].map((o) => radio('rel', o, o, String(ui.answers.relocate || '').split(':')[0] === o || (o.startsWith('Possibly') && /^Open to it/.test(ui.answers.relocate || '')))).join('')}</div><label class="field" id="citiesbox">Which cities or regions?<input type="text" id="cities" value="${esc(ui.answers.relocateCities)}" placeholder="e.g. Seattle, Denver, anywhere on the West Coast"></label>`,
     mount(el) { const box = el.querySelector('#citiesbox'); const sync = () => box.classList.toggle('hidden', !['Yes', 'Possibly, for the right role'].includes(el.querySelector('input[name=rel]:checked')?.value)); el.querySelectorAll('input[name=rel]').forEach((r) => (r.onchange = sync)); sync(); },
@@ -378,6 +383,7 @@ ${section('What you’re looking for', [
     row('Where you’ve interviewed recently', st.interviewed.length ? st.interviewed.map((x) => `<div>${esc(x.title || 'Job')}${x.company ? ` <span class="muted">· ${esc(x.company)}</span>` : ''}${x.fromJourney ? ' <span class="tiny muted">from Journey</span>' : ''}</div>`).join('') : '', 'edit:interviewed'),
     row('Suit you', jobs(st.fit), 'edit:fit'),
     row('Aspirational job', jobs(st.reach), 'edit:reach'),
+    row('How recent', (() => { const v = w.maxAgeDays ?? 14; return { 3: 'Posted in the past 3 days', 7: 'Posted in the past week', 14: 'Posted in the past 2 weeks', 30: 'Posted in the past month', 0: 'Any time' }[v] || `Past ${v} days`; })(), 'edit:recent'),
     row('Where and how', [...(w.jobType || []), ...(w.where || [])].map(esc).join(' · '), 'edit:where'),
     row('Lowest pay', [w.payFloor ? `$${Number(w.payFloor).toLocaleString()} a year` : '', w.hourlyFloor ? `$${w.hourlyFloor} an hour for contract work` : ''].filter(Boolean).join(' · '), 'edit:pay'),
     row('Never show me', (w.dealBreakers || []).length ? pills(w.dealBreakers) : '<span class="muted">Nothing</span>', 'edit:never'),
@@ -442,7 +448,7 @@ function wireAdder(el, kind, ui) {
 }
 
 // ----- Change one answer later, in an overlay (setup itself only runs the first time) -----
-const EDIT_TITLE = { sweetspot: 'Job titles we look for', interviewed: 'Where you’ve interviewed recently', fit: 'Jobs that suit you', reach: 'Aspirational job', where: 'Where and how you want to work', pay: 'Pay', never: 'Never show me', relocate: 'Would you move?', start: 'When you could start', linkedin: 'LinkedIn' };
+const EDIT_TITLE = { sweetspot: 'Job titles we look for', interviewed: 'Where you’ve interviewed recently', fit: 'Jobs that suit you', recent: 'How recent', reach: 'Aspirational job', where: 'Where and how you want to work', pay: 'Pay', never: 'Never show me', relocate: 'Would you move?', start: 'When you could start', linkedin: 'LinkedIn' };
 export async function editAnswer(qid, onSaved) {
   const q = Q.find((x) => x.id === qid);
   if (!q) return;

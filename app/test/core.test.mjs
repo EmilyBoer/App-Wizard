@@ -364,3 +364,13 @@ test('review: new wordings are approved, edited or turned down; approved ones jo
   const done = await api.call('docs.reviewDone', { id, approveRest: true });
   assert.equal(done.reviewed, true);
 });
+
+test('only recent postings: default 2 weeks, changeable, undated jobs still show', () => {
+  const daysAgo = (n) => new Date(Date.now() - n * 86400000).toISOString();
+  const job = (n) => ({ title: 'Web Producer', description: 'Run the website.', location: 'Remote', postedAt: n == null ? null : daysAgo(n) });
+  assert.equal(hardFilter(job(5), {}).ok, true);
+  assert.match(hardFilter(job(20), {}).reasons.join(' '), /older than 14 days/);
+  assert.equal(hardFilter(job(20), { maxAgeDays: 30 }).ok, true);
+  assert.equal(hardFilter(job(200), { maxAgeDays: 0 }).ok, true);
+  assert.equal(hardFilter(job(null), {}).ok, true);
+});

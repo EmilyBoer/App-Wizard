@@ -58,6 +58,13 @@ export function hardFilter(job, want, rules = []) {
   if (pay?.hourly && want.hourlyFloor) {
     if (pay.max / 2080 < want.hourlyFloor * slack) reasons.push(`Pays up to $${Math.round(pay.max / 2080)} an hour, under your $${want.hourlyFloor} an hour.`);
   } else if (want.payFloor && pay && pay.max < want.payFloor * slack) reasons.push(`Pay tops out at ${payLabel(pay)}, under your $${Math.round(want.payFloor / 1000)}k floor.`);
+  // Only recent postings: default the past 14 days (0 means any age). Jobs with no date still show.
+  const maxAge = want.maxAgeDays === undefined || want.maxAgeDays === null ? 14 : Number(want.maxAgeDays);
+  if (maxAge > 0) {
+    const basis = job.postedAt || job.updatedAt;
+    const age = basis ? Math.floor((Date.now() - new Date(basis).getTime()) / 86400000) : job.ageDays;
+    if (Number.isFinite(age) && age > maxAge) reasons.push(`Posted ${age} days ago, older than ${maxAge} days.`);
+  }
   // Kinds of work: hide only clear mismatches (most postings don't say).
   const types = want.jobType || [];
   if (types.length) {
