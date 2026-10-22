@@ -332,3 +332,9 @@ body.building .nav, body.building .ask { visibility: hidden; }
 .own-pdf { width: 100%; height: 100%; border: 0; display: block; }
 .own-scale { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
 .own-scale iframe { border: 0; background: #fff; display: block; }
+
+.dz-pals { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: var(--s2); }
+.dz-pal { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1.5px solid var(--line); border-radius: 10px; overflow: hidden; padding: 0; background: var(--paper); cursor: pointer; color: var(--ink); }
+.dz-pal span { height: 26px; }
+.dz-pal b { grid-column: 1 / -1; padding: 4px 6px; text-align: left; font-weight: 600; }
+.dz-pal.on { border-color: var(--ink); box-shadow: 0 0 0 1.5px var(--ink); }

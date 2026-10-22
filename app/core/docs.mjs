@@ -29,24 +29,39 @@ export const MIN = { body: 10, heading: 11, name: 18, marginIn: 0.5, lineHeight:
 // Templates are just good starting combinations of design settings. People can change any setting after.
 // Fonts used here are all free Google Fonts.
 export const PRESETS = {
-  classic: { label: 'Classic', note: 'Serif name, a headline in capitals, fine rules.', layout: 'single', header: 'left', headerRule: 'hairline', contact: 'spread', icons: false, headline: true, nameStyle: 'bold', titles: 'rule', nameSize: 'large', fonts: { heading: 'Lora', body: 'Inter' }, accent: '#23395B', size: 10, spacing: 'balanced', margin: 0.6, dates: 'right', bullets: 'dot', skills: 'columns', sidebarTint: 'none', pageTint: 'none' },
-  timeline: { label: 'Timeline', note: 'Dates in their own column. Quick to scan; fits a little less.', layout: 'single', header: 'split', headerRule: 'none', contact: 'spread', icons: true, headline: true, nameStyle: 'bold', titles: 'rule', nameSize: 'large', fonts: { heading: 'Poppins', body: 'Inter' }, accent: '#1F6F6B', size: 10, spacing: 'balanced', margin: 0.6, dates: 'left', bullets: 'dot', skills: 'columns', sidebarTint: 'none', pageTint: 'none' },
-  modern: { label: 'Modern', note: 'A soft sidebar for contact, skills and education.', layout: 'sidebar-left', header: 'left', headerRule: 'none', contact: 'spread', icons: true, headline: true, nameStyle: 'split', titles: 'short', nameSize: 'xl', fonts: { heading: 'Poppins', body: 'Inter' }, accent: '#4A6B5C', size: 10, spacing: 'balanced', margin: 0.6, dates: 'right', bullets: 'dot', skills: 'list', sidebarTint: 'light', pageTint: 'none' },
-  executive: { label: 'Executive', note: 'Centered and formal, for senior roles.', layout: 'single', header: 'center', headerRule: 'none', contact: 'spread', icons: false, headline: true, nameStyle: 'bold', nameUpper: true, titles: 'center', nameSize: 'large', fonts: { heading: 'Lora', body: 'Source Sans 3' }, accent: '#1E1E1E', size: 10, spacing: 'balanced', margin: 0.7, dates: 'right', bullets: 'dot', skills: 'columns', sidebarTint: 'none', pageTint: 'none' },
-  minimal: { label: 'Minimal', note: 'Section names in the margin. Calm and airy.', layout: 'single', header: 'left', headerRule: 'none', contact: 'together', icons: false, headline: true, nameStyle: 'split', titles: 'gutter', nameSize: 'xl', fonts: { heading: 'Inter', body: 'Inter' }, accent: '#111111', size: 10, spacing: 'balanced', margin: 0.65, dates: 'right', bullets: 'dash', skills: 'inline', sidebarTint: 'none', pageTint: 'none' },
-  bold: { label: 'Bold', note: 'A deep color band across the top.', layout: 'single', header: 'band', headerRule: 'none', contact: 'spread', icons: true, headline: true, nameStyle: 'bold', titles: 'tint', nameSize: 'xl', fonts: { heading: 'Poppins', body: 'Inter' }, accent: '#1D3557', size: 10, spacing: 'balanced', margin: 0.55, dates: 'right', bullets: 'dot', skills: 'tags', sidebarTint: 'none', pageTint: 'none' },
-  editorial: { label: 'Editorial', note: 'Warm paper, big serif headings, a writer’s feel.', layout: 'single', header: 'left', headerRule: 'accent', contact: 'together', icons: false, headline: true, nameStyle: 'bold', titles: 'plain', nameSize: 'xl', fonts: { heading: 'Lora', body: 'Source Sans 3' }, accent: '#9C4A2F', size: 10, spacing: 'balanced', margin: 0.65, dates: 'below', bullets: 'dot', skills: 'inline', sidebarTint: 'none', pageTint: 'warm' },
-  twotone: { label: 'Two-tone', note: 'A dark sidebar with white text.', layout: 'sidebar-left', header: 'left', headerRule: 'none', contact: 'spread', icons: true, headline: true, nameStyle: 'split', titles: 'caps', nameSize: 'xl', fonts: { heading: 'Poppins', body: 'Inter' }, accent: '#24413B', size: 10, spacing: 'balanced', margin: 0.6, dates: 'below', bullets: 'dot', skills: 'list', sidebarTint: 'dark', pageTint: 'none' },
+  classic: { label: 'Classic', note: 'A monogram, a serif name and fine rules.', mono: 'circle', jobLine: 'one', layout: 'single', header: 'left', headerRule: 'hairline', contact: 'spread', icons: false, headline: true, nameStyle: 'bold', titles: 'rule', nameSize: 'large', fonts: { heading: 'Lora', body: 'Inter' }, accent: '#1B2A41', accent2: '#4F9BD9', size: 10, spacing: 'balanced', margin: 0.55, dates: 'right', bullets: 'dot', skills: 'columns', sidebarTint: 'none', pageTint: 'none' },
+  timeline: { label: 'Timeline', note: 'A real timeline: every job on a connected line.', jobLine: 'one', layout: 'single', header: 'left', headerRule: 'hairline', contact: 'spread', icons: false, headline: true, nameStyle: 'bold', titles: 'rule', nameSize: 'large', fonts: { heading: 'Poppins', body: 'Inter' }, accent: '#0F4C5C', accent2: '#F29E5C', size: 10, spacing: 'balanced', margin: 0.55, dates: 'left', bullets: 'dot', skills: 'columns', sidebarTint: 'none', pageTint: 'none' },
+  modern: { label: 'Modern', note: 'A soft sidebar with your initials, contact and skills.', mono: 'square', layout: 'sidebar-left', header: 'left', headerRule: 'none', contact: 'spread', icons: true, headline: true, nameStyle: 'split', titles: 'short', nameSize: 'xl', fonts: { heading: 'Poppins', body: 'Inter' }, accent: '#4B5A2E', accent2: '#C2A86A', size: 10, spacing: 'balanced', margin: 0.5, dates: 'right', bullets: 'dot', skills: 'tags', sidebarTint: 'light', pageTint: 'none' },
+  executive: { label: 'Executive', note: 'Centered and formal, for senior roles.', jobLine: 'one', layout: 'single', header: 'center', headerRule: 'double', contact: 'spread', icons: false, headline: true, nameStyle: 'bold', nameUpper: true, titles: 'center', nameSize: 'large', fonts: { heading: 'Lora', body: 'Source Sans 3' }, accent: '#26282B', accent2: '#B08D57', size: 10, spacing: 'balanced', margin: 0.62, dates: 'right', bullets: 'dot', skills: 'columns', sidebarTint: 'none', pageTint: 'none' },
+  minimal: { label: 'Minimal', note: 'Numbered sections in the margin and a large, light name.', numbers: true, jobLine: 'one', layout: 'single', header: 'left', headerRule: 'none', contact: 'together', icons: false, headline: true, nameStyle: 'light', titles: 'gutter', nameSize: 'xxl', fonts: { heading: 'Inter', body: 'Inter' }, accent: '#111111', accent2: '#F0705F', size: 10, spacing: 'balanced', margin: 0.58, dates: 'right', bullets: 'dash', skills: 'inline', sidebarTint: 'none', pageTint: 'none' },
+  bold: { label: 'Bold', note: 'A deep color band with your initials in the background.', mono: 'watermark', jobLine: 'one', layout: 'single', header: 'band', headerRule: 'none', contact: 'spread', icons: true, headline: true, nameStyle: 'bold', titles: 'tint', nameSize: 'xl', fonts: { heading: 'Poppins', body: 'Inter' }, accent: '#45284F', accent2: '#E39AAE', size: 10, spacing: 'balanced', margin: 0.5, dates: 'right', bullets: 'dot', skills: 'tags', sidebarTint: 'none', pageTint: 'none' },
+  editorial: { label: 'Editorial', note: 'Warm paper, big serif headings, a writer’s feel.', headlineStyle: 'italic', layout: 'single', header: 'left', headerRule: 'accent', contact: 'together', icons: false, headline: true, nameStyle: 'bold', titles: 'plain', nameSize: 'xl', fonts: { heading: 'Lora', body: 'Source Sans 3' }, accent: '#9C4A2F', accent2: '#D9B48F', size: 10, spacing: 'balanced', margin: 0.58, dates: 'below', bullets: 'dot', skills: 'inline', sidebarTint: 'none', pageTint: 'warm' },
+  twotone: { label: 'Two-tone', note: 'A dark sidebar with white text.', mono: 'circle', layout: 'sidebar-left', header: 'left', headerRule: 'none', contact: 'spread', icons: true, headline: true, nameStyle: 'split', titles: 'caps', nameSize: 'xl', fonts: { heading: 'Poppins', body: 'Inter' }, accent: '#1F3B2D', accent2: '#C9A227', size: 10, spacing: 'balanced', margin: 0.5, dates: 'below', bullets: 'dot', skills: 'tags', sidebarTint: 'dark', pageTint: 'none' },
 };
 const RENAMED = { compact: 'timeline' };
 /** Every design setting a person can change (a template sets all of them). */
-export const DESIGN_KEYS = ['layout', 'header', 'headerRule', 'contact', 'icons', 'headline', 'nameStyle', 'titles', 'size', 'spacing', 'margin', 'dates', 'bullets', 'skills', 'sidebarTint', 'pageTint', 'accent', 'order', 'hidden', 'sidebar', 'nameSize', 'nameUpper', 'fill'];
+export const DESIGN_KEYS = ['accent2', 'layout', 'header', 'headerRule', 'mono', 'headlineStyle', 'jobLine', 'numbers', 'contact', 'icons', 'headline', 'nameStyle', 'titles', 'size', 'spacing', 'margin', 'dates', 'bullets', 'skills', 'sidebarTint', 'pageTint', 'accent', 'order', 'hidden', 'sidebar', 'nameSize', 'nameUpper', 'fill'];
 export const TEMPLATES = Object.fromEntries(Object.entries(PRESETS).map(([k, v]) => [k, { label: v.label, note: v.note, columns: v.layout === 'single' ? 1 : 2 }]));
 export const SECTIONS = { summary: 'Summary', experience: 'Experience', skills: 'Skills', education: 'Education', certifications: 'Certifications' };
+// Two-color palettes: a deep main color (name, section titles) and a highlight (bullets, bars, dots, badges, bubbles).
+export const PALETTES = {
+  'ink-sky': { name: 'Ink and sky', accent: '#1B2A41', accent2: '#4F9BD9' },
+  'navy-coral': { name: 'Navy and coral', accent: '#14213D', accent2: '#EF6F61' },
+  'teal-peach': { name: 'Teal and peach', accent: '#0F4C5C', accent2: '#F29E5C' },
+  'forest-gold': { name: 'Forest and gold', accent: '#1F3B2D', accent2: '#C9A227' },
+  'plum-blush': { name: 'Plum and blush', accent: '#45284F', accent2: '#E39AAE' },
+  'clay-sand': { name: 'Clay and sand', accent: '#9C4A2F', accent2: '#D9B48F' },
+  'olive-linen': { name: 'Olive and linen', accent: '#4B5A2E', accent2: '#C2A86A' },
+  'charcoal-mint': { name: 'Charcoal and mint', accent: '#26282B', accent2: '#4DB38E' },
+  'black-coral': { name: 'Black and coral', accent: '#111111', accent2: '#F0705F' },
+  'charcoal-brass': { name: 'Charcoal and brass', accent: '#26282B', accent2: '#B08D57' },
+};
 export const ACCENTS = ['#23395B', '#1E1E1E', '#1D3557', '#1F6F6B', '#4A6B5C', '#24413B', '#9C4A2F', '#6B4E8C'];
 // Space between sections, jobs and bullets (points), the gap under a section title, and line height.
-const SPACING = { compact: { sec: 10, role: 7, li: 1, h: 4, lh: 1.28 }, balanced: { sec: 14, role: 9, li: 1.5, h: 6, lh: 1.3 }, roomy: { sec: 18, role: 12, li: 2.6, h: 8, lh: 1.42 } };
-const NAME_SIZE = { standard: 2.6, large: 3.2, xl: 3.8 };
+// One spacing system. sec: between sections (also header to first section), role: between jobs and between
+// education entries, h: under a section title, li: between bullets and list items, lh: line height.
+const SPACING = { compact: { sec: 14, role: 9, li: 2, h: 6, lh: 1.32 }, balanced: { sec: 19, role: 12, li: 3, h: 8, lh: 1.38 }, roomy: { sec: 24, role: 15, li: 4, h: 10, lh: 1.46 } };
+const NAME_SIZE = { standard: 2.6, large: 3.2, xl: 3.8, xxl: 4.4 };
 const PAPER = { none: '#FFFFFF', warm: '#FBF7F1', cool: '#F5F8FB' };
 
 /** Fill in every design setting: the template's choices first, then what the person changed. */
@@ -63,10 +78,15 @@ export function normalizeDesign(d = {}) {
   out.nameSize = NAME_SIZE[out.nameSize] ? out.nameSize : 'large';
   out.margin = Math.max(MIN.marginIn, Number(out.margin) || 0.6);
   out.accent = /^#[0-9a-f]{6}$/i.test(out.accent) ? out.accent : '#23395B';
+  out.accent2 = /^#[0-9a-f]{6}$/i.test(out.accent2) ? out.accent2 : out.accent;
   out.sidebarTint = out.sidebarTint === true ? 'light' : out.sidebarTint === false ? 'none' : ['none', 'light', 'dark'].includes(out.sidebarTint) ? out.sidebarTint : 'none';
   out.pageTint = PAPER[out.pageTint] ? out.pageTint : 'none';
   out.contact = out.contact === 'together' ? 'together' : 'spread';
-  out.headerRule = ['none', 'hairline', 'accent'].includes(out.headerRule) ? out.headerRule : 'none';
+  out.headerRule = ['none', 'hairline', 'accent', 'double'].includes(out.headerRule) ? out.headerRule : 'none';
+  out.mono = ['none', 'circle', 'square', 'watermark'].includes(out.mono) ? out.mono : 'none';
+  out.headlineStyle = out.headlineStyle === 'italic' ? 'italic' : 'caps';
+  out.jobLine = out.jobLine === 'one' ? 'one' : 'two';
+  out.numbers = Boolean(out.numbers);
   out.nameStyle = ['bold', 'light', 'split'].includes(out.nameStyle) ? out.nameStyle : 'bold';
   if (out.header === 'split' && out.layout === 'single' && false) out.header = 'split';
   if (out.dates === 'left' && out.titles === 'gutter') out.dates = 'right';
@@ -106,6 +126,9 @@ export function fontFaces(families, customFonts = [], fontBase, extraGoogle = []
   return { link, css };
 }
 
+/** How light a color is, 0 to 255. */
+function lum(hex) { const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)); return r * 0.3 + g * 0.59 + b * 0.11; }
+
 /** Mix a color toward white (or another color): amount 0 = the color, 1 = the other. Solid, so it prints evenly. */
 function mix(hex, amount, toward = '#ffffff') {
   const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
@@ -140,24 +163,40 @@ function nameHtml(name, d) {
   return esc(name);
 }
 
+const initials = (name) => String(name || '').trim().split(/\s+/).filter(Boolean).map((w) => w[0]).filter((ch, i, a) => i === 0 || i === a.length - 1).join('').toUpperCase();
+
 /** Name and contact at the top, for one-column layouts and letters. */
 function headerHtml(c, d, resume = {}) {
   const head = ['split', 'band', 'center'].includes(d.header) ? d.header : 'left';
   const hl = d.headline ? headlineOf({ ...resume, contact: c }) : '';
-  const name = `<div class="hd-name"><h1>${nameHtml(c.name, d)}</h1>${hl ? `<div class="headline">${esc(hl)}</div>` : ''}</div>`;
+  const nameBlock = `<div class="hd-name"><h1>${nameHtml(c.name, d)}</h1>${hl ? `<div class="headline ${d.headlineStyle === 'italic' ? 'it' : ''}">${esc(hl)}</div>` : ''}</div>`;
+  const mono = (d.mono === 'circle' || d.mono === 'square') && head !== 'band' ? `<div class="mono mono-${d.mono}" aria-hidden="true">${esc(initials(c.name))}</div>` : '';
+  const name = mono ? `<div class="hd-id">${mono}${nameBlock}</div>` : nameBlock;
+  if (head === 'band') return `<header class="hd h-band ${d.mono === 'watermark' ? 'wm' : ''}" data-initials="${esc(initials(c.name))}">${nameBlock}${contactHtml(c, d, d.contact === 'together' ? 'c-together' : d.icons && contactItems(c).length >= 5 ? 'c-grid' : 'c-spread')}</header>`;
   if (head === 'split') return `<header class="hd h-split">${name}${contactHtml(c, d, 'c-stack')}</header>`;
   const spread = d.contact === 'together' ? 'c-together' : d.icons && contactItems(c).length >= 5 ? 'c-grid' : 'c-spread';
   return `<header class="hd h-${head} rule-${d.headerRule}">${name}${contactHtml(c, d, spread)}</header>`;
 }
 
 function headerCss(d, f, nameSize, m) {
-  const a = d.accent;
+  const a = d.accent, a2 = d.accent2 || d.accent;
+  const onA2 = lum(a2) > 150 ? a : '#fff';
   const nameWeight = d.nameStyle === 'light' ? 300 : d.nameUpper ? 600 : 700;
-  return `.hd{margin-bottom:calc(var(--k) * ${d.spacing === 'compact' ? 10 : 16}pt)}
+  return `.hd{margin-bottom:calc(var(--k) * ${(SPACING[d.spacing] || SPACING.balanced).sec + 3}pt)}
 h1{font-family:${f.head};font-size:${nameSize}pt;margin:0;color:var(--name);letter-spacing:${d.nameUpper ? '.14em' : nameSize >= 34 ? '-.03em' : '-.02em'};line-height:1.02;font-weight:${nameWeight};${d.nameUpper ? 'text-transform:uppercase;' : ''}}
 .n-light{font-weight:300}.n-bold{font-weight:700}
-.headline{font-family:${f.body};font-size:${d.size}pt;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--acc-text);margin-top:${Math.round(nameSize * 0.24)}pt}
+.headline{font-family:${f.body};font-size:${d.size}pt;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--hl, var(--acc-text));margin-top:${Math.round(nameSize * 0.24)}pt}
 .hd-name{margin-bottom:${Math.round(nameSize * 0.34)}pt}
+.headline.it{font-family:${f.head};font-style:italic;text-transform:none;letter-spacing:0;font-weight:400;font-size:${d.size + 3}pt}
+.hd-id{display:flex;align-items:center;gap:${Math.round(nameSize * 0.5)}pt;margin-bottom:${Math.round(nameSize * 0.34)}pt}
+.hd-id .hd-name{margin:0}
+.h-center .hd-id{flex-direction:column;gap:${Math.round(nameSize * 0.35)}pt}
+.mono{flex:none;display:flex;align-items:center;justify-content:center;width:${Math.round(nameSize * 1.75)}pt;height:${Math.round(nameSize * 1.75)}pt;font-family:${f.head};font-weight:600;font-size:${Math.round(nameSize * 0.6)}pt;letter-spacing:.04em;line-height:1}
+.mono-circle{border:1.75pt solid ${a2};color:${a};border-radius:50%}
+.mono-square{background:${a2};color:${onA2};border-radius:${Math.round(nameSize * 0.3)}pt}
+.wm{position:relative;overflow:hidden}.wm > *{position:relative;z-index:1}
+.wm::after{content:attr(data-initials);position:absolute;right:${m * 0.5}in;top:-${Math.round(nameSize * 0.55)}pt;font-family:${f.head};font-weight:800;font-size:${Math.round(nameSize * 3.6)}pt;letter-spacing:-.05em;line-height:1;color:rgba(255,255,255,.07)}
+.rule-double .contact,.h-center.rule-double .contact{border-top:2.25pt double var(--rule-strong);border-bottom:2.25pt double var(--rule-strong);padding:7pt 2pt}
 .contact{font-size:${MIN.body}pt;color:var(--ink2);line-height:1.4}
 .ci{white-space:nowrap;display:inline-flex;align-items:center}
 .ico{width:.9em;height:.9em;margin-right:4pt;flex:none;fill:none;stroke:var(--icon);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
@@ -167,7 +206,7 @@ h1{font-family:${f.head};font-size:${nameSize}pt;margin:0;color:var(--name);lett
 .c-together .ci + .ci::before{content:"";display:inline-block;width:.75pt;height:.95em;background:var(--rule-strong);margin:0 9pt}
 .c-stack{display:flex;flex-direction:column;gap:4pt}
 .rule-hairline .contact{border-top:.75pt solid var(--rule);padding-top:8pt}
-.rule-accent .hd-name::after{content:"";display:block;width:34pt;height:3pt;background:${a};margin-top:${Math.round(nameSize * 0.36)}pt}
+.rule-accent .hd-name::after{content:"";display:block;width:34pt;height:3pt;background:${a2};margin-top:${Math.round(nameSize * 0.36)}pt}
 .h-center{text-align:center}
 .h-center .contact{border-top:.75pt solid var(--rule);border-bottom:.75pt solid var(--rule);padding:6pt 2pt}
 .h-center .c-together{justify-content:center}
@@ -175,7 +214,7 @@ h1{font-family:${f.head};font-size:${nameSize}pt;margin:0;color:var(--name);lett
 .h-split .hd-name{margin:0}
 .h-split .c-stack{align-items:flex-end;text-align:right}
 .h-split .ci{flex-direction:row-reverse}.h-split .ico{margin:0 0 0 5pt}
-.h-band{background:${a};margin:-${m}in -${m}in calc(var(--k) * 18pt);padding:${Math.max(0.45, m * 0.8)}in ${m}in ${Math.max(0.3, m * 0.5)}in;--name:#fff;--ink2:rgba(255,255,255,.9);--icon:${mix(a, 0.55)};--acc-text:${mix(a, 0.62)};--rule:rgba(255,255,255,.25);--rule-strong:rgba(255,255,255,.4)}`;
+.h-band{background:${a};box-shadow:inset 0 -5pt 0 ${a2};margin:-${m}in -${m}in calc(var(--k) * ${(SPACING[d.spacing] || SPACING.balanced).sec + 3}pt);padding:${Math.max(0.45, m * 0.8)}in ${m}in ${Math.max(0.3, m * 0.5)}in;--name:#fff;--ink2:rgba(255,255,255,.9);--icon:${a2};--acc-text:${a2};--hl:${a2};--rule:rgba(255,255,255,.25);--rule-strong:rgba(255,255,255,.4)}`;
 }
 
 /** Resume HTML from the design settings. Reading order in the HTML = reading order for hiring systems. */
@@ -188,7 +227,7 @@ export function resumeHtml(resume, design, { fontBase } = {}) {
   const fb = (x) => (SERIF.has(x) ? 'Georgia, serif' : 'Arial, Helvetica, sans-serif');
   const f = { head: `"${head}",${fb(head)}`, body: `"${body}",${fb(body)}` };
   const sp = SPACING[d.spacing] || SPACING.balanced;
-  const a = d.accent, m = d.margin, s = d.size;
+  const a = d.accent, a2 = d.accent2 || d.accent, m = d.margin, s = d.size;
   const nameSize = Math.max(MIN.name, Math.round(s * (NAME_SIZE[d.nameSize] || NAME_SIZE.large)));
   const hs = Math.max(MIN.heading, s + 1);
   const c = resume.contact || {};
@@ -205,29 +244,33 @@ export function resumeHtml(resume, design, { fontBase } = {}) {
   const whenStack = (r) => `<span>${esc(fmtDate(r.start))}${r.end ? ' –' : ''}</span>${r.end ? `<span>${esc(fmtDate(r.end))}</span>` : ''}`;
   const coLine = (r) => `<div class="rc"><span class="co">${esc(r.company)}</span>${r.location ? `<span class="sepx"> · </span><span class="rl">${esc(r.location)}</span>` : ''}</div>`;
   const bullets = (r) => `<ul>${(r.bullets || []).map((b) => `<li>${esc(b.text)}</li>`).join('')}</ul>`;
+  const oneLine = d.jobLine === 'one' && !sidebarOn;
   const roles = (resume.roles || []).map((r) => {
-    if (timeline) return `<div class="role tl"><div class="tl-when">${whenStack(r)}</div><div class="tl-body"><div class="rt">${esc(r.title)}</div>${coLine(r)}${bullets(r)}</div></div>`;
-    if (dates === 'below') return `<div class="role"><div class="rt">${esc(r.title)}</div>${coLine(r)}<div class="rd rd-below">${when(r)}</div>${bullets(r)}</div>`;
+    const loc = r.location ? esc(r.location) : '';
+    if (timeline) return `<div class="role tl"><div class="tl-rail"></div><div class="tl-body"><div class="tl-when">${when(r)}${loc ? `<span class="sepx"> · </span>${loc}` : ''}</div><div class="rt">${esc(r.title)}<span class="sepx"> · </span><span class="co">${esc(r.company)}</span></div>${bullets(r)}</div></div>`;
+    if (dates === 'below') return `<div class="role"><div class="rt">${esc(r.title)}</div><div class="rc"><span class="co">${esc(r.company)}</span>${loc ? `<span class="sepx"> · </span><span class="rl">${loc}</span>` : ''}<span class="sepx"> · </span><span class="rd rd-below">${when(r)}</span></div>${bullets(r)}</div>`;
+    if (oneLine) return `<div class="role"><div class="rh"><span class="rh-l"><span class="rt">${esc(r.title)}</span><span class="sepx"> · </span><span class="co">${esc(r.company)}</span></span><span class="rd">${loc ? `${loc}<span class="sepx"> · </span>` : ''}${when(r)}</span></div>${bullets(r)}</div>`;
     return `<div class="role"><div class="rh"><span class="rt">${esc(r.title)}</span><span class="rd">${when(r)}</span></div>${coLine(r)}${bullets(r)}</div>`;
   }).join('');
   const skillList = resume.skills || [];
   const skills = (side) => {
     if (!skillList.length) return '';
-    const style = side && (d.skills === 'inline' || d.skills === 'columns') ? 'list' : d.skills;
+    const style = side && (d.skills === 'inline' || d.skills === 'columns') ? 'comma' : d.skills;
     if (style === 'tags') return `<div class="tags">${skillList.map((x) => `<span class="tagx">${esc(x)}</span>`).join(' ')}</div>`;
+    if (style === 'comma') return `<p class="sk-comma">${skillList.map((x) => esc(x)).join(', ')}</p>`;
     if (style === 'list') return `<ul class="sk-list">${skillList.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
     if (style === 'columns') return `<ul class="sk-cols">${skillList.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
     return `<p class="skills">${skillList.map((x) => `<span class="sk">${esc(x)}</span>`).join(' ')}</p>`;
   };
   const yearRow = (main, sub, year, side) => {
     if (side) return `<div class="ed"><div class="et">${main}</div>${sub ? `<div class="es">${sub}</div>` : ''}${year ? `<div class="rd">${esc(year)}</div>` : ''}</div>`;
-    if (timeline) return `<div class="ed tl"><div class="tl-when">${year ? `<span>${esc(year)}</span>` : ''}</div><div class="tl-body"><div class="et">${main}</div>${sub ? `<div class="es">${sub}</div>` : ''}</div></div>`;
+    if (timeline) return `<div class="ed tl"><div class="tl-rail"></div><div class="tl-body"><div class="rh"><span class="et">${main}</span>${year ? `<span class="rd">${esc(year)}</span>` : ''}</div>${sub ? `<div class="es">${sub}</div>` : ''}</div></div>`;
     return `<div class="ed"><div class="rh"><span class="et">${main}</span>${year ? `<span class="rd">${esc(year)}</span>` : ''}</div>${sub ? `<div class="es">${sub}</div>` : ''}</div>`;
   };
   const edu = (side) => (resume.education || []).map((e) => yearRow(`${esc(e.degree)}${e.field ? `, ${esc(e.field)}` : ''}`, esc(e.school), e.year, side)).join('');
   const certs = (side) => (resume.certifications || []).map((x) => yearRow(esc(x.name), '', x.year, side)).join('');
-  const summary = resume.summary ? (timeline ? `<div class="tl"><div class="tl-when"></div><p class="summary tl-body">${esc(resume.summary)}</p></div>` : `<p class="summary">${esc(resume.summary)}</p>`) : '';
-  const skillsBlock = (side) => { const b = skills(side); return b && timeline && !side ? `<div class="tl"><div class="tl-when"></div><div class="tl-body">${b}</div></div>` : b; };
+  const summary = resume.summary ? `<p class="summary">${esc(resume.summary)}</p>` : '';
+  const skillsBlock = (side) => { const b = skills(side); return b; };
   const block = (k, side) => ({ summary, experience: roles, skills: skillsBlock(side), education: edu(side), certifications: certs(side) })[k];
   const sec = (k, side) => { const b = block(k, side); return b && !d.hidden.includes(k) ? `<section class="sec sec-${k}"><h2><span>${SECTIONS[k]}</span></h2><div class="sec-body">${b}</div></section>` : ''; };
   const mainHtml = d.order.filter((k) => !inSide(k)).map((k) => sec(k, false)).join('');
@@ -238,28 +281,30 @@ export function resumeHtml(resume, design, { fontBase } = {}) {
     rule: `${caps(Math.max(MIN.body, hs - 1), 0.16)};color:var(--acc-text);border-bottom:.75pt solid var(--rule);padding-bottom:5pt`,
     caps: `${caps(Math.max(MIN.body, hs - 1), 0.18)};color:var(--acc-text)`,
     short: `${caps(Math.max(MIN.body, hs - 1), 0.18)};color:var(--acc-text)`,
-    bar: `${caps(Math.max(MIN.body, hs - 1), 0.14)};color:var(--acc-text);border-left:3pt solid ${a};padding-left:8pt;line-height:1.1`,
-    tint: `${caps(Math.max(MIN.body, hs - 1), 0.16)};color:${dark(a) ? a : mix(a, 0.2, '#000000')};background:${mix(a, 0.9)};padding:4pt 8pt;border-radius:2pt`,
-    plain: `color:var(--acc-text);font-size:${hs + 4}pt;font-weight:600;letter-spacing:-.01em;line-height:1.15`,
+    bar: `${caps(Math.max(MIN.body, hs - 1), 0.14)};color:var(--acc-text);border-left:3pt solid ${a2};padding-left:8pt;line-height:1.1`,
+    tint: `${caps(Math.max(MIN.body, hs - 1), 0.16)};color:${dark(a) ? a : mix(a, 0.2, '#000000')};background:${mix(a2, 0.8, paper)};padding:4pt 8pt;border-radius:2pt`,
+    plain: `color:var(--acc-text);font-size:${hs + 3}pt;font-weight:600;letter-spacing:-.01em;line-height:1.15`,
     center: `${caps(Math.max(MIN.body, hs - 1), 0.24)};color:var(--acc-text);display:flex;align-items:center;gap:12pt`,
     gutter: `${caps(Math.max(MIN.body, hs - 1), 0.07)};color:var(--acc-text);margin:0 !important;padding-top:2pt;line-height:1.3`,
   }[titles] || '';
   const extraTitle = titles === 'center' ? 'h2::before,h2::after{content:"";flex:1;border-top:.75pt solid var(--rule)}'
-    : titles === 'short' ? `h2::after{content:"";display:block;width:22pt;height:2pt;background:${a};margin-top:6pt}.side.dark h2::after{background:rgba(255,255,255,.7)}`
+    : titles === 'short' ? `h2::after{content:"";display:block;width:22pt;height:2.5pt;background:${a2};margin-top:6pt}`
       : titles === 'gutter' ? '.single .sec{display:grid;grid-template-columns:1.32in 1fr;column-gap:14pt}' : '';
+  const numberCss = d.numbers && titles !== 'center' ? `.single,.main{counter-reset:sec}.single h2::before,.main h2::before{counter-increment:sec;content:counter(sec, decimal-leading-zero);font-weight:400;letter-spacing:.04em;color:${a2};margin-right:9pt}${titles === 'gutter' ? '.single h2::before{display:block;margin:0 0 2pt}' : ''}` : '';
   const bulletCss = d.bullets === 'dash' ? '.role ul{list-style:none;padding-left:13pt}.role li{position:relative}.role li::before{content:"–";position:absolute;left:-12pt;color:var(--muted)}'
     : d.bullets === 'none' ? '.role ul{list-style:none;padding-left:0}'
-      : `.role ul{list-style:none;padding-left:12pt}.role li{position:relative}.role li::before{content:"";position:absolute;left:-10.5pt;top:calc(${sp.lh / 2}em - 1.8pt);width:3.6pt;height:3.6pt;border-radius:50%;background:${a}}`;
+      : `.role ul{list-style:none;padding-left:12pt}.role li{position:relative}.role li::before{content:"";position:absolute;left:-10.5pt;top:calc(${sp.lh / 2}em - 1.8pt);width:3.6pt;height:3.6pt;border-radius:50%;background:${a2}}`;
 
   // Sidebar layouts: the color runs edge to edge, full height, on every page.
-  const cw = page.wIn - 2 * m, gap = 0.45, sideW = +(cw * 0.32).toFixed(2);
+  const cw = page.wIn - 2 * m, gap = 0.5, sideW = +(cw * 0.32).toFixed(2);
   const stripW = (m + sideW + gap / 2).toFixed(3);
   const tint = d.sidebarTint;
   const sideBg = tint === 'dark' ? a : mix(a, 0.83, paper);
   const strip = sidebarOn && tint !== 'none' ? `<div class="strip" style="${d.layout === 'sidebar-left' ? 'left' : 'right'}:0;width:${stripW}in;background:${sideBg}"></div>` : '';
   const hl = d.headline ? headlineOf(resume) : '';
-  const sideNamecard = `<header class="hd-main"><h1>${nameHtml(c.name, d)}</h1>${hl ? `<div class="headline">${esc(hl)}</div>` : ''}</header>`;
-  const contactSec = `<section class="sec sec-contact"><h2><span>Contact</span></h2><div class="sec-body">${contactHtml(c, d, 'c-stack')}</div></section>`;
+  const sideNamecard = `<header class="hd-main"><h1>${nameHtml(c.name, d)}</h1>${hl ? `<div class="headline ${d.headlineStyle === 'italic' ? 'it' : ''}">${esc(hl)}</div>` : ''}</header>`;
+  const sideMono = d.mono === 'circle' || d.mono === 'square' ? `<div class="mono mono-${d.mono} side-mono" aria-hidden="true">${esc(initials(c.name))}</div>` : '';
+  const contactSec = `${sideMono}<section class="sec sec-contact"><h2><span>Contact</span></h2><div class="sec-body">${contactHtml(c, d, 'c-stack')}</div></section>`;
   const layout = sidebarOn
     ? `<div class="cols ${d.layout}">${sideNamecard}<aside class="side ${tint === 'dark' ? 'dark' : ''}">${contactSec}${sideHtml}</aside><div class="main">${mainHtml}</div></div>`
     : `${headerHtml(c, d, resume)}<div class="single">${mainHtml}</div>`;
@@ -271,50 +316,62 @@ ${css}
 @page{size:${page.w} ${page.h};margin:0}
 *{box-sizing:border-box}
 html{background:${paper}}
-body{margin:0;--k:1;--acc:${a};--acc-text:${accText};--name:${a};--ink:#1C2130;--ink2:#4A5163;--muted:#7D8396;--rule:${rule};--rule-strong:#B9BECB;--icon:${a};font-family:${f.body};font-size:${s}pt;line-height:${sp.lh};color:var(--ink);-webkit-print-color-adjust:exact;print-color-adjust:exact;font-kerning:normal;font-feature-settings:"kern","liga","calt";text-rendering:optimizeLegibility;font-variant-numeric:lining-nums;-webkit-font-smoothing:antialiased}
+body{margin:0;--k:1;--acc:${a};--acc-text:${accText};--hl:${lum(a2) < 160 ? a2 : a};--name:${a};--ink:#1C2130;--ink2:#4A5163;--muted:#7D8396;--rule:${rule};--rule-strong:#B9BECB;--icon:${a};font-family:${f.body};font-size:${s}pt;line-height:${sp.lh};color:var(--ink);-webkit-print-color-adjust:exact;print-color-adjust:exact;font-kerning:normal;font-feature-settings:"kern","liga","calt";text-rendering:optimizeLegibility;font-variant-numeric:lining-nums;-webkit-font-smoothing:antialiased}
 .page{position:relative;z-index:1;width:${page.w};padding:${m}in;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 .strip{position:fixed;top:0;bottom:0;z-index:0}
 ${headerCss(d, f, nameSize, m)}
 h2{font-family:${f.head};margin:0 0 calc(var(--k) * ${sp.h}pt);break-after:avoid;line-height:1.2;${titleCss}}
 ${extraTitle}
+${numberCss}
 .sec + .sec{margin-top:calc(var(--k) * ${sp.sec}pt)}
 .summary{color:var(--ink2)}
 .role{break-inside:avoid-page}
 .role + .role{margin-top:calc(var(--k) * ${sp.role}pt)}
 .rh{display:flex;justify-content:space-between;gap:12pt;align-items:baseline}
+.rh-l{min-width:0}
+.rh-l .co{font-size:${s + 1}pt}
 .rt{font-weight:600;color:var(--ink);font-size:${s + 1}pt;letter-spacing:-.005em;line-height:1.3}
 .rc{color:var(--ink2);margin-top:1.5pt}
-.co{font-weight:600;color:var(--acc-text)}
+.co{font-weight:600;color:var(--ink2)}
 .sepx{color:var(--muted)}
 .rd{font-size:${MIN.body}pt;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
-.rd-below{margin-top:1pt${titles === 'plain' ? ';font-style:italic' : ''}}
-.role ul{margin:calc(var(--k) * 3pt) 0 0;padding:0}
+.rd-below{${titles === 'plain' ? 'font-style:italic' : ''}}
+.role ul{margin:calc(var(--k) * ${sp.li + 2}pt) 0 0;padding:0}
 .role li + li{margin-top:calc(var(--k) * ${sp.li}pt)}
 ${bulletCss}
 p{margin:0}
-.ed + .ed{margin-top:calc(var(--k) * 7pt)}
+.ed + .ed{margin-top:calc(var(--k) * ${sp.role}pt)}
 .et{font-weight:600;color:var(--ink)}
 .es{color:var(--ink2)}
-.tl{display:grid;grid-template-columns:.88in 1fr;column-gap:14pt}
-.tl-when{display:flex;flex-direction:column;font-size:${MIN.body}pt;color:var(--muted);font-variant-numeric:tabular-nums;padding-top:1.5pt;line-height:1.35}
-.sk-list{list-style:none;margin:0;padding:0}.sk-list li + li{margin-top:calc(var(--k) * 3.5pt)}
-.sk-cols{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--k) * 4pt) 16pt}
-.sk-cols li{position:relative;padding-left:11pt}.sk-cols li::before{content:"";position:absolute;left:0;top:calc(${sp.lh / 2}em - 1.6pt);width:3.2pt;height:3.2pt;border-radius:50%;background:${a}}
+/* timeline: a slim rail with a dot for each job, dates above the title */
+.tl{display:grid;grid-template-columns:10pt 1fr;column-gap:12pt}
+.tl-rail{position:relative}
+.role.tl .tl-rail::before{content:"";position:absolute;left:50%;top:.75em;bottom:calc(-1 * var(--k) * ${sp.role}pt - .75em);width:1pt;background:${mix(a2, 0.55, paper)};transform:translateX(-50%)}
+.role.tl:last-child .tl-rail::before{display:none}
+.role.tl .tl-rail::after{content:"";position:absolute;left:50%;top:.32em;width:7pt;height:7pt;border-radius:50%;background:${a2};box-shadow:0 0 0 2.5pt ${paper};transform:translateX(-50%)}
+.tl-when{font-size:${MIN.body}pt;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--hl, var(--acc-text));margin-bottom:1.5pt;font-variant-numeric:tabular-nums}
+.tl-when .sepx{color:var(--muted)}
+.sk-list{list-style:none;margin:0;padding:0}.sk-list li + li{margin-top:calc(var(--k) * ${sp.li}pt)}
+.sk-cols{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--k) * ${sp.li}pt) 16pt}
+.sk-cols li{position:relative;padding-left:11pt}.sk-cols li::before{content:"";position:absolute;left:0;top:calc(${sp.lh / 2}em - 1.6pt);width:3.2pt;height:3.2pt;border-radius:50%;background:${a2}}
 .skills{line-height:1.7}
 .sk{white-space:nowrap}
 .sk.eol::after{display:none !important}
 .sk:not(:last-child)::after{content:"";display:inline-block;width:3pt;height:3pt;border-radius:50%;background:var(--rule-strong);margin:0 8pt;vertical-align:middle}
-.tags{display:flex;flex-wrap:wrap;gap:5pt}
-.tagx{background:${mix(a, 0.92, paper)};border-radius:3pt;padding:2pt 8pt;font-size:${MIN.body}pt;color:var(--ink)}
+.tags{display:flex;flex-wrap:wrap;gap:5pt 5pt}
+.sk-comma{line-height:1.6;color:var(--ink2)}
+.tagx{background:${mix(a2, 0.82, paper)};border-radius:999px;padding:2.5pt 9pt;font-size:${MIN.body}pt;line-height:1.35;color:var(--ink)}
 .cols{display:grid;column-gap:${gap}in;grid-template-columns:${d.layout === 'sidebar-left' ? `${sideW}in 1fr` : `1fr ${sideW}in`};grid-template-rows:auto 1fr;grid-template-areas:${d.layout === 'sidebar-left' ? '"side head" "side main"' : '"head side" "main side"'}}
-.hd-main{grid-area:head;margin-bottom:calc(var(--k) * 18pt);padding-top:2pt}
+.hd-main{grid-area:head;margin-bottom:calc(var(--k) * ${sp.sec + 3}pt)}
 .hd-main h1{color:var(--name)}
 .main{grid-area:main;min-width:0}
 .side{grid-area:side;min-width:0}
-.side .sec + .sec{margin-top:calc(var(--k) * ${sp.sec + 4}pt)}
+.side .sec + .sec{margin-top:calc(var(--k) * ${sp.sec}pt)}
 .side .c-stack{gap:7pt}.side .ci{white-space:normal;align-items:flex-start;word-break:break-word}.side .ico{margin-top:.22em}
-.side .tagx{background:${tint === 'dark' ? 'rgba(255,255,255,.12)' : '#ffffff'}}
-.side.dark{--ink:#fff;--ink2:rgba(255,255,255,.86);--muted:rgba(255,255,255,.62);--rule:rgba(255,255,255,.25);--rule-strong:rgba(255,255,255,.4);--acc-text:#fff;--icon:${mix(a, 0.6)};color:#fff}
+.side-mono{width:58pt;height:58pt;font-size:21pt;margin-bottom:calc(var(--k) * ${sp.sec}pt)}
+.side.dark .mono-circle{border-color:${a2};color:#fff}
+.side .tagx{background:${tint === 'dark' ? 'rgba(255,255,255,.14)' : '#ffffff'};${tint === 'none' ? `border:.75pt solid var(--rule)` : ''}}
+.side.dark{--ink:#fff;--ink2:rgba(255,255,255,.86);--muted:rgba(255,255,255,.62);--rule:rgba(255,255,255,.25);--rule-strong:rgba(255,255,255,.4);--acc-text:${lum(a2) > 110 ? a2 : '#fff'};--icon:${lum(a2) > 110 ? a2 : '#fff'};color:#fff}
 @media screen{html,body{min-height:100%}.page{min-height:${page.h}}}
 </style></head><body>${strip}<div class="page">
 ${layout}

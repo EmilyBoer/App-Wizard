@@ -13,7 +13,7 @@ import { mergeProfile, settleConflict, decideUnderselling, addBullet, pendingCou
 import { rankJobs, parsePay, payLabel, bucket, EMPLOYER_TYPES, WORK_TYPES } from './match.mjs';
 import { recordEvent, learnFromNo, learnFromYes, learnFromEdit, writingEdits, mergeRules, learningSummary } from './learn.mjs';
 import { addToTracker, setStatus, findDuplicate, dueFollowUps, toCsv, STATUSES, STATUS_LABEL } from './tracker.mjs';
-import { resumeHtml, letterHtml, ownResumeHtml, fillTemplate, templateData, fileName, resumeText, letterText, matchFont, FONTS, TEMPLATES, PRESETS, SECTIONS, ACCENTS, normalizeDesign, DESIGN_KEYS, cutOnce, expectedText, readableCheck, maxPages, pageSize } from './docs.mjs';
+import { resumeHtml, letterHtml, ownResumeHtml, fillTemplate, templateData, fileName, resumeText, letterText, matchFont, FONTS, TEMPLATES, PRESETS, SECTIONS, ACCENTS, PALETTES, normalizeDesign, DESIGN_KEYS, cutOnce, expectedText, readableCheck, maxPages, pageSize } from './docs.mjs';
 import { jobsFromAlertEmail, parseIcs, researchCompany } from './intake.mjs';
 import { ARTICLES, searchHelp } from './help.mjs';
 import { identifyWebsite, fetchAll, checkJobLink, readSource, parseJobUrl, makeJob } from '../../engine/src/index.mjs';
@@ -196,7 +196,7 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
     }),
 
     // ----- design -----
-    'design.get': () => ({ ...normalizeDesign(store().get('design')), raw: (({ own, customFonts, canva, ...r }) => r)(store().get('design')), ownBuilt: Boolean(store().get('design').own?.template), ownFrom: store().get('design').own?.from?.name || null, fonts_available: FONTS, templates: TEMPLATES, presets: PRESETS, sections: SECTIONS, accents: ACCENTS, keys: DESIGN_KEYS, years: yearsOfExperience(store().get('profile')) }),
+    'design.get': () => ({ ...normalizeDesign(store().get('design')), raw: (({ own, customFonts, canva, ...r }) => r)(store().get('design')), ownBuilt: Boolean(store().get('design').own?.template), ownFrom: store().get('design').own?.from?.name || null, fonts_available: FONTS, templates: TEMPLATES, presets: PRESETS, sections: SECTIONS, accents: ACCENTS, palettes: PALETTES, keys: DESIGN_KEYS, years: yearsOfExperience(store().get('profile')) }),
     'design.save': (patch) => store().update('design', (d) => {
       for (const k of ['template', 'paper', 'length', 'yearsBack', 'mode', ...DESIGN_KEYS]) if (k in patch) d[k] = patch[k];
       if (patch.fonts) d.fonts = { ...(d.fonts || {}), ...patch.fonts };
