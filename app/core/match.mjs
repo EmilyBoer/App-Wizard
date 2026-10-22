@@ -34,6 +34,8 @@ export function parsePay(text) {
   if (m) { const lo = val(m[1]), hi = val(m[2]); if (lo > 10000 && hi >= lo) return { min: lo, max: hi }; }
   const h = t.match(/\$\s?(\d{2,3}(?:\.\d{2})?)\s*(?:-|–|to)\s*\$?\s?(\d{2,3}(?:\.\d{2})?)\s*(?:\/|per\s)\s*(?:hr|hour)/i);
   if (h) return { min: Number(h[1]) * 2080, max: Number(h[2]) * 2080, hourly: true };
+  const one = t.match(/\$\s?(\d{2,3}(?:\.\d{2})?)\s*(?:\/|per\s)\s*(?:hr|hour)/i);
+  if (one) return { min: Number(one[1]) * 2080, max: Number(one[1]) * 2080, hourly: true };
   return null;
 }
 
@@ -52,7 +54,17 @@ export function hardFilter(job, want, rules = []) {
   const title = String(job.title || '').toLowerCase();
   const pay = parsePay(text);
   const strictPay = rules.some((r) => r.kind === 'pay-strict');
-  if (want.payFloor && pay && pay.max < want.payFloor * (strictPay ? 1 : 0.95)) reasons.push(`Pay tops out at ${payLabel(pay)}, under your $${Math.round(want.payFloor / 1000)}k floor.`);
+  const slack = strictPay ? 1 : 0.95;
+  if (pay?.hourly && want.hourlyFloor) {
+    if (pay.max / 2080 < want.hourlyFloor * slack) reasons.push(`Pays up to $${Math.round(pay.max / 2080)} an hour, under your $${want.hourlyFloor} an hour.`);
+  } else if (want.payFloor && pay && pay.max < want.payFloor * slack) reasons.push(`Pay tops out at ${payLabel(pay)}, under your $${Math.round(want.payFloor / 1000)}k floor.`);
+  // Kinds of work: hide only clear mismatches (most postings don't say).
+  const types = want.jobType || [];
+  if (types.length) {
+    const head = `${job.title}\n${String(job.description || '').slice(0, 1500)}`;
+    if (/\b(contract|contractor|freelance|temporary|1099|contract[- ]to[- ]hire)\b/i.test(head) && !types.includes('Contract')) reasons.push('A contract role, and you’re looking for other kinds of work.');
+    if (/\bpart[- ]time\b/i.test(head) && !types.includes('Part-time')) reasons.push('Part-time, and you’re looking for other kinds of work.');
+  }
   const where = (want.where || []).map((w) => w.toLowerCase());
   if (where.length) {
     const remoteOk = where.some((w) => w.includes('remote'));

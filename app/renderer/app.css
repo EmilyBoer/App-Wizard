@@ -359,3 +359,14 @@ body.building .nav, body.building .ask { visibility: hidden; }
 /* Tab contents stack with the same rhythm as a page. */
 .tab-body { display: flex; flex-direction: column; gap: var(--s5); }
 .tab-body > div:first-child > h2 + p { margin-top: var(--s1); }
+
+/* "or" between alternative ways to do one thing */
+.or { display: flex; align-items: center; gap: var(--s3); color: var(--ink-muted); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; }
+.or::before, .or::after { content: ""; flex: 1; border-top: 1px solid var(--line); }
+.pay-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--s5); }
+.pay-grid input { max-width: 200px; font-size: 18px; }
+/* Collapsible help keeps its distance from what's above and inside. */
+details { margin-top: var(--s1); }
+details > summary { cursor: pointer; font-weight: 600; }
+details[open] > summary { margin-bottom: var(--s3); }
+.radio > span .tag { margin-left: 6px; }

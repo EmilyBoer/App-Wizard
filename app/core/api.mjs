@@ -329,7 +329,7 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
 
     // ----- what you want -----
     'want.get': () => store().get('want'),
-    'want.save': (patch) => store().update('want', (w) => { for (const k of ['titles', 'work', 'places', 'payFloor', 'where', 'level', 'jobType', 'dealBreakers', 'ambiguous', 'keywords', 'suggestedTitles']) if (k in patch) w[k] = patch[k]; }),
+    'want.save': (patch) => store().update('want', (w) => { for (const k of ['titles', 'work', 'places', 'payFloor', 'hourlyFloor', 'where', 'level', 'jobType', 'dealBreakers', 'ambiguous', 'keywords', 'suggestedTitles']) if (k in patch) w[k] = patch[k]; }),
     'want.addExample': async ({ input, kind = 'fit', file, url, text }) => {
       if (!['interviewed', 'fit', 'reach'].includes(kind)) kind = 'fit';
       url = String(url || '').trim(); text = String(text || '').trim();
