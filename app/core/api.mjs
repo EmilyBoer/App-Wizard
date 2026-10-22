@@ -70,7 +70,7 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
       const counts = Object.fromEntries(STATUSES.map((k) => [k, tracker.list.filter((t) => t.status === k).length]));
       return {
         account: session.account, setup: { ...setup, steps: SETUP_STEPS },
-        hasKey: Boolean(settings.claudeKey || process.env.ANTHROPIC_API_KEY),
+        hasKey: Boolean(settings.claudeKey || process.env.ANTHROPIC_API_KEY), builtInKey: !settings.claudeKey && Boolean(process.env.ANTHROPIC_API_KEY),
         counts, followUps: dueFollowUps(tracker), lastFetch: jobs.lastFetch, newJobs: jobs.list.filter((j) => !j.rated && !j.hiddenBecause && (j.score == null || j.score >= 25)).length,
         pending: pendingCount(profile), learning: learningSummary(s.get('learning')), lastBatch: settings.lastBatch || null,
       };
@@ -80,7 +80,7 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
 
     // ----- settings -----
     'settings.get': () => { const s = store().get('settings'); return { ...s, claudeKey: s.claudeKey ? `••••${s.claudeKey.slice(-4)}` : '', hasKey: Boolean(s.claudeKey) }; },
-    'settings.save': (patch) => store().update('settings', (s) => { for (const k of ['model', 'fastModel', 'morningHour', 'morningCount', 'morningOn']) if (k in patch) s[k] = patch[k]; if (patch.claudeKey && !patch.claudeKey.startsWith('••••')) s.claudeKey = patch.claudeKey.trim(); }) && methods['settings.get'](),
+    'settings.save': (patch) => store().update('settings', (s) => { for (const k of ['model', 'fastModel', 'morningHour', 'morningCount', 'morningOn', 'letterWhen']) if (k in patch) s[k] = patch[k]; if (patch.claudeKey && !patch.claudeKey.startsWith('••••')) s.claudeKey = patch.claudeKey.trim(); }) && methods['settings.get'](),
     'settings.testKey': async () => { await claude().send({ system: 'Reply with OK.', content: 'Say OK', fast: true, maxTokens: 5 }); return { ok: true }; },
 
     // ----- materials -----
@@ -182,15 +182,15 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
     // ----- voice -----
     'voice.get': () => store().get('voice'),
     'voice.useResume': ({ on }) => store().update('voice', (v) => { v.useResume = Boolean(on); }),
-    'voice.addFile': async ({ file }) => {
+    'voice.addFile': async ({ file, kind = 'writing' }) => {
       const prepared = prepareFile(file);
       if (prepared.problem) throw new UserError(prepared.problem);
       if (!prepared.text && !claudeReady()) throw new UserError('We can read Word and text files now. For a PDF or screenshot, paste the text instead, or add it later in Documents.');
       const text = prepared.text || (await ai.readMaterial(claude(), prepared)).text;
-      store().update('voice', (v) => { v.samples.push({ id: id('s_'), name: file.name, text }); });
+      store().update('voice', (v) => { v.samples.push({ id: id('s_'), name: file.name, text, kind }); });
       return true;
     },
-    'voice.addSample': ({ text, name }) => store().update('voice', (v) => { v.samples.push({ id: id('s_'), name: name || 'Pasted writing', text }); }),
+    'voice.addSample': ({ text, name, kind = 'writing' }) => store().update('voice', (v) => { v.samples.push({ id: id('s_'), name: name || 'Pasted writing', text, kind }); }),
     'voice.removeSample': ({ id: sid }) => store().update('voice', (v) => { v.samples = v.samples.filter((s) => s.id !== sid); }),
     'voice.save': (patch) => store().update('voice', (v) => { if (patch.dials) v.dials = { ...v.dials, ...patch.dials }; if (patch.never) v.never = patch.never; }),
     'voice.generate': async () => {
@@ -418,7 +418,8 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
         profile: { contact: p.contact, summary: p.summary || '', roles: p.roles.map((r) => ({ title: r.title, company: r.company, start: r.start, end: r.end, results: r.bullets.length })), skills: p.skills.map((x) => x.name), years: yearsOfExperience(p), checks: pendingCount(p) },
         interviewed: [...by('interviewed'), ...s.get('tracker').list.filter((t) => ['interviewing', 'offer'].includes(t.status) && !w.examples.some((e) => e.kind === 'interviewed' && String(e.company).toLowerCase() === String(t.company).toLowerCase())).map((t) => ({ id: t.id, title: t.title, company: t.company, fromJourney: true }))],
         fit: by('fit'), reach: by('reach'),
-        voice: { samples: s.get('voice').samples.map((x) => ({ id: x.id, name: x.name, words: String(x.text || '').split(/\s+/).length })), sampleLine: s.get('voice').sampleLine || '', useResume: Boolean(s.get('voice').useResume) },
+        letterWhen: settings.letterWhen || 'always',
+        voice: { samples: s.get('voice').samples.map((x) => ({ id: x.id, name: x.name, kind: x.kind || 'writing', words: String(x.text || '').split(/\s+/).length })), sampleLine: s.get('voice').sampleLine || '', useResume: Boolean(s.get('voice').useResume) },
         lookIn: w.lookIn || {},
         schedule: { on: Boolean(settings.morningOn), hour: Number(settings.morningHour ?? 7), count: Number(settings.morningCount ?? 3) },
         want: { summary: w.summary, reachNote: w.reachNote || '', titles: w.titles, suggestedTitles: w.suggestedTitles, ambiguous: w.ambiguous, payFloor: w.payFloor, where: w.where, dealBreakers: w.dealBreakers },
@@ -610,18 +611,21 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
       const match = j.match || await methods['jobs.explain']({ id: jobId });
       progress('docs', 'Tailoring your resume…');
       const resume = await ai.tailorResume(c, { profile, want, voice, job: j, match, edits: writingEdits(s.get('learning')), limits: { yearsBack: design.yearsBack } });
-      progress('docs', 'Writing your cover letter…');
-      const letter = await ai.writeLetter(c, { profile, voice, job: j, match, want });
+      // Cover letters: always, only when the posting asks, or never (their choice in setup).
+      const when = s.get('settings').letterWhen || 'always';
+      const wantLetter = when === 'always' || (when === 'asked' && /cover letter/i.test(j.description || ''));
+      let letter = null;
+      if (wantLetter) { progress('docs', 'Writing your cover letter…'); letter = await ai.writeLetter(c, { profile, voice, job: j, match, want }); }
       const version = s.get('documents').list.filter((d) => d.jobId === jobId && d.kind === 'resume').length + 1;
       const name = profile.contact?.name;
       const rdoc = { id: id('d_'), jobId, kind: 'resume', version, created: now().toISOString(), data: resume, cuts: [], file: fileName(name, 'Resume', j), checks: resume.checks, status: 'draft', company: j.company, title: j.title };
-      const ldoc = { id: id('d_'), jobId, kind: 'letter', version, created: now().toISOString(), data: letter, file: fileName(name, 'Cover_Letter', j), checks: letter.checks, status: 'draft', company: j.company, title: j.title };
-      s.update('documents', (d) => { d.list.unshift(rdoc, ldoc); });
+      const ldoc = letter ? { id: id('d_'), jobId, kind: 'letter', version, created: now().toISOString(), data: letter, file: fileName(name, 'Cover_Letter', j), checks: letter.checks, status: 'draft', company: j.company, title: j.title } : null;
+      s.update('documents', (d) => { d.list.unshift(...[rdoc, ldoc].filter(Boolean)); });
       const t = s.get('tracker'); const { entry } = addToTracker(t, j, { status: 'ready', fit: match });
-      entry.resumeDocId = rdoc.id; entry.letterDocId = ldoc.id; entry.resumeFile = rdoc.file + '.pdf'; entry.letterFile = ldoc.file + '.pdf';
+      entry.resumeDocId = rdoc.id; entry.resumeFile = rdoc.file + '.pdf'; if (ldoc) { entry.letterDocId = ldoc.id; entry.letterFile = ldoc.file + '.pdf'; }
       if (['found', 'saved', 'skipped'].includes(entry.status)) setStatus(t, entry.id, 'ready');
       s.set('tracker', t);
-      return { resume: slimDoc(rdoc), letter: slimDoc(ldoc) };
+      return { resume: slimDoc(rdoc), letter: ldoc ? slimDoc(ldoc) : null };
     }),
     'docs.list': () => store().get('documents').list.map(slimDoc),
     'docs.get': ({ id: did }) => { const d = docById(did); return { ...d, html: renderDoc(d) }; },

@@ -2,3 +2,6 @@ node_modules/
 jobs.json
 .DS_Store
 app/dist/
+
+# A Claude key for tester copies. Never commit it.
+app/config/claude.json

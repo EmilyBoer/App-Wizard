@@ -80,8 +80,11 @@ ${li.length ? `<div class="list">${li.map((m) => `<div class="item">${tag('Linke
     } },
 
   { id: 'where', ask: 'Where and how do you want to work?', help: 'Pick all that work for you.',
-    body: (st) => { const types = st.want.jobType || []; const w = st.want.where || []; const hybrid = (w.find((x) => /hybrid|on-?site near/i.test(x)) || '').replace(/^(hybrid|on-?site)\s*near\s*/i, ''); return `<b class="small">What kind of work</b><div class="row">${['Full-time', 'Contract', 'Part-time'].map((t) => chip(t, types.includes(t), `data-t="${t}"`)).join('')}</div><b class="small">Where</b><div class="row">${chip('Remote', w.includes('Remote'), 'data-w="Remote"')}${chip('Hybrid', w.some((x) => /hybrid/i.test(x)), 'data-w="Hybrid"')}${chip('On-site', w.some((x) => /on-?site/i.test(x)), 'data-w="On-site"')}</div><label class="field">For hybrid or on-site, near which city?<input type="text" id="city" value="${esc(hybrid)}" placeholder="e.g. Portland, OR"></label>`; },
-    mount(el) { el.querySelectorAll('[data-w], [data-t]').forEach((c) => (c.onclick = () => c.setAttribute('aria-pressed', c.getAttribute('aria-pressed') === 'true' ? 'false' : 'true'))); },
+    body: (st) => { const types = st.want.jobType || []; const w = st.want.where || []; const hybrid = (w.find((x) => /hybrid|on-?site near/i.test(x)) || '').replace(/^(hybrid|on-?site)\s*near\s*/i, ''); return `<b class="small">What kind of work</b><div class="row">${['Full-time', 'Contract', 'Part-time'].map((t) => chip(t, types.includes(t), `data-t="${t}"`)).join('')}</div><b class="small">Where</b><div class="row">${chip('Remote', w.includes('Remote'), 'data-w="Remote"')}${chip('Hybrid', w.some((x) => /hybrid/i.test(x)), 'data-w="Hybrid"')}${chip('On-site', w.some((x) => /on-?site/i.test(x)), 'data-w="On-site"')}</div><label class="field ${w.some((x) => /hybrid|on-?site/i.test(x)) ? '' : 'hidden'}" id="citybox">For hybrid or on-site, near which city?<input type="text" id="city" value="${esc(hybrid)}" placeholder="e.g. Portland, OR"></label>`; },
+    mount(el) {
+      const sync = () => el.querySelector('#citybox').classList.toggle('hidden', !['Hybrid', 'On-site'].some((k) => el.querySelector(`[data-w="${k}"]`).getAttribute('aria-pressed') === 'true'));
+      el.querySelectorAll('[data-w], [data-t]').forEach((c) => (c.onclick = () => { c.setAttribute('aria-pressed', c.getAttribute('aria-pressed') === 'true' ? 'false' : 'true'); sync(); }));
+    },
     next(el) {
       const on_ = (k) => el.querySelector(`[data-w="${k}"]`).getAttribute('aria-pressed') === 'true';
       const city = el.querySelector('#city').value.trim();
@@ -92,8 +95,8 @@ ${li.length ? `<div class="list">${li.map((m) => `<div class="item">${tag('Linke
     } },
 
   { id: 'relocate', ask: 'Would you move for the right job?', help: 'Applications often ask. We’ll answer the same way every time.',
-    body: (st, ui) => `<div class="row">${['No', 'Yes', 'Open to it for the right role'].map((o) => radio('rel', o, o, String(ui.answers.relocate || '').split(':')[0] === o)).join('')}</div><label class="field" id="citiesbox">Which cities or regions?<input type="text" id="cities" value="${esc(ui.answers.relocateCities)}" placeholder="e.g. Seattle, Denver, anywhere on the West Coast"></label>`,
-    mount(el) { const box = el.querySelector('#citiesbox'); const sync = () => box.classList.toggle('hidden', !['Yes', 'Open to it for the right role'].includes(el.querySelector('input[name=rel]:checked')?.value)); el.querySelectorAll('input[name=rel]').forEach((r) => (r.onchange = sync)); sync(); },
+    body: (st, ui) => `<div class="row">${['No', 'Yes', 'Possibly, for the right role'].map((o) => radio('rel', o, o, String(ui.answers.relocate || '').split(':')[0] === o || (o.startsWith('Possibly') && /^Open to it/.test(ui.answers.relocate || '')))).join('')}</div><label class="field" id="citiesbox">Which cities or regions?<input type="text" id="cities" value="${esc(ui.answers.relocateCities)}" placeholder="e.g. Seattle, Denver, anywhere on the West Coast"></label>`,
+    mount(el) { const box = el.querySelector('#citiesbox'); const sync = () => box.classList.toggle('hidden', !['Yes', 'Possibly, for the right role'].includes(el.querySelector('input[name=rel]:checked')?.value)); el.querySelectorAll('input[name=rel]').forEach((r) => (r.onchange = sync)); sync(); },
     async next(el) {
       const v = el.querySelector('input[name=rel]:checked')?.value; if (!v) { toast('Pick one.', true); return false; }
       const cities = el.querySelector('#cities').value.trim();
@@ -101,19 +104,19 @@ ${li.length ? `<div class="list">${li.map((m) => `<div class="item">${tag('Linke
       await call('answers.save', { key: 'relocateCities', question: 'Where would you relocate?', answer: v === 'No' ? '' : cities });
     } },
 
-  { id: 'start', ask: 'When could you start a new job?', help: 'We’ll use this on applications that ask.',
+  { id: 'start', when: () => false, ask: 'When could you start a new job?', help: 'We’ll use this on applications that ask.',
     body: (st, ui) => `<div class="row">${['Right away', 'With 2 weeks’ notice', 'In about a month'].map((o) => radio('start', o, o, ui.answers.start === o)).join('')}<label class="radio"><input type="radio" name="start" value="date" ${ui.answers.start && !['Right away', 'With 2 weeks’ notice', 'In about a month'].includes(ui.answers.start) ? 'checked' : ''}>A specific date</label></div><input type="date" id="sdate" style="max-width:220px">`,
     async next(el) { let v = el.querySelector('input[name=start]:checked')?.value; if (!v) { toast('Pick one.', true); return false; } if (v === 'date') { const d = el.querySelector('#sdate').value; if (!d) { toast('Pick the date.', true); return false; } v = new Date(d + 'T12:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); } await call('answers.save', { key: 'start', question: 'When can you start?', answer: v }); } },
 
-  { id: 'never', ask: 'Anything you never want to see?', help: 'Jobs with these get hidden. You can change this any time.', skip: 'Nothing comes to mind',
+  { id: 'never', when: () => false, ask: 'Anything you never want to see?', help: 'Jobs with these get hidden. You can change this any time.', skip: 'Nothing comes to mind',
     body: (st) => { const all = [...new Set(['Sales targets', 'Night or weekend shifts', 'Relocation', 'Unpaid trial work', 'On-call', ...(st.want.dealBreakers || [])])]; return `<div class="row">${all.map((d) => chip(d, (st.want.dealBreakers || []).includes(d), `data-d="${esc(d)}"`)).join('')}</div><input type="text" id="deal" placeholder="Add your own, press Enter" style="max-width:320px">`; },
     mount(el) { el.querySelectorAll('[data-d]').forEach((c) => (c.onclick = () => c.setAttribute('aria-pressed', c.getAttribute('aria-pressed') === 'true' ? 'false' : 'true'))); const d = el.querySelector('#deal'); d.onkeydown = (e) => { if (e.key === 'Enter' && d.value.trim()) { const c = document.createElement('button'); c.type = 'button'; c.className = 'chip'; c.dataset.d = d.value.trim(); c.textContent = d.value.trim(); c.setAttribute('aria-pressed', 'true'); c.onclick = () => c.setAttribute('aria-pressed', c.getAttribute('aria-pressed') === 'true' ? 'false' : 'true'); d.previousElementSibling.append(c); d.value = ''; } }; },
     next: (el) => call('want.save', { dealBreakers: [...el.querySelectorAll('[data-d][aria-pressed=true]')].map((c) => c.dataset.d) }) },
 
-  { id: 'writing', ask: 'Want your letters to sound like you?', help: 'Share something you wrote in your own words: a long email to friends, a cover letter you liked, a LinkedIn post. A couple of paragraphs is plenty. We only use it to learn how you write.', skip: 'Just use my resumes',
+  { id: 'writing', ask: 'Want everything we write to sound like you?', help: 'Share something you wrote in your own words: a long email to friends, a LinkedIn post, a note to a colleague. A couple of paragraphs is plenty. We only use it to learn how you write.', skip: 'Just use my resumes',
     body: (st) => `<div class="stack-s"><textarea id="wtext" placeholder="Paste something you wrote" style="min-height:160px"></textarea>
 <div class="row"><button class="btn secondary" data-act="addw" data-busy="Saving…">Add this</button><label class="btn">Or choose a file<input type="file" class="sr" id="wfile" accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg"></label></div></div>
-${st.voice.samples.length ? `<div class="list">${st.voice.samples.map((x) => `<div class="item">${tag('Your writing', 'info')}<div class="grow"><div>${esc(x.name)}</div><div class="small muted">${x.words} words</div></div><button class="btn small" data-act="rmw" data-id="${x.id}">Remove</button></div>`).join('')}</div>` : ''}
+${st.voice.samples.filter((x) => x.kind !== 'letter').length ? `<div class="list">${st.voice.samples.filter((x) => x.kind !== 'letter').map((x) => `<div class="item">${tag('Your writing', 'info')}<div class="grow"><div>${esc(x.name)}</div><div class="small muted">${x.words} words</div></div><button class="btn small" data-act="rmw" data-id="${x.id}">Remove</button></div>`).join('')}</div>` : ''}
 <p class="tiny muted">No samples? We’ll learn from how your resumes are written. You can add more any time in Profile.</p>`,
     mount(el, st, ui) {
       el.querySelector('#wfile').onchange = async (e) => { const [file] = await readFiles(e.target.files); try { await call('voice.addFile', { file }); ui.repaint(); } catch (ex) { toast(ex.message, true); } };
@@ -124,23 +127,40 @@ ${st.voice.samples.length ? `<div class="list">${st.voice.samples.map((x) => `<d
     },
     async next(el, st) { const t = el.querySelector('#wtext').value.trim(); if (t) await call('voice.addSample', { text: t, name: `Pasted writing (${t.split(/\s+/).slice(0, 5).join(' ')}…)` }); } },
 
+  { id: 'letters', ask: 'Got a cover letter you’re proud of?', help: 'Drop in one or two you’ve sent. We’ll learn how you open, how you tell a story and how you sign off, so the letters we write sound like yours.', skip: 'I don’t have one',
+    body: (st) => { const ls = st.voice.samples.filter((x) => x.kind === 'letter'); const when = st.letterWhen || 'always'; return `<div class="stack-s"><textarea id="ltext" placeholder="Paste a cover letter" style="min-height:160px"></textarea>
+<div class="row"><button class="btn secondary" data-act="addl" data-busy="Saving…">Add this</button><label class="btn">Or choose a file<input type="file" class="sr" id="lfile" accept=".pdf,.docx,.txt,.md"></label></div></div>
+${ls.length ? `<div class="list">${ls.map((x) => `<div class="item">${tag('Cover letter', 'info')}<div class="grow"><div>${esc(x.name)}</div><div class="small muted">${x.words} words</div></div><button class="btn small" data-act="rml" data-id="${x.id}">Remove</button></div>`).join('')}</div>` : ''}
+<div class="card tight stack-s"><b>When should we write a cover letter?</b>${[['always', 'For every application'], ['asked', 'Only when the posting asks for one'], ['never', 'Never']].map(([v, l]) => radio('lwhen', v, l, when === v)).join('')}</div>`; },
+    mount(el, st, ui) {
+      el.querySelector('#lfile').onchange = async (e) => { const [file] = await readFiles(e.target.files); try { await call('voice.addFile', { file, kind: 'letter' }); ui.repaint(); } catch (ex) { toast(ex.message, true); } };
+      on(el, {
+        addl: (b) => act(b, async () => { const t = el.querySelector('#ltext').value.trim(); if (!t) throw new Error('Paste a cover letter first.'); await call('voice.addSample', { text: t, name: `Cover letter (${t.split(/\s+/).slice(0, 5).join(' ')}…)`, kind: 'letter' }); ui.repaint(); }),
+        rml: async (b) => { await call('voice.removeSample', { id: b.dataset.id }); ui.repaint(); },
+      });
+    },
+    async next(el) {
+      const t = el.querySelector('#ltext').value.trim();
+      if (t) await call('voice.addSample', { text: t, name: `Cover letter (${t.split(/\s+/).slice(0, 5).join(' ')}…)`, kind: 'letter' });
+      await call('settings.save', { letterWhen: el.querySelector('input[name=lwhen]:checked')?.value || 'always' });
+    } },
+
   { id: 'connect', when: (st) => !st.hasKey, ask: 'Now let’s connect Claude.', help: 'Claude is what reads your files and writes for you. During testing, you use your own Claude API key. It takes about 3 minutes, and then we’ll read everything you’ve added.',
     body: () => `<div class="stack"><a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" class="btn secondary" style="align-self:flex-start">Sign in to Claude Console to get a key</a>
 <ol class="small muted" style="margin:0;padding-left:20px"><li>Sign in, and add $5 of credit under Settings, Billing.</li><li>Press Create Key, name it Job Wizard, and copy it.</li><li>Paste it here.</li></ol>
 <input type="password" id="key" placeholder="sk-ant-…" autocomplete="off"><div class="note alert hidden" id="err" role="alert"></div></div>`,
     async next(el) { const err = el.querySelector('#err'); err.classList.add('hidden'); try { await call('settings.save', { claudeKey: el.querySelector('#key').value }); await call('settings.testKey'); toast('Claude is connected. Reading your files now.'); call('builder.prepareProfile').then(() => call('builder.prepareWants')).catch(() => {}); } catch (e) { err.textContent = e.message; err.classList.remove('hidden'); return false; } } },
 
-  { id: 'found', enter: () => call('builder.analyze'), ask: 'Here’s what we pulled from your resumes.', help: 'Fill in anything that’s missing, like your LinkedIn link, website or portfolio, and city and state. Everything Job Wizard writes for you comes from this, and we never make anything up.',
+  { id: 'found', enter: () => call('builder.analyze'), ask: 'Here’s what we pulled from your resumes.', help: 'Fill in anything that’s missing. Everything Job Wizard writes for you comes from this, and we never make anything up.',
     body: (st) => { const c = st.profile.contact || {}; return `<div class="grid">${[['name', 'Name'], ['email', 'Email'], ['phone', 'Phone'], ['location', 'City, State'], ['linkedin', 'LinkedIn link'], ['website', 'Website or portfolio']].map(([k, l]) => `<label class="field">${l}<input type="text" data-contact="${k}" value="${esc(c[k] || '')}"></label>`).join('')}</div>
-<div class="list"><div class="list-head row between"><span>${st.profile.roles.length} role${st.profile.roles.length === 1 ? '' : 's'} · ${st.profile.years} years</span><span class="tiny muted" style="font-weight:400">You can edit roles and results any time in Profile.</span></div>${st.profile.roles.map((r) => `<div class="item"><div class="grow"><div>${esc(r.title)} · ${esc(r.company)}</div><div class="small muted">${esc(r.start || '')} – ${esc(r.end || '')} · ${r.results} results</div></div></div>`).join('')}</div>
-<div class="row">${st.profile.skills.slice(0, 16).map((x) => `<span class="tag muted">${esc(x)}</span>`).join('')}</div>
-${st.profile.checks ? `<div class="note info">${st.profile.checks} thing${st.profile.checks > 1 ? 's' : ''} to double-check, like dates that don’t match between files. <a href="#/setup/3">Check now</a> or later in Profile.</div>` : ''}`; },
+<div class="list"><div class="list-head">${st.profile.roles.length} job${st.profile.roles.length === 1 ? '' : 's'} · ${st.profile.years} years · ${st.profile.roles.reduce((n, r) => n + r.results, 0)} results in your bullet vault</div>${st.profile.roles.map((r) => `<div class="item"><div class="grow"><div>${esc(r.title)} <span class="muted">· ${esc(r.company)}</span></div><div class="small muted">${esc(r.start || '')} – ${esc(r.end || '')}</div></div></div>`).join('')}</div>
+${st.profile.checks ? `<div class="note info">${st.profile.checks} thing${st.profile.checks > 1 ? 's' : ''} didn’t match between your files, like different dates for the same job. We’ll keep them for you to sort out after setup, in Profile.</div>` : ''}`; },
     mount(el) { el.querySelectorAll('[data-contact]').forEach((i) => (i.onchange = () => call('profile.setContact', { [i.dataset.contact]: i.value }))); } },
 
-  { id: 'sweetspot', ask: 'Here’s your sweet spot.', help: 'From your resume and the jobs you added. Keep the titles that sound right.', enter: () => call('builder.analyze'),
-    body: (st) => `${st.want.summary ? `<div class="note info"><b>${esc(st.want.summary)}</b></div>` : ''}${st.want.reachNote ? `<div class="note muted"><b>Your reach:</b> ${esc(st.want.reachNote)}</div>` : ''}
+  { id: 'sweetspot', ask: 'Let’s pick the job titles that fit.', help: 'From your resumes and the jobs you added. Keep the ones that sound right, and add your own.', enter: () => call('builder.analyze'),
+    body: (st) => `${st.want.summary ? `<p class="muted">${esc(st.want.summary)}</p>` : ''}
 <b class="small">Job titles we’ll look for</b><div class="row">${st.want.titles.map((t) => `<button class="chip" aria-pressed="true" data-act="deltitle" data-t="${esc(t)}">${esc(t)} ×</button>`).join('')}<input type="text" id="title" placeholder="Add a title, press Enter" style="width:240px"></div>
-${(st.want.suggestedTitles || []).filter((x) => x.accepted == null).length ? `<b class="small">You might also fit:</b><div class="row">${st.want.suggestedTitles.filter((x) => x.accepted == null).map((x) => `<span class="chip suggest">${esc(x.title)} <button class="btn small" data-act="sugg" data-t="${esc(x.title)}" data-v="1" style="color:var(--good)">Yes</button><button class="btn small" data-act="sugg" data-t="${esc(x.title)}" data-v="0">No</button></span>`).join('')}</div>` : ''}`,
+${(st.want.suggestedTitles || []).filter((x) => x.accepted == null).length ? `<b class="small">These might fit too. Keep them?</b><div class="row">${st.want.suggestedTitles.filter((x) => x.accepted == null).map((x) => `<span class="chip suggest">${esc(x.title)} <button class="btn small" data-act="sugg" data-t="${esc(x.title)}" data-v="1" style="color:var(--good)">Yes</button><button class="btn small" data-act="sugg" data-t="${esc(x.title)}" data-v="0">No</button></span>`).join('')}</div>` : ''}`,
     mount(el, st, ui) {
       const t = el.querySelector('#title'); t.onkeydown = async (e) => { if (e.key === 'Enter' && t.value.trim()) { await call('want.save', { titles: [...st.want.titles, t.value.trim()] }); ui.repaint(); } };
       on(el, {
@@ -149,6 +169,8 @@ ${(st.want.suggestedTitles || []).filter((x) => x.accepted == null).length ? `<b
       });
     },
     next(el, st) { if (!st.want.titles.length) { toast('Keep at least one job title.', true); return false; } } },
+
+  { id: 'rate', ask: 'Now rate a few real jobs.', help: 'These are live jobs we found with your answers. Every yes and no teaches Job Wizard what fits before your first morning batch.', skip: 'Skip for now', custom: true },
 
   { id: 'keep', ask: 'Now, how should your resumes look?', help: 'We can rebuild your current resume’s design, fonts and all, so every resume we tailor looks like yours. Or pick one of our 8 designs, shown with your own history.',
     body: (st) => `<div class="own-choice">
@@ -176,13 +198,11 @@ ${(st.want.suggestedTitles || []).filter((x) => x.accepted == null).length ? `<b
 
   { id: 'design', ask: (st) => (st.keep ? 'Here’s your design, rebuilt.' : 'How should your resume look?'), help: (st) => (st.keep ? 'Your original is on the left, our rebuild on the right with the same words. Tell us anything that looks different and we’ll fix it.' : 'Pick a template, then make it yours: layout, sidebar, section order, color, fonts and spacing. The preview is your real resume and changes as you go.'), custom: true },
 
-  { id: 'rate', ask: 'Last one: rate a few real jobs.', help: 'These are live jobs we found with your answers. Every yes and no teaches Job Wizard what fits before your first morning batch.', skip: 'Skip for now', custom: true },
-
   { id: 'done', ask: 'Your job search is built.', help: 'Every morning, Job Wizard checks for new jobs that fit and gets your best matches ready to apply. Change any answer later in Profile.', custom: true },
 ];
 
 // Setup sections, shown above each question (the bar shows overall progress).
-const SECTIONS = [['Your background', ['resume', 'linkedin']], ['Jobs you want', ['interviewed', 'fit', 'reach']], ['Your answers', ['pay', 'where', 'relocate', 'start', 'never']], ['Your voice', ['writing', 'connect']], ['Your results', ['found', 'sweetspot', 'keep', 'fonts', 'design', 'rate', 'done']]];
+const SECTIONS = [['Your background', ['resume', 'linkedin']], ['Jobs you want', ['interviewed', 'fit', 'reach']], ['Your answers', ['pay', 'where', 'relocate', 'start', 'never']], ['Your voice', ['writing', 'letters', 'connect']], ['Your matches', ['found', 'sweetspot', 'rate']], ['Your resume', ['keep', 'fonts', 'design', 'done']]];
 const sectionOf = (qid) => { const i = SECTIONS.findIndex(([, ids]) => ids.includes(qid)); return i < 0 ? '' : `${SECTIONS[i][0]} · Part ${i + 1} of ${SECTIONS.length}`; };
 
 export async function render(root, params, app) {
@@ -315,7 +335,7 @@ ${learned.length ? `<section class="card quiet tight"><b>What we’ve learned so
     const s = await call('settings.get');
     body.innerHTML = `<section class="card featured"><h2>Every morning at</h2><div class="row"><select id="hour" style="width:auto">${[5, 6, 7, 8, 9, 10].map((h) => `<option value="${h}" ${h === Number(s.morningHour) ? 'selected' : ''}>${h}:00 AM</option>`).join('')}</select><span class="muted">we’ll get your best</span><select id="count" style="width:auto">${[1, 2, 3, 5].map((n) => `<option ${n === Number(s.morningCount) ? 'selected' : ''}>${n}</option>`).join('')}</select><span class="muted">matches ready to apply.</span></div><p class="tiny muted">Job Wizard needs to be open, even in the background.</p></section>`;
     body.querySelectorAll('select').forEach((x) => (x.onchange = () => call('settings.save', { morningHour: Number(body.querySelector('#hour').value), morningCount: Number(body.querySelector('#count').value) })));
-    foot.innerHTML = `<button class="btn primary big" data-act="dash" data-busy="Getting your first matches ready…">Go to my Dashboard</button><a class="btn" href="#/profile">See your choices in Profile</a>`;
+    foot.innerHTML = `<button class="btn primary big" data-act="dash" data-busy="Getting your first matches ready…">See my matches</button><a class="btn" href="#/profile">See your choices in Profile</a>`;
     on(foot, { dash: (b) => act(b, async () => { document.body.classList.remove('building'); app.go('#/dashboard'); call('batch.run', { reason: 'setup' }).then(() => app.refresh()).catch(() => {}); }) });
   }
 

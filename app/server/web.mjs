@@ -6,6 +6,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { createApi } from '../core/api.mjs';
 import { startServer } from './http.mjs';
+import { loadTeamKey } from '../core/teamkey.mjs';
+import { fileURLToPath } from 'node:url';
+loadTeamKey(path.join(path.dirname(fileURLToPath(import.meta.url)), '..'));
 
 const base = process.env.APP_WIZARD_DATA || path.join(os.homedir(), '.app-wizard');
 let emit = () => {};

@@ -6,8 +6,10 @@ import os from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createApi } from '../core/api.mjs';
 import { startServer } from '../server/http.mjs';
+import { loadTeamKey } from '../core/teamkey.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
+loadTeamKey(path.join(here, '..'));
 const RENDERER = path.resolve(here, '../renderer');
 let win = null;
 let tray = null;

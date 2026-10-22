@@ -50,7 +50,7 @@ function paintNav() {
   const map = { job: 'journey', dashboard: 'journey', tracker: 'journey', interview: 'interviews', doc: 'documents', setup: 'profile' };
   const active = map[here] || here;
   const badge = { Journey: o.newJobs };
-  nav.innerHTML = NAV.map(([n, h]) => {
+  nav.innerHTML = NAV.filter(([n]) => !(n === 'Claude' && o.builtInKey)).map(([n, h]) => {
     const isOn = h.slice(2) === active;
     return `<a href="${h}" class="${isOn ? 'on' : ''}" ${isOn ? 'aria-current="page"' : ''}>${n}${badge[n] ? `<span class="count">${badge[n]}</span>` : ''}${n === 'Extension' ? ' <span class="soon">soon</span>' : ''}${n === 'Claude' && !o.hasKey ? ' <span class="count">!</span>' : ''}</a>`;
   }).join('');
