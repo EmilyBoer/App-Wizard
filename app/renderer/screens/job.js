@@ -1,8 +1,8 @@
-import { call, esc, tag, act, toast, on, modal, posted, VERDICT, STATUS_TAG, working, aw } from '../lib.js';
+import { call, esc, tag, act, toast, on, modal, posted, STATUS_TAG, working, aw } from '../lib.js';
 
 const FIT = { direct: ['Direct', 'var(--good)'], related: ['Related', 'var(--info)'], gap: ['Gap', 'var(--attention)'] };
 
-export async function render(root, [jobId], app) {
+export async function render(root, [jobId, then], app) {
   let profile = await call('profile.get');
   const bulletText = (id) => { for (const r of profile.roles) for (const b of r.bullets) if (b.id === id) return b.text; return null; };
   const paint = async () => {
@@ -13,7 +13,7 @@ export async function render(root, [jobId], app) {
     root.innerHTML = `<div class="page"><div class="split">
 <section class="main">
   <a href="#/dashboard" class="small">← All jobs</a>
-  <div><div class="row">${t ? tag(trLabel(t.status), STATUS_TAG[t.status]) : ''}${m ? tag(VERDICT[m.verdict]?.[0] || m.verdict, VERDICT[m.verdict]?.[1] || 'muted') : ''}<span class="small muted">${esc(posted(j))}</span></div>
+  <div><div class="row">${t ? tag(trLabel(t.status), STATUS_TAG[t.status]) : ''}<span class="small muted">${esc(posted(j))}</span></div>
   <h1>${esc(j.title)}</h1><div style="font-size:18px">${esc([j.company, j.location, j.payText].filter(Boolean).join(' · '))}</div>
   ${j.url ? `<a href="${esc(j.url)}" target="_blank" rel="noopener" class="small">Open the posting</a>` : ''}</div>
   ${j.hiddenBecause?.length ? `<div class="note att">Hidden from your matches: ${esc(j.hiddenBecause.join(' '))}</div>` : ''}
@@ -32,7 +32,7 @@ export async function render(root, [jobId], app) {
   <div class="scrollx"><table class="t"><thead><tr><th>They want</th><th>From your profile</th><th>Fit</th></tr></thead><tbody>
   ${(m.mustHaves || []).map((x) => `<tr><td>${esc(x.want)}</td><td class="${x.bulletId ? '' : 'muted'}">${esc(bulletText(x.bulletId) || 'Not in your profile yet')}</td><td style="color:${FIT[x.fit]?.[1]};font-weight:600">${FIT[x.fit]?.[0] || ''}</td></tr>`).join('')}
   </tbody></table></div>
-  ${(m.gapQuestions || []).length ? `<div class="note info"><b>Have you done this?</b> ${m.gapQuestions.map(esc).join(' ')} <button class="btn link" data-act="chat">Tell the wizard</button></div>` : ''}
+  ${(m.gapQuestions || []).length ? `<div class="note info"><b>Have you done this?</b> ${m.gapQuestions.map(esc).join(' ')} <button class="btn link" data-act="chat">Tell us</button></div>` : ''}
   <button class="btn link" data-act="explain" data-force="1" style="align-self:flex-start">Check again</button>`
   : `<div class="row"><span class="muted">${esc((j.scoreReasons || []).join(' · '))}</span><button class="btn secondary" data-act="explain" data-busy="Checking the fit…">Check the fit</button></div>`}
   </section>
@@ -41,10 +41,10 @@ export async function render(root, [jobId], app) {
   <div class="list">
     <div class="item">${resume ? tag(resume.status === 'final' ? 'Done' : 'Draft', resume.status === 'final' ? 'good' : 'att') : tag('Not yet', 'muted')}<div class="grow"><div>Tailored resume</div><div class="small muted">${resume ? `${esc(resume.checks?.length ? resume.checks[0] : 'Every line traced to your profile.')}` : 'Built only from your profile.'}</div></div>${resume ? `<a href="#/doc/${resume.id}">Review</a>` : ''}</div>
     <div class="item">${letter ? tag(letter.checks?.length ? 'Check' : letter.status === 'final' ? 'Done' : 'Draft', letter.checks?.length ? 'att' : letter.status === 'final' ? 'good' : 'att') : tag('Not yet', 'muted')}<div class="grow"><div>Cover letter</div><div class="small muted">${letter ? esc(letter.checks?.length ? letter.checks.join(' ') : 'In your voice, every fact checked.') : 'In your voice.'}</div></div>${letter ? `<a href="#/doc/${letter.id}">Review</a>` : ''}</div>
-    <div class="item" style="background:var(--spark-soft)">${tag('Your call', 'spark')}<div class="grow"><div>Form answers</div><div class="small">Saved answers are filled in for you. Anything personal that you haven’t saved, we ask you. <a href="#/setup/8">Your saved answers</a></div></div></div>
+    <div class="item">${tag('Your call', 'att')}<div class="grow"><div>Form answers</div><div class="small">Saved answers are filled in for you. Anything personal that you haven’t saved, we ask you. <a href="#/setup/8">Your saved answers</a></div></div></div>
   </div>
   <div class="row">
-    ${resume ? `<button class="btn primary big" data-act="apply">Open and fill application</button>` : `<button class="btn primary big" data-act="make" data-busy="Writing your application…">Make my resume and letter</button>`}
+    ${resume ? `<button class="btn primary big" data-act="apply">Open and fill application</button>` : `<button class="btn primary big" data-act="make" data-busy="Writing your application…">Draft my application</button>`}
     ${resume ? '<button class="btn" data-act="make" data-busy="Writing…">Make a new version</button>' : ''}
     <button class="btn secondary" data-act="cheat">Make interview cheat sheet</button>
     <span data-progress="docs" class="small muted"></span>
@@ -54,7 +54,7 @@ export async function render(root, [jobId], app) {
 
   <details class="card"><summary><b>Job description</b></summary><div class="small" style="white-space:pre-wrap;margin-top:12px">${esc(j.description)}</div><button class="btn small" data-act="edittext" style="align-self:flex-start">Edit description</button></details>` : ''}
 </section>
-<aside class="side card quiet" style="position:sticky;top:84px"><h2>Chat about this job</h2><p class="small muted">Ask anything: how you fit, what to say about a gap, what to ask them. If you mention something new about your experience, we’ll offer to add it.</p><button class="btn secondary" data-act="chat">Ask the wizard</button></aside>
+<aside class="side card quiet" style="position:sticky;top:84px"><h2>Chat about this job</h2><p class="small muted">Ask anything: how you fit, what to say about a gap, what to ask them. If you mention something new about your experience, we’ll offer to add it.</p><button class="btn secondary" data-act="chat">Ask Margot</button></aside>
 </div></div>`;
   };
   on(root, {
@@ -76,7 +76,7 @@ export async function render(root, [jobId], app) {
       const j = await call('jobs.get', { id: jobId });
       modal(`<h2>Apply</h2><ol class="stack-s" style="padding-left:20px;margin:0">
 <li>Download your files: ${j.documents.filter((d) => d.status).slice(0, 2).map((d) => `<a href="#/doc/${d.id}" data-close>${esc(d.file)}.pdf</a>`).join(' and ')}.</li>
-<li>Open the application. With the Job Wizard browser extension, press its button on the form to fill it in. <a href="#/help/extension" data-close>Set up the extension</a></li>
+<li>Open the application. With the Margot browser extension, press its button on the form to fill it in. <a href="#/help/extension" data-close>Set up the extension</a></li>
 <li>Check everything, answer anything marked “needs you”, and press submit yourself.</li>
 <li>Come back and press <b>I applied</b> (the extension does this for you).</li></ol>
 <div class="row"><button class="btn primary" id="open">Open the application</button><button class="btn" data-close>Close</button></div>`, { onMount: (m) => { m.querySelector('#open').onclick = () => aw.open(j.url); } });
@@ -88,6 +88,8 @@ export async function render(root, [jobId], app) {
   }
   root.innerHTML = `<div class="page">${working('Loading…')}</div>`;
   await paint();
+  // "Draft my application" on a job card lands here and starts drafting straight away.
+  if (then === 'draft') { history.replaceState(null, '', `#/job/${encodeURIComponent(jobId)}`); root.querySelector('.btn.primary[data-act="make"]')?.click(); }
 }
 const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : '');
 const trLabel = (s) => ({ found: 'Found', saved: 'Saved', ready: 'Ready to apply', applied: 'Applied', interviewing: 'Interviewing', offer: 'Offer', rejected: 'Not moving forward', skipped: 'Skipped', closed: 'Closed' })[s] || s;

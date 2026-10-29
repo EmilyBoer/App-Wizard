@@ -1,11 +1,11 @@
-// Talks to the Job Wizard desktop app on this computer only.
+// Talks to the Margot desktop app on this computer only.
 const BASE = 'http://127.0.0.1:47321';
 
 async function callApp(path, body) {
   const { token } = await chrome.storage.local.get('token');
   const res = await fetch(BASE + path, { method: 'POST', headers: { 'content-type': 'application/json', 'x-app-wizard-token': token || '' }, body: JSON.stringify(body || {}) });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || 'Job Wizard didn’t answer. Is it open?');
+  if (!res.ok) throw new Error(data.error || 'Margot didn’t answer. Is it open?');
   return data;
 }
 

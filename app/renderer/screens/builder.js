@@ -152,11 +152,11 @@ ${ls.length ? `<div class="list">${ls.map((x) => `<div class="item">${tag('Cover
 
   { id: 'connect', when: (st) => !st.hasKey, ask: 'Now let’s connect Claude.', help: 'Claude is what reads your files and writes for you. During testing, you use your own Claude API key. It takes about 3 minutes, and then we’ll read everything you’ve added.',
     body: () => `<div class="stack"><a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" class="btn secondary" style="align-self:flex-start">Sign in to Claude Console to get a key</a>
-<ol class="small muted" style="margin:0;padding-left:20px"><li>Sign in, and add $5 of credit under Settings, Billing.</li><li>Press Create Key, name it Job Wizard, and copy it.</li><li>Paste it here.</li></ol>
+<ol class="small muted" style="margin:0;padding-left:20px"><li>Sign in, and add $5 of credit under Settings, Billing.</li><li>Press Create Key, name it Margot, and copy it.</li><li>Paste it here.</li></ol>
 <input type="password" id="key" placeholder="sk-ant-…" autocomplete="off"><div class="note alert hidden" id="err" role="alert"></div></div>`,
     async next(el) { const err = el.querySelector('#err'); err.classList.add('hidden'); try { await call('settings.save', { claudeKey: el.querySelector('#key').value }); await call('settings.testKey'); toast('Claude is connected. Reading your files now.'); call('builder.prepareProfile').then(() => call('builder.prepareWants')).catch(() => {}); } catch (e) { err.textContent = e.message; err.classList.remove('hidden'); return false; } } },
 
-  { id: 'found', enter: () => call('builder.analyze'), ask: 'Here’s what we pulled from your resumes.', help: 'Fill in anything that’s missing. Everything Job Wizard writes for you comes from this, and we never make anything up.',
+  { id: 'found', enter: () => call('builder.analyze'), ask: 'Here’s what we pulled from your resumes.', help: 'Fill in anything that’s missing. Everything Margot writes for you comes from this, and we never make anything up.',
     body: (st) => { const c = st.profile.contact || {}; return `<div class="grid">${[['name', 'Name'], ['email', 'Email'], ['phone', 'Phone'], ['location', 'City, State'], ['linkedin', 'LinkedIn link'], ['website', 'Website or portfolio']].map(([k, l]) => `<label class="field">${l}<input type="text" data-contact="${k}" value="${esc(c[k] || '')}"></label>`).join('')}</div>
 <div class="list"><div class="list-head">${st.profile.roles.length} job${st.profile.roles.length === 1 ? '' : 's'} · ${st.profile.years} years · ${st.profile.roles.reduce((n, r) => n + r.results, 0)} results in your bullet vault</div>${st.profile.roles.map((r) => `<div class="item"><div class="grow"><div>${esc(r.title)} <span class="muted">· ${esc(r.company)}</span></div><div class="small muted">${esc(r.start || '')} – ${esc(r.end || '')}</div></div></div>`).join('')}</div>
 ${st.profile.checks ? `<div class="note info">${st.profile.checks} thing${st.profile.checks > 1 ? 's' : ''} didn’t match between your files, like different dates for the same job. We’ll keep them for you to sort out after setup, in Profile.</div>` : ''}`; },
@@ -175,7 +175,7 @@ ${(st.want.suggestedTitles || []).filter((x) => x.accepted == null).length ? `<b
     },
     next(el, st) { if (!st.want.titles.length) { toast('Keep at least one job title.', true); return false; } } },
 
-  { id: 'rate', ask: 'Now rate a few real jobs.', help: 'These are live jobs we found with your answers. Every yes and no teaches Job Wizard what fits before your first morning batch.', skip: 'Skip for now', custom: true },
+  { id: 'rate', ask: 'Now rate a few real jobs.', help: 'These are live jobs we found with your answers. Every yes and no teaches Margot what fits before your first morning batch.', skip: 'Skip for now', custom: true },
 
   { id: 'keep', ask: 'Now, how should your resumes look?', help: 'We can rebuild your current resume’s design, fonts and all, so every resume we tailor looks like yours. Or pick one of our 8 designs, shown with your own history.',
     body: (st) => `<div class="own-choice">
@@ -198,12 +198,12 @@ ${(st.want.suggestedTitles || []).filter((x) => x.accepted == null).length ? `<b
       await call('own.start', { id: src });
     } },
 
-  { id: 'fonts', when: (st) => st.keep === true && st.ownFonts > 0, ask: 'Your resume uses these fonts.', help: 'To match your design exactly, Job Wizard needs each one. Upload any that are missing now, or do it later in Profile, Resume design. Until then we use the closest free match.', skip: 'Do this later',
+  { id: 'fonts', when: (st) => st.keep === true && st.ownFonts > 0, ask: 'Your resume uses these fonts.', help: 'To match your design exactly, Margot needs each one. Upload any that are missing now, or do it later in Profile, Resume design. Until then we use the closest free match.', skip: 'Do this later',
     body: () => '<div id="fontsbox" class="stack"></div>', mount: (el) => fontsPanel(el.querySelector('#fontsbox')) },
 
   { id: 'design', ask: (st) => (st.keep ? 'Here’s your design, rebuilt.' : 'How should your resume look?'), help: (st) => (st.keep ? 'Your original is on the left, our rebuild on the right with the same words. Tell us anything that looks different and we’ll fix it.' : 'Pick a template, then make it yours: layout, sidebar, section order, color, fonts and spacing. The preview is your real resume and changes as you go.'), custom: true },
 
-  { id: 'done', ask: 'Your job search is built.', help: 'Every morning, Job Wizard checks for new jobs that fit and gets your best matches ready to apply. Change any answer later in Profile.', custom: true },
+  { id: 'done', ask: 'Your job search is built.', help: 'Every morning, Margot checks for new jobs that fit and gets your best matches ready to apply. Change any answer later in Profile.', custom: true },
 ];
 
 // Setup sections, shown above each question (the bar shows overall progress).
@@ -338,7 +338,7 @@ ${learned.length ? `<section class="card quiet tight"><b>What we’ve learned so
     await call('builder.complete');
     await app.refresh();
     const s = await call('settings.get');
-    body.innerHTML = `<section class="card featured"><h2>Every morning at</h2><div class="row"><select id="hour" style="width:auto">${[5, 6, 7, 8, 9, 10].map((h) => `<option value="${h}" ${h === Number(s.morningHour) ? 'selected' : ''}>${h}:00 AM</option>`).join('')}</select><span class="muted">we’ll get your best</span><select id="count" style="width:auto">${[1, 2, 3, 5].map((n) => `<option ${n === Number(s.morningCount) ? 'selected' : ''}>${n}</option>`).join('')}</select><span class="muted">matches ready to apply.</span></div><p class="tiny muted">Job Wizard needs to be open, even in the background.</p></section>`;
+    body.innerHTML = `<section class="card featured"><h2>Every morning at</h2><div class="row"><select id="hour" style="width:auto">${[5, 6, 7, 8, 9, 10].map((h) => `<option value="${h}" ${h === Number(s.morningHour) ? 'selected' : ''}>${h}:00 AM</option>`).join('')}</select><span class="muted">we’ll get your best</span><select id="count" style="width:auto">${[1, 2, 3, 5].map((n) => `<option ${n === Number(s.morningCount) ? 'selected' : ''}>${n}</option>`).join('')}</select><span class="muted">matches ready to apply.</span></div><p class="tiny muted">Margot needs to be open, even in the background.</p></section>`;
     body.querySelectorAll('select').forEach((x) => (x.onchange = () => call('settings.save', { morningHour: Number(body.querySelector('#hour').value), morningCount: Number(body.querySelector('#count').value) })));
     foot.innerHTML = `<button class="btn primary big" data-act="dash" data-busy="Getting your first matches ready…">See my matches</button><a class="btn" href="#/profile">See your choices in Profile</a>`;
     on(foot, { dash: (b) => act(b, async () => { document.body.classList.remove('building'); app.go('#/dashboard'); call('batch.run', { reason: 'setup' }).then(() => app.refresh()).catch(() => {}); }) });
@@ -379,7 +379,7 @@ ${section('About you', [
   ])}
 ${section('What you’re looking for', [
     row('Job titles', w.titles.length ? pills(w.titles) : '', 'edit:sweetspot'),
-    row('Your sweet spot', w.summary ? `<div class="clamp">${esc(w.summary)}</div>` : '', 'edit:sweetspot'),
+    row('What you’re aiming for', w.summary ? `<div class="clamp">${esc(w.summary)}</div>` : '', 'edit:sweetspot'),
     row('Where you’ve interviewed recently', st.interviewed.length ? st.interviewed.map((x) => `<div>${esc(x.title || 'Job')}${x.company ? ` <span class="muted">· ${esc(x.company)}</span>` : ''}${x.fromJourney ? ' <span class="tiny muted">from Journey</span>' : ''}</div>`).join('') : '', 'edit:interviewed'),
     row('Suit you', jobs(st.fit), 'edit:fit'),
     row('Aspirational job', jobs(st.reach), 'edit:reach'),
@@ -393,7 +393,7 @@ ${section('Answers for applications', [
     row('Would you move?', esc(answers.relocate), 'edit:relocate'),
     row('When you could start', esc(answers.start), 'edit:start'),
   ])}
-${section('How Job Wizard works for you', [
+${section('How Margot works for you', [
     row('Where you look', (hosts.length ? hosts.map(([h, n]) => `${esc(h)} <span class="muted">(${n})</span>`).join(' · ') : '<span class="muted">Learned from the job links you add</span>') + `<div class="small muted">${watched} compan${watched === 1 ? 'y' : 'ies'} checked for new jobs every day</div>`, '#/setup/7'),
     row('What it’s learned', `${learning.summary.yes} yes · ${learning.summary.no} no · ${learning.summary.rules} rule${learning.summary.rules === 1 ? '' : 's'}`, '#/profile/vault', 'See'),
     row('Morning batch', `${st.schedule.on ? `Every day at ${st.schedule.hour}:00 AM, your best ${st.schedule.count} match${st.schedule.count === 1 ? '' : 'es'} made ready` : 'Turned off'}`, '#/profile/schedule'),

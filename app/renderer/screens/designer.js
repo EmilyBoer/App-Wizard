@@ -11,6 +11,8 @@ const PAGE_PX = { letter: [816, 1056], a4: [794, 1123] };
 export async function renderDesigner(el, { dark = false } = {}) {
   let d = await call('design.get');
   let thumbs = null;
+  let summary = (await call('profile.get').catch(() => ({})))?.summary || '';
+  const hasKey = Boolean((await call('app.overview').catch(() => ({})))?.hasKey);
   el.innerHTML = `<div class="designer${dark ? ' on-dark' : ''}">
   <aside class="dz-panel" aria-label="Resume design settings"></aside>
   <section class="dz-preview" aria-label="Live preview">
@@ -39,6 +41,9 @@ export async function renderDesigner(el, { dark = false } = {}) {
     panel.innerHTML = `
 ${group('tpl', 'Template', `<div class="dz-thumbs">${d.ownBuilt ? `<button type="button" class="dz-thumb ${own ? 'on' : ''}" data-own aria-pressed="${own}"><div class="dz-mini"><iframe tabindex="-1" title="" scrolling="no" data-thumb="own"></iframe></div><b>Your own design</b><span class="tiny muted">Rebuilt from ${esc(d.ownFrom || 'your resume')}</span></button>` : ''}${Object.entries(d.presets).map(([k, p]) => `<button type="button" class="dz-thumb ${!own && d.template === k ? 'on' : ''}" data-preset="${k}" aria-pressed="${!own && d.template === k}"><div class="dz-mini"><img src="assets/templates/${k}.webp" alt="" loading="lazy"></div><b>${esc(p.label)}</b><span class="tiny muted">${esc(p.note)}</span></button>`).join('')}</div>
 ${d.ownBuilt ? '' : '<button type="button" class="btn small secondary" data-keepown style="align-self:flex-start">Keep my own resume’s design</button><span class="tiny muted">We rebuild the look of a resume you already have (a PDF, Word file, Canva export or screenshot), fonts and all.</span>'}`, isOpen('tpl', true))}
+${group('summary', 'Summary', `<label class="field small">The short paragraph at the top of your resume<textarea id="dz-summary" rows="5" placeholder="Two or three sentences about the work you do.">${esc(summary)}</textarea></label>
+<span class="tiny muted" id="dz-sumnote">${summary ? 'Edit it any way you like. It saves when you click away and shows on every resume.' : 'Write your own, or let us write one from your experience.'}</span>
+<button type="button" class="btn small secondary" data-rewrite data-busy="Writing…" style="align-self:flex-start" ${hasKey ? '' : 'disabled'}>Write a new one from my experience</button>`, isOpen('summary', true))}
 ${own ? group('own', 'Your own design', `<div id="dz-ownfonts" class="stack"></div><div class="row"><button type="button" class="btn small secondary" data-compare>Compare with my original</button><button type="button" class="btn small" data-keepown>Rebuild from a different file</button></div><span class="tiny muted">To change colors, spacing or layout, pick a template instead. Your own design stays here.</span>`, true) : ''}
 ${own ? '' : group('layout', 'Layout', `${seg('layout', d.layout, [['single', 'One column', icon('single')], ['sidebar-left', 'Sidebar left', icon('sidebar-left')], ['sidebar-right', 'Sidebar right', icon('sidebar-right')]])}
 ${sidebarOn ? `<b class="small">In the sidebar</b><div class="row">${['skills', 'education', 'certifications', 'summary'].map((k) => `<label class="radio"><input type="checkbox" data-side="${k}" ${d.sidebar.includes(k) ? 'checked' : ''}>${esc(d.sections[k])}</label>`).join('')}</div><b class="small">Sidebar color</b>${seg('sidebarTint', d.sidebarTint, [['none', 'None'], ['light', 'Light tint'], ['dark', 'Dark, white text']])}` : ''}`, isOpen('layout', true))}
@@ -151,10 +156,21 @@ ${own ? '' : `<button type="button" class="btn small" data-reset style="align-se
       const other = d.order.filter((k) => inSide(k) !== side);
       return save({ order: side ? [...other, ...group] : [...group, ...other] });
     }
+    if ('rewrite' in b.dataset) {
+      b.classList.add('busy'); b.textContent = 'Writing…';
+      try { summary = await call('profile.writeSummary', { replace: true }); toast('New summary written. Edit it any way you like.'); } catch (ex) { toast(ex.message, true); }
+      paintPanel(); paintPreview(); return;
+    }
     if ('reset' in b.dataset) { await call('design.applyPreset', { id: d.template }); d = await call('design.get'); paintPanel(); paintPreview(); toast('Back to the template’s settings.'); }
   });
   panel.addEventListener('change', async (e) => {
     const t = e.target;
+    if (t.id === 'dz-summary') {
+      summary = t.value.trim();
+      await call('profile.setSummary', { text: summary });
+      const note = panel.querySelector('#dz-sumnote'); if (note) note.textContent = 'Saved. It shows on every resume.';
+      return paintPreview();
+    }
     if (t.dataset.side) return save({ sidebar: t.checked ? [...new Set([...d.sidebar, t.dataset.side])] : d.sidebar.filter((x) => x !== t.dataset.side) });
     if ('icons' in t.dataset) return save({ icons: t.checked });
     if ('headline' in t.dataset) return save({ headline: t.checked });

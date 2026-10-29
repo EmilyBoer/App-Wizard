@@ -1,92 +1,157 @@
-# Job Wizard style guide
+# Margot app style guide
 
-How the app looks and behaves. The tokens live in `renderer/app.css` (`:root`); this file says how to use them.
-The checks at the bottom run automatically in `test/ui-crawl.mjs`.
+How the app looks and behaves. Tokens live in `renderer/app.css`. This file lists every element we use, what it's for and how it looks today. The automatic checks at the bottom run in `test/ui-crawl.mjs`.
+
+**Status (2026-10-28):** the app uses the October 28 Margot look (plum, pink and lime). Branding may still change. The system is built so that a rebrand changes **layer 1** (and sometimes **layer 2**) in `app.css`, not the screens.
+
+## How a rebrand works
+
+`app.css` has three layers:
+
+| Layer | What's in it | Change it when |
+|---|---|---|
+| 1. Brand | 8 colors, 3 fonts. The only place hex codes and font names appear. | The palette or fonts change. Also update the font link in `renderer/index.html`. |
+| 2. Roles | What each color is *for*: ground, surface, text, muted text, act, good news, quiet, needs you, closed. Defined twice: once for the dark ground, once for light surfaces. | What a color *means* changes (for example, light ground instead of dark, or disabled becomes mist). |
+| 3. Components | Buttons, tags, notes, cards and the rest. They use roles only. | An element changes shape (corners, outline, size). |
+
+Rebrand checklist:
+1. Swap layer 1.
+2. Check layer 2 still makes sense.
+3. Run the crawl.
+4. Look at every screen at 1440 and 390 wide.
+
+**One trap:** a role that points at another role (`--good: var(--ink)`) is fixed where it's declared. Any alias of a surface role must be re-declared in the light-surface block, or it shows the dark-ground color on a light card.
+
+Old token names (`--spark`, `--good-soft`, `--info`, `--attention`, etc.) are kept as aliases because screens use them in inline styles. New code should use the role names.
 
 ## Principles
 
-1. **One thing matters most on each screen.** Exactly one primary button. Everything else is quieter.
-2. **Plain words, sentence case.** "Save and leave", not "SAVE & EXIT". No jargon, no exclamation marks in buttons.
+1. **One thing matters most on each screen.** Exactly one main button (small row buttons don't count).
+2. **Plain words, sentence case.** "Save and leave", not "SAVE & EXIT". We speak as "we", never "she" or "I".
 3. **Every way in has a way out.** Every overlay has an X, closes with Esc, and never throws away typed work without asking.
-4. **Setup runs once.** After the first sign-in, answers are changed in Profile, in an overlay, never by going back into setup.
+4. **Setup runs once.** After that, answers change in Profile, in an overlay.
 5. **Truth over polish.** We never show a number, title or fact we didn't get from the person.
+6. **No fit labels.** Everything we show is assumed to fit. A job gets one plain sentence about why, plus "Draft my application".
+7. **Responsive from the first draft.** Nothing scrolls sideways on a phone except tabs and wide tables, on purpose.
 
 ## Color
 
-| Token | Use |
-|---|---|
-| `--ink` #14213D | Text, headings, the outline of secondary buttons |
-| `--ink-2` #33405E | Secondary text inside cards |
-| `--ink-muted` #5E6880 | Help text, labels, captions |
-| `--paper` / `--panel` / `--panel-2` | Page, quiet surfaces, hover |
-| `--line` / `--line-strong` | Dividers and borders; strong for inputs and hover |
-| `--spark-deep` #D2461C | **Only** the primary button and the active tab underline |
-| `--good` / `--info` / `--attention` / `--alert` (+ `-soft`) | Status tags and notes, never decoration |
+**Brand (layer 1):**
+- plum night #261B2A
+- plum #372839
+- plum line #4A3750
+- mist #CBB8CC
+- pink lilac #F3C1EA
+- soft lime #D8EBAE
+- eggshell #F6EFEC
+- white #FFFFFF, for resumes and letters only
 
-Setup (first sign-in) uses the dark theme (`body.building`); everything else is light. Overlays are always light.
+**Meaning (layer 2):**
+
+| Role | Today | Used for |
+|---|---|---|
+| Ground | plum night | Page, top bar, setup |
+| Raised panel | plum | Quiet cards, kanban lanes, empty states, the area behind documents |
+| Surface | eggshell | Cards, lists, job cards, overlays, chat, form fields |
+| Text | eggshell on dark, plum night on light | |
+| Muted text | mist on dark, plum line on light | Help text and captions only |
+| Act | pink | Main buttons, "New", "needs you", active tab underline |
+| Good news | lime | Done, Interviewing, Offer, the star, the disabled button (Emily's call) |
+| Quiet | mist | Neutral tags, info notes, field outlines |
+| Closed | plum night | Closed, Rejected, Skipped tags |
+
+No red anywhere. A problem is shown as "needs you" (pink) with a plain instruction.
 
 ## Type
 
-| Role | Font | Size / line height | Weight |
-|---|---|---|---|
-| Page title (h1) | Schibsted Grotesk (`--display`) | 36 / 42 | 800, −0.02em |
-| Section title (h2) | `--display` | 22 / 30 | 700, −0.01em |
-| Card title (h3) | Figtree (`--sans`) | 17 / 24 | 700 |
-| Body | `--sans` | 16 / 26 | 400 |
-| Small | `--sans` | 14 / 21 | 400 |
-| Tiny (hints only) | `--sans` | 13 / 19 | 400 |
-| Eyebrow (labels like "Question 3 of 18") | `--sans` | 14 / 20 | 600, muted |
-| Tags | `--sans` | 12.5 / 18 | 600 |
+Bricolage Grotesque for everything. Instrument Serif italic for one emphasized word at a time (`.accent-word`, as on the login screen). DM Mono for small labels (eyebrows, table heads, "or").
 
-Allowed sizes: 10 (nav badge), 11, 12, 12.5, 13, 14, 15, 16, 17, 18, 20, 21, 22, 30, 36 px. Nothing else.
-Bold is for names of things and the one thing to notice, not whole sentences.
-
-## Spacing
-
-One scale: `--s1` 4 · `--s2` 8 · `--s3` 12 · `--s4` 16 · `--s5` 24 · `--s6` 32 · `--s7` 48 · `--s8` 64 px.
-Inside a card: 16 between items. Between cards: 24. Between page sections: 32–48.
-Corners: `--r-sm` 8 (inputs, small buttons), `--r-md` 12 (notes), `--r-lg` 16 (cards, overlays).
-
-## Buttons (three levels)
-
-| Level | Class | When |
+| Role | Size / line height | Weight |
 |---|---|---|
-| Primary | `.btn.primary` (`.big` in setup footers) | The one action that moves the person forward. One per screen; overlays can have their own. |
-| Secondary | `.btn.secondary` | A real action that isn't the main one (Upload, Add this job, Fix it). |
-| Quiet | `.btn`, `.btn.small`, `.btn.link` | Back, Cancel, Change, Remove, Skip. |
+| Page title (h1) | 36 / 42 (30 on phones) | 600, −0.02em |
+| Section title (h2) | 22 / 30 | 600 |
+| Card title (h3) | 17 / 24 | 600 |
+| Body | 16 / 26 | 400 |
+| Small | 14 / 21 | 400 |
+| Tiny (hints only) | 13 / 19 | 400 |
+| Eyebrow | 13 / 20, mono, capitals | 500 |
+| Tags | 12.5 / 18 | 600 |
 
-Labels say what happens: "Save", "Add this job", "Looks right". Busy states use `data-busy` ("Saving…").
-Destructive actions use `.btn.danger` and are never primary.
+Allowed sizes: 10, 11, 12, 12.5, 13, 14, 15, 16, 17, 18, 20, 21, 22, 30, 36 px.
+
+## Spacing and corners
+
+- **Spacing scale:** `--s1` 4 · `--s2` 8 · `--s3` 12 · `--s4` 16 · `--s5` 24 · `--s6` 32 · `--s7` 48 · `--s8` 64.
+- **Corners:** buttons are pills; cards 24; notes and small cards 14; fields 10; tags 6.
+- **Tap targets:** at least 44 px tall (small row buttons 36).
+
+## The elements we're keeping
+
+These are the building blocks every screen is made from. Their *job* stays fixed through any rebrand; only how they look changes.
+
+| Element | Class | Job | Looks like today |
+|---|---|---|---|
+| Main button | `.btn.primary` (`.big` in setup footers, `.small` for repeated row actions) | The one action that moves the person forward | Pink pill, plum night text and 1.5px outline. Hover: plum night fill, pink text. |
+| Also button | `.btn.secondary` | A real action that isn't the main one | Outline pill in the text color. Hover: filled. |
+| Quiet button | `.btn`, `.btn.small`, `.btn.link` | Back, Cancel, Change, Remove, Skip | Underlined text |
+| Disabled button | `[disabled]` on any `.btn` | "Not available yet" | Lime fill, plum night outline |
+| Busy | `act()` in `lib.js` | While saving | Only the label changes ("Saving…") |
+| Tag | `tag(text, kind)` | A one- or two-word label, never clickable | 6px corners. `muted`/`info` = mist, `good` = lime, `att`/`alert`/`spark` = pink, `closed` = plum night |
+| Note | `.note.info / good / att / alert` | One sentence of status | Solid fill, plum night text. Mist info, lime done, pink needs you |
+| Card | `.card` (`.featured`, `.quiet`, `.tight`) | A group of related things | Eggshell. Featured gets a plum night edge. Quiet is a plum panel. |
+| List | `.list > .item` | Rows of things | Eggshell, hairline dividers |
+| Job card | `.job` | One job | Eggshell. Title, company line, one sentence on why it fits, "Draft my application" |
+| Stat | `.stat` | A number on Journey | Eggshell tile, big number |
+| Profile row | `.choice-list > .choice` | Label · value · "Change" | Eggshell list |
+| Tabs | `.tabs .tab` | Sections inside a page | Words with a 3px pink underline. Scroll sideways on phones. |
+| Menu | `.nav` | Main sections | Same as tabs. On phones it gets its own row and scrolls sideways. |
+| Chip | `.chip` | A choice you can toggle | Outline pill. Pressed: filled in the text color. |
+| Option | `.radio`, `.pick`, `.choice-card` | Pick one or several | Outlined box; selected gets a strong edge |
+| Love/Fine/Avoid | `.tri` | Three-way choice | Lime / mist / pink when on |
+| Field | `input`, `select`, `textarea` | Typing | Always eggshell with plum night text and a mist outline. Plum while typing. |
+| Field that needs fixing | `.needs-fix` or `aria-invalid="true"` | Something's wrong | Mist fill, 2px plum night edge, one instruction |
+| Drop zone | `.drop` | Drag files in | Dashed outline on a raised panel |
+| Numbered step | `.dot` | Step numbers | Always the same plum night circle |
+| Progress | `.progress` | How far along | Lime yes, mist maybe, pink no, eggshell current |
+| Overlay | `modal()` in `lib.js` | Anything that edits or confirms | Eggshell, X in the corner, Esc closes. Don't build overlays by hand. |
+| Toast | `toast()` | "Saved." | Plum with a lime star. Errors are pink. |
+| Empty state | `.empty` | Nothing here yet | Raised panel, star, one line and what to do |
+| Chat | `.drawer` | Ask Margot | Eggshell drawer; your messages plum night, ours mist |
+| Logo | `sparkle()` + "margot" | Brand | Lime four-point star (slow twinkle, off under reduced motion), lowercase wordmark |
+| Documents | `.paper-wrap`, `.dz-stage` | Resumes and letters | White paper on a plum panel. On phones the paper shrinks to fit. |
+
+**Retired:** fit labels ("Strong match", "Good match", "Stretch", "Weak match"), letter avatars, the orange button with offset shadow, navy, Schibsted Grotesk and Figtree.
 
 ## Overlays
 
-- Use `modal()` from `renderer/lib.js`. It adds the X, Esc, click-outside, focus handling and the
-  "You typed something that isn't saved" check. Don't build overlays by hand.
-- Title as the first h2. One primary button. "Cancel" uses `data-close`.
+- Use `modal()` from `renderer/lib.js`. It adds the X, Esc, click-outside, focus handling and the "You typed something that isn't saved" check.
+- Title as the first h2. One main button. "Cancel" uses `data-close`.
 - Changing a Profile answer opens that answer's form in an overlay (`editAnswer` in `builder.js`).
 
-## Components
+## Responsive
 
-- **Cards** `.card` (+ `.featured` for the one card that matters, `.quiet` for background info, `.tight` for compact).
-- **Notes** `.note.info|good|att|alert`: a sentence of status, never a paragraph.
-- **Tags** `.tag.good|info|att|alert|muted`: one or two words.
-- **Profile rows** `.choice`: label · value · quiet "Change" button.
-- **Tabs** `.tabs .tab` with `.on` for the current one.
+| Width | What happens |
+|---|---|
+| Over 960 | Full layout |
+| 960 and under | Resume editor, side panels and checklists stack |
+| 720 and under | 16px gutter. Menu on its own row, scrolling sideways. Tabs scroll sideways. Main buttons in page headers and setup footers go full width. Profile rows stack. Login stacks. |
+| 400 and under | Template and font pickers go one column |
+
+Before calling any screen done, look at it at 1440 and 390 wide.
 
 ## Resumes (the documents we make)
 
-These follow their own rules in `core/docs.mjs`:
+These follow their own rules in `core/docs.mjs` and are *not* affected by the app's brand:
 - Body text never below 10 pt, section titles never below 11 pt, margins at least 0.5 in.
-- Real text in reading order (name and contact first) so hiring systems can read it; icons are drawn, not text.
-- The contact line spreads evenly across the page (or sits in an even grid when there are icons).
-- Short resumes open up their spacing (up to 1.6×) to fill the page evenly.
+- Real text in reading order (name and contact first) so hiring systems can read it.
 
 ## Automatic checks (`test/ui-crawl.mjs`)
 
 Visits every screen and:
 - opens every overlay and checks it has an X and closes with Esc
 - checks typed text isn't lost when clicking outside an overlay
-- checks the menu is visible (there's always a way out)
+- checks the menu is visible
 - checks setup can't be reopened once finished
-- flags any screen with more than one primary button
+- flags any screen with more than one main button (small row buttons don't count)
 - flags any text size that isn't on the type scale
+- **new:** at 390 px wide, flags anything that sticks out past the edge of the page

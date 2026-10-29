@@ -1,4 +1,4 @@
-import { call, esc, tag, act, toast, on, modal, posted, ago, BUCKET, VERDICT, STATUS_TAG, sparkle, readFiles, dropZone } from '../lib.js';
+import { call, esc, tag, act, toast, on, modal, posted, ago, STATUS_TAG, sparkle, readFiles, dropZone } from '../lib.js';
 import * as tracker from './tracker.js';
 
 export async function render(root, _p, app) {
@@ -17,7 +17,7 @@ export async function render(root, _p, app) {
 <div class="head"><div><div class="eyebrow">${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</div><h1>Good ${hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'}${name ? `, ${esc(name)}` : ''}.</h1>
 <p class="muted">${ready.length ? `${ready.length} application${ready.length > 1 ? 's are' : ' is'} ready for you to check and send.` : fresh.length ? `${fresh.length} new match${fresh.length > 1 ? 'es' : ''} to look at.` : 'Nothing new yet. Check your job sites or add a job.'}</p></div>
 <div class="row"><button class="btn" data-act="add">Add jobs</button><button class="btn secondary" data-act="refresh" data-busy="Checking job sites…">Check for new jobs</button><button class="btn primary" data-act="batch" data-busy="Getting applications ready…">Get applications ready</button></div></div>
-${!o.hasKey ? `<div class="note att">Connect Claude in the <a href="#/claude">Claude tab</a> so Job Wizard can read and write for you.</div>` : ''}
+${!o.hasKey ? `<div class="note att">Connect Claude in the <a href="#/claude">Claude tab</a> so we can read and write for you.</div>` : ''}
 ${o.pending ? `<div class="note info">${o.pending} thing${o.pending > 1 ? 's' : ''} in your experience to check. <a href="#/setup/3">Take a look</a></div>` : ''}
 ${o.followUps.length ? `<div class="note att"><b>Follow-ups due:</b> ${o.followUps.map((f) => `${esc(f.company)} (${esc(f.title)})`).join(', ')}. See them in Your journey below.</div>` : ''}
 <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">
@@ -28,13 +28,14 @@ ${o.lastBatch ? `<details class="card quiet tight"><summary class="small"><b>Mor
 ${ready.length ? `<section class="stack"><h2>Ready for you to send</h2><div class="grid">${ready.map((t) => pipeCard(t)).join('')}</div></section>` : ''}
 
 <section class="stack"><div class="row between"><h2>New matches</h2><span class="small muted">${lastFetch ? `Checked ${esc(ago(lastFetch))}` : ''}${weak ? ` · <button class="btn link" data-act="weak">Show ${weak} weaker match${weak > 1 ? 'es' : ''}</button>` : ''}${hiddenCount ? ` · <button class="btn link" data-act="hidden">${hiddenCount} hidden by your rules</button>` : ''}</span></div>
-${fresh.length ? `<div class="grid">${fresh.slice(0, 24).map((j, i) => jobCard(j, i === 0)).join('')}</div>` : `<div class="empty">${sparkle(24)}<b>No new matches right now.</b><span class="muted small">Add jobs from a screenshot of a job alert, a link or an alert email, or watch more companies in Profile.</span></div>`}</section>
+${fresh.length ? `<div class="grid">${fresh.slice(0, 24).map((j) => jobCard(j)).join('')}</div>` : `<div class="empty">${sparkle(24)}<b>No new matches right now.</b><span class="muted small">Add jobs from a screenshot of a job alert, a link or an alert email, or watch more companies in Profile.</span></div>`}</section>
 <div id="board"></div>
 </div>`;
     await tracker.render(root.querySelector('#board'), [], app, 'embedded');
   };
-  const pipeCard = (t) => `<a class="job" href="${t.jobId ? `#/job/${encodeURIComponent(t.jobId)}` : '#/tracker'}"><div class="row between">${tag(tr_label(t.status), STATUS_TAG[t.status])}${t.fit ? tag((VERDICT[t.fit] || [t.fit])[0], (VERDICT[t.fit] || [0, 'muted'])[1]) : ''}</div><div class="t">${esc(t.title)}</div><div class="small muted">${esc([t.company, t.salary, t.location].filter(Boolean).join(' · '))}</div>${t.status === 'ready' ? '<span class="small"><b>Resume and letter ready.</b> Check and send.</span>' : ''}</a>`;
-  const jobCard = (j, top) => `<a class="job ${top ? 'top' : ''}" href="#/job/${encodeURIComponent(j.id)}"><div class="row between">${j.verdict ? tag(VERDICT[j.verdict][0], VERDICT[j.verdict][1]) : j.needsText ? tag(j.fromAlert ? `From ${j.fromAlert}` : 'Added by you', 'info') : j.bucket ? tag(BUCKET[j.bucket][0] + ' match', BUCKET[j.bucket][1]) : ''}<span class="score muted">${esc(posted(j))}</span></div><div class="t">${esc(j.title)}</div><div class="small muted">${esc([j.company, j.location, j.pay].filter(Boolean).join(' · '))}</div>${j.needsText ? '<span class="small" style="color:var(--attention)">Paste the description to check the fit.</span>' : `<span class="small">${esc(j.why || (j.scoreReasons || []).join(' · '))}</span>`}</a>`;
+  const pipeCard = (t) => `<a class="job" href="${t.jobId ? `#/job/${encodeURIComponent(t.jobId)}` : '#/tracker'}"><div class="row between">${tag(tr_label(t.status), STATUS_TAG[t.status])}</div><div class="t">${esc(t.title)}</div><div class="small muted">${esc([t.company, t.salary, t.location].filter(Boolean).join(' · '))}</div>${t.status === 'ready' ? '<span class="small"><b>Resume and letter ready.</b> Check and send.</span>' : ''}</a>`;
+  // No fit labels: one plain sentence about why, and the next step.
+  const jobCard = (j) => { const href = `#/job/${encodeURIComponent(j.id)}`; return `<article class="job"><div class="row between">${j.needsText ? tag(j.fromAlert ? `From ${j.fromAlert}` : 'Added by you', 'muted') : '<span></span>'}<span class="score muted">${esc(posted(j))}</span></div><a class="t" href="${href}" style="text-decoration:none">${esc(j.title)}</a><div class="small muted">${esc([j.company, j.location, j.pay].filter(Boolean).join(' · '))}</div>${j.needsText ? `<span class="why">Paste the description so we can check the fit.</span><a class="btn small secondary" href="${href}">Paste the description</a>` : `<span class="why">${esc(j.why || (j.scoreReasons || []).join(' · '))}</span><a class="btn small primary" href="${href}/draft">Draft my application</a>`}</article>`; };
   on(root, {
     weak: () => { showWeak = true; paint(); },
     refresh: (b) => act(b, async () => { const r = await call('jobs.refresh'); toast(`${r.kept} matches, ${r.hidden} hidden by your rules.`); paint(); app.refresh(); }),

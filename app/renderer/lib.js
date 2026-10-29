@@ -15,7 +15,7 @@ export const aw = bridge;
 export const call = (m, a) => bridge.call(m, a);
 
 export const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-export const sparkle = (n = 16) => `<svg width="${n}" height="${n}" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 0 Q10 10 20 10 Q10 10 10 20 Q10 10 0 10 Q10 10 10 0Z" fill="var(--spark)"></path></svg>`;
+export const sparkle = (n = 16) => `<svg width="${n}" height="${n}" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 0 Q10 10 20 10 Q10 10 10 20 Q10 10 0 10 Q10 10 10 0Z" fill="var(--lime)"></path></svg>`;
 export const tag = (text, kind = 'muted') => `<span class="tag ${kind}">${esc(text)}</span>`;
 export const chip = (text, on, attrs = '') => `<button type="button" class="chip" aria-pressed="${on ? 'true' : 'false'}" ${attrs}>${esc(text)}</button>`;
 export const radio = (name, value, label, checked) => `<label class="radio"><input type="radio" name="${esc(name)}" value="${esc(value)}" ${checked ? 'checked' : ''}>${esc(label)}</label>`;
@@ -118,8 +118,11 @@ export function when(iso) {
   const d = new Date(iso);
   return d.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
+// No fit labels on screen (design system v2): everything we show is assumed to fit, and each job gets one plain sentence about why.
+// These stay for code that still sorts by them.
 export const VERDICT = { strong: ['Strong match', 'good'], good: ['Good match', 'info'], stretch: ['Stretch', 'att'], skip: ['Weak match', 'muted'] };
 export const BUCKET = { strong: ['Strong', 'good'], good: ['Good', 'info'], maybe: ['Maybe', 'att'], weak: ['Weak', 'muted'] };
-export const STATUS_TAG = { found: 'muted', saved: 'info', ready: 'att', applied: 'good', interviewing: 'info', offer: 'good', rejected: 'muted', skipped: 'muted', closed: 'muted' };
+// Tags: mist by default, pink = needs you, lime = good news, plum night = closed.
+export const STATUS_TAG = { found: 'muted', saved: 'muted', ready: 'att', applied: 'muted', interviewing: 'good', offer: 'good', rejected: 'closed', skipped: 'closed', closed: 'closed' };
 
 export function working(text) { return `<div class="working"><span class="spin"></span>${esc(text)}</div>`; }

@@ -7,12 +7,12 @@ export async function render(root, _params, app) {
     root.innerHTML = `
 <div class="login">
   <section class="art">
-    <div class="brand" style="color:#fff">${sparkle(22)}Job Wizard</div>
-    <div class="stack" style="max-width:460px">
-      <div style="font-family:var(--display);font-size:44px;line-height:48px;font-weight:800;letter-spacing:-.02em">Job applications, minus the dread.</div>
-      <p style="font-size:18px;line-height:28px;opacity:.85">Set it up once. Every morning, Job Wizard finds jobs that fit and has your resume and cover letter ready. You check them and press send.</p>
+    <div class="brand">${sparkle(22)}margot</div>
+    <div class="stack" style="max-width:480px">
+      <div class="big-line">AI Apply, in <span class="accent-word" style="color:var(--pink)">your</span> voice.</div>
+      <p style="font-size:18px;line-height:28px">An extension of you that finds the right jobs, writes in your voice, and preps you for interviews. You approve every step.</p>
     </div>
-    <p class="small" style="opacity:.7">Everything stays on this computer.</p>
+    <p class="small muted">Everything stays on this computer.</p>
   </section>
   <section class="form">
     <h1>${mode === 'login' ? 'Welcome back' : 'Let’s get you set up'}</h1>

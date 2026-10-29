@@ -11,14 +11,14 @@ export async function render(root, params, app, name) {
     const byJob = new Map();
     for (const d of docs) { if (!byJob.has(d.jobId)) byJob.set(d.jobId, []); byJob.get(d.jobId).push(d); }
     root.innerHTML = `<div class="page">
-<div class="head"><div><h1>Documents</h1><p class="muted">Every resume and cover letter Job Wizard made for you, and every file you’ve given it.</p></div></div>
-<details class="fold" data-fold="made" ${isOpen('made') ? 'open' : ''}><summary><h2>Made by Job Wizard</h2><span class="muted small">${docs.length} document${docs.length === 1 ? '' : 's'}</span></summary><div class="stack">
+<div class="head"><div><h1>Documents</h1><p class="muted">Every resume and cover letter Margot made for you, and every file you’ve given it.</p></div></div>
+<details class="fold" data-fold="made" ${isOpen('made') ? 'open' : ''}><summary><h2>Made by Margot</h2><span class="muted small">${docs.length} document${docs.length === 1 ? '' : 's'}</span></summary><div class="stack">
 ${!docs.length ? '<div class="empty"><b>Nothing yet.</b><span class="muted small">Open a job and press Make my resume and letter, or let the morning batch do it.</span></div>' : `
 <div class="list">${[...byJob.entries()].map(([jobId, ds]) => `<div class="item"><div class="grow"><div>${esc(ds[0].title)} · ${esc(ds[0].company)}</div><div class="small muted">${ds.map((d) => `<a href="#/doc/${d.id}">${d.kind === 'resume' ? 'Resume' : 'Cover letter'} v${d.version}</a> ${d.status === 'final' ? tag('Final', 'good') : tag('Draft', 'att')}`).join(' · ')}</div></div><a class="btn small" href="#/job/${encodeURIComponent(jobId)}">Job</a></div>`).join('')}</div>`}
 </div></details>
 <details class="fold" data-fold="files" ${isOpen('files') ? 'open' : ''}><summary><h2>Your files</h2><span class="muted small">${st.materials.length} file${st.materials.length === 1 ? '' : 's'}</span></summary><div class="stack">
 ${st.profileStale ? '<div class="row"><button class="btn primary" data-act="rebuild" data-busy="Reading your new files…">Update my profile from new files</button></div>' : ''}
-<p class="muted small">Add anything that helps Job Wizard know you better: newer resumes, reviews, work samples, things you’ve written. The more it knows, the better your matches and documents.</p>
+<p class="muted small">Add anything that helps Margot know you better: newer resumes, reviews, work samples, things you’ve written. The more it knows, the better your matches and documents.</p>
 <section class="drop" id="drop" style="padding:20px"><div class="row"><b>Drop files here</b><label class="btn secondary">Choose files<input type="file" multiple class="sr" id="files" accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg,.webp"></label><button class="btn" data-act="paste">Paste text</button></div><div data-progress="materials" class="small muted" aria-live="polite"></div></section>
 ${st.materials.length ? `<div class="list">${st.materials.map((m) => { const [l, k, note] = KIND[m.kind] || KIND.other; return `<div class="item">${m.problem ? tag('Can’t read', 'alert') : tag(l, k)}<div class="grow"><div>${esc(m.name)}</div><div class="small muted">${esc(m.problem || [m.summary, note].filter(Boolean).join('. ').replace(/\.\./g, '.'))}</div></div>${m.problem ? '' : `<label class="small">This is <select data-kind="${m.id}" style="width:auto;padding:4px 8px">${Object.entries(KIND).map(([kk, [ll]]) => `<option value="${kk}" ${kk === m.kind ? 'selected' : ''}>${ll}</option>`).join('')}</select></label>`}<button class="btn small" data-act="rm" data-id="${m.id}">Remove</button></div>`; }).join('')}</div>` : ''}
 </div></details></div>`;
@@ -47,14 +47,14 @@ async function viewer(root, docId, app) {
     root.innerHTML = `<div class="page"><div class="split">
 <section class="main">
   <a href="#/job/${encodeURIComponent(doc.jobId)}" class="small">← ${esc(doc.title)} · ${esc(doc.company)}</a>
-  <div class="head"><div><div class="row">${tag(doc.status === 'final' ? 'Final' : 'Draft', doc.status === 'final' ? 'good' : 'att')}${doc.readable === true ? tag('Readable by hiring systems', 'good') : doc.readable === false ? tag('Readability problem', 'alert') : ''}</div><h1>${isResume ? 'Resume' : 'Cover letter'}</h1><p class="small muted" style="font-family:var(--mono)">${esc(doc.file)}.pdf</p></div>
+  <div class="head"><div><div class="row">${tag(doc.status === 'final' ? 'Final' : 'Draft', doc.status === 'final' ? 'good' : 'att')}${doc.readable === true ? tag('Readable by hiring systems', 'good') : doc.readable === false ? tag('Readability problem', 'alert') : ''}</div><h1>${isResume ? 'Resume' : 'Cover letter'}</h1><p class="small muted" style="font-family:var(--mono);overflow-wrap:anywhere">${esc(doc.file)}.pdf</p></div>
   <div class="row"><button class="btn primary" data-act="pdf">Download PDF</button><button class="btn" data-act="copy">Copy text</button>${doc.status !== 'final' ? '<button class="btn secondary" data-act="approve">Looks good</button>' : ''}</div></div>
   <div id="fit" class="small muted" aria-live="polite"></div>
   <div class="paper-wrap"><iframe class="docframe" id="frame" title="${isResume ? 'Resume' : 'Cover letter'}" style="max-width:${limits.page.w};margin:0 auto;display:block"></iframe></div>
 </section>
 <aside class="side stack">
   ${isResume ? `<section class="card tight"><h3>New wordings</h3><p class="small muted">See which lines are new wording and which came straight from your library. Approved wordings are saved for future resumes.</p><button class="btn small secondary" data-act="review" style="align-self:flex-start">Review lines</button></section>` : ''}
-  <section class="card quiet tight"><h3>Edit a line</h3><p class="small muted">Click any line in the ${isResume ? 'resume' : 'letter'} to change it. Your edits teach Job Wizard how you like things written.</p></section>
+  <section class="card quiet tight"><h3>Edit a line</h3><p class="small muted">Click any line in the ${isResume ? 'resume' : 'letter'} to change it. Your edits teach Margot how you like things written.</p></section>
   ${(doc.checks || []).length ? `<section class="card tight"><h3>We checked it</h3><ul class="small" style="margin:0;padding-left:18px">${doc.checks.map((c) => `<li>${esc(c)}</li>`).join('')}</ul></section>` : `<section class="card tight"><h3>We checked it</h3><p class="small">Every ${isResume ? 'line' : 'fact'} comes from your profile. Numbers match.</p></section>`}
   ${isResume && (doc.cuts || []).length ? `<section class="card tight"><h3>To fit ${limits.maxPages === 1 ? 'one page' : '1½ pages'}, we cut</h3><ul class="small" style="margin:0;padding-left:18px">${doc.cuts.map((c) => `<li>${esc(c)}</li>`).join('')}</ul><button class="btn small" data-act="uncut">Put everything back</button></section>` : ''}
   ${!aw.pdf ? '<p class="tiny muted">In the browser version, Download PDF opens the print window: choose “Save as PDF”.</p>' : ''}
@@ -71,8 +71,9 @@ async function viewer(root, docId, app) {
     const pageH = inchesToPx(limits.page.h) - (isResume ? 0 : 154);
     const used = () => { const pg = d.querySelector('.page'); if (!pg) return d.documentElement.scrollHeight; const mh = pg.style.minHeight; pg.style.minHeight = '0'; const v = pg.scrollHeight; pg.style.minHeight = mh; return v; };
     frame.style.height = Math.max(d.documentElement.scrollHeight + 24, 600) + 'px';
+    shrinkToFit(frame);
     // click-to-edit
-    const lines = isResume ? [...d.querySelectorAll('li, .summary')] : [...d.querySelectorAll('p')].slice(3, -1);
+    const lines = isResume ? [...d.querySelectorAll('.role li, .summary')] : [...d.querySelectorAll('p')].slice(3, -1);
     let idx = 0;
     lines.forEach((el) => {
       let path;
@@ -81,7 +82,7 @@ async function viewer(root, docId, app) {
         else { const role = el.closest('.role'); const ri = [...d.querySelectorAll('.role')].indexOf(role); const bi = [...role.querySelectorAll('li')].indexOf(el); path = `${ri}.${bi}`; }
       } else path = String(idx++);
       el.style.cursor = 'text'; el.title = 'Click to edit';
-      el.onmouseenter = () => (el.style.background = '#FFE8DF'); el.onmouseleave = () => (el.style.background = '');
+      el.onmouseenter = () => (el.style.background = '#F3C1EA'); el.onmouseleave = () => (el.style.background = '');
       el.onclick = () => editLine(path, el.textContent);
     });
     if (!isResume) return;
@@ -175,4 +176,15 @@ ${nw.map((l) => `<div class="card tight rv-line ${l.decision || ''}" data-path="
   });
   paint();
 }
+// On narrow screens the paper keeps its real width and is scaled down to fit, like a preview, instead of being cut off.
+function shrinkToFit(frame) {
+  const wrap = frame.parentElement; if (!wrap) return;
+  const pageW = frame.contentDocument?.documentElement.scrollWidth || 816;
+  const room = wrap.clientWidth - parseFloat(getComputedStyle(wrap).paddingLeft) * 2;
+  const s = Math.min(1, room / pageW);
+  if (s >= 1) { Object.assign(frame.style, { width: '', transform: '', marginBottom: '', transformOrigin: '' }); return; }
+  Object.assign(frame.style, { width: pageW + 'px', maxWidth: 'none', transform: `scale(${s})`, transformOrigin: '0 0', margin: '0' });
+  frame.style.marginBottom = -(parseFloat(frame.style.height) * (1 - s)) + 'px';
+}
+addEventListener('resize', () => document.querySelectorAll('.paper-wrap > .docframe').forEach(shrinkToFit));
 const inchesToPx = (v) => (String(v).endsWith('mm') ? (parseFloat(v) / 25.4) * 96 : parseFloat(v) * 96);

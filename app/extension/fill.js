@@ -76,9 +76,9 @@
   }
 
   async function run(panel) {
-    panel.status('Asking Job Wizard…');
+    panel.status('Asking Margot…');
     const r = await send({ type: 'fill', url: location.href });
-    if (!r?.ok) return panel.status(r?.error || 'Job Wizard didn’t answer. Is it open?', true);
+    if (!r?.ok) return panel.status(r?.error || 'Margot didn’t answer. Is it open?', true);
     const { fields, answers, job, resume, letter } = r.data;
     const filled = [], needs = [];
     const els = [...document.querySelectorAll('input, textarea, select')].filter((el) => !el.disabled && el.type !== 'hidden' && el.offsetParent !== null || el.type === 'file');
@@ -89,7 +89,7 @@
       if (el.type === 'file') {
         if (/resume|cv/.test(label) && resume?.pdfBase64) { await attachFile(el, resume.pdfBase64, resume.file); filled.push('Resume'); }
         else if (/cover/.test(label) && letter?.pdfBase64) { await attachFile(el, letter.pdfBase64, letter.file); filled.push('Cover letter'); }
-        else if (/resume|cv|cover/.test(label)) needs.push({ label, note: 'Attach your file: download the PDF from Job Wizard first.' });
+        else if (/resume|cv|cover/.test(label)) needs.push({ label, note: 'Attach your file: download the PDF from Margot first.' });
         continue;
       }
       if (el.type === 'radio' || el.type === 'checkbox') {
@@ -132,7 +132,7 @@
   .s{color:#56607A;font-size:13px}.bad{color:#C23B3B}.ok{color:#0E7A4D}
   ul{margin:0;padding-left:18px} li{margin:2px 0}
   .need{background:#FFE8DF;border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
-  </style><div class="p" role="dialog" aria-label="Job Wizard"><h2><span>✦ Job Wizard</span><button data-x aria-label="Close">×</button></h2><div id="body" class="s">Starting…</div></div>`;
+  </style><div class="p" role="dialog" aria-label="Margot"><h2><span>✦ Margot</span><button data-x aria-label="Close">×</button></h2><div id="body" class="s">Starting…</div></div>`;
   document.documentElement.append(host);
   const body = root.getElementById('body');
   root.querySelector('[data-x]').onclick = () => (host.style.display = 'none');

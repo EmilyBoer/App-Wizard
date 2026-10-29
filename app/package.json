@@ -1,7 +1,7 @@
 {
   "name": "app-wizard",
   "version": "0.1.0",
-  "description": "Job Wizard: set up once, then get matched jobs and ready-to-send applications every morning.",
+  "description": "Margot: set up once, then get matched jobs and ready-to-send applications every morning.",
   "type": "module",
   "main": "main/main.mjs",
   "scripts": {
@@ -19,7 +19,7 @@
   },
   "build": {
     "appId": "com.appwizard.desktop",
-    "productName": "Job Wizard",
+    "productName": "Margot",
     "files": [
       "main/**",
       "core/**",

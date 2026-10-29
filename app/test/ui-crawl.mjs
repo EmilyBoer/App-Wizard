@@ -27,7 +27,8 @@ for (const r of routes) {
   if (!exit) problems.push(`${r}: no visible way out (nav or back link)`);
   const audit = await p.evaluate(() => {
     const vis = (e) => e.offsetParent && !e.closest('.modal-back, iframe, .dz-preview, .dz-mini, .own-sheet');
-    const primaries = [...document.querySelectorAll('#screen .btn.primary')].filter(vis).length;
+    // Repeated row actions ("Draft my application" on each job) use the small main button and don't count.
+    const primaries = [...document.querySelectorAll('#screen .btn.primary:not(.small)')].filter(vis).length;
     const sizes = new Map();
     for (const e of document.querySelectorAll('#screen *')) { if (!vis(e) || !e.childNodes.length || ![...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())) continue; const fs = parseFloat(getComputedStyle(e).fontSize); sizes.set(fs, (sizes.get(fs) || 0) + 1); }
     return { primaries, sizes: [...sizes.entries()] };
@@ -35,6 +36,15 @@ for (const r of routes) {
   if (audit.primaries > 1) problems.push(`${r}: ${audit.primaries} primary buttons (style guide: one per screen)`);
   const SCALE = [10, 11, 12, 12.5, 13, 14, 15, 16, 17, 18, 20, 21, 22, 30, 36];
   for (const [fs, n] of audit.sizes) if (!SCALE.includes(fs)) problems.push(`${r}: ${n} text element(s) at ${fs}px, not on the type scale`);
+  // Phone width: nothing scrolls sideways (design-rules.md §1).
+  await p.setViewportSize({ width: 390, height: 844 }); await p.waitForTimeout(300);
+  const wide = await p.evaluate(() => {
+    const W = document.documentElement.clientWidth;
+    const out = [...document.querySelectorAll('#screen *')].filter((e) => { if (!e.offsetParent || e.closest('.kanban, .scrollx, .tabs, .nav, .dz-stage, .dz-mini, iframe, .own-sheet')) return false; const r = e.getBoundingClientRect(); return r.right > W + 1 && r.width > 0; });
+    return { scroll: document.documentElement.scrollWidth > W + 1 || document.body.scrollWidth > W + 1, els: out.slice(0, 3).map((e) => e.tagName.toLowerCase() + (e.className && typeof e.className === 'string' ? '.' + e.className.split(' ')[0] : '')) };
+  });
+  if (wide.els.length) problems.push(`${r}: at 390px wide, sticks out of the page: ${wide.els.join(', ')}`);
+  await p.setViewportSize({ width: 1360, height: 900 }); await p.waitForTimeout(200);
   const acts = await p.$$eval('#screen [data-act]:not([disabled]), #screen [data-edit]', (els) => els.filter((e) => e.offsetParent).map((e) => (e.dataset.edit ? 'edit=' + e.dataset.edit : e.dataset.act)));
   for (const a of [...new Set(acts)].filter((x) => x.startsWith('edit=') || !SKIP.test(x))) {
     const sel = a.startsWith('edit=') ? `#screen [data-edit="${a.slice(5)}"]` : `#screen [data-act="${a}"]`;

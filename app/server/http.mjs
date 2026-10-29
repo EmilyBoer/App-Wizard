@@ -22,9 +22,9 @@ export function startServer(api, { port = 47321, host = '127.0.0.1', full = fals
     try {
       if (url.pathname.startsWith('/ext/')) {
         const method = EXT_METHODS[url.pathname.slice(5)];
-        if (url.pathname === '/ext/ping') return send(res, 200, { ok: true, app: 'Job Wizard', loggedIn: Boolean(api.session) }, cors);
+        if (url.pathname === '/ext/ping') return send(res, 200, { ok: true, app: 'Margot', loggedIn: Boolean(api.session) }, cors);
         if (!method) return send(res, 404, { error: 'Unknown' }, cors);
-        if (!api.session) return send(res, 401, { error: 'Open Job Wizard and log in first.' }, cors);
+        if (!api.session) return send(res, 401, { error: 'Open Margot and log in first.' }, cors);
         const token = api.store().get('settings').extensionToken;
         if (!token || req.headers['x-app-wizard-token'] !== token) return send(res, 403, { error: 'Pair the extension first: Profile, Settings, Browser extension.' }, cors);
         return send(res, 200, await api.call(method, await body(req)), cors);

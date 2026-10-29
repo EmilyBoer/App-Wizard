@@ -2,7 +2,7 @@
 
 To give testers a copy that works without their own Claude key:
 
-1. In Claude Console, create a key named "Job Wizard testers" and set a low monthly spending limit.
+1. In Claude Console, create a key named "Margot testers" and set a low monthly spending limit.
 2. Create `config/claude.json` in this folder:
 
    ```json

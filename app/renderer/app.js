@@ -23,20 +23,20 @@ export const app = {
   go(hash) { if (location.hash === hash) route(); else location.hash = hash; },
   openChat(jobId, starter) { chat.open({ jobId, app, starter }); },
 };
-window.appWizard = app;
+window.margot = app; window.appWizard = app; // old name kept for the extension and tests
 
 function shell() {
   root.innerHTML = `
 <header class="top"><div class="top-in">
-  <a class="brand" href="#/journey">${sparkle(18)}Job Wizard</a>
+  <a class="brand" href="#/journey" aria-label="Margot, home">${sparkle(18)}margot</a>
   <nav class="nav" aria-label="Main"></nav>
-  <button class="ask" data-act="chat">${sparkle(12)}Ask the wizard</button>
-  <button class="avatar" data-act="me" aria-label="Account"></button>
+  <button class="ask" data-act="chat">${sparkle(12)}Ask Margot</button>
+  <button class="btn small logout" data-act="me">Log out</button>
 </div></header>
 <main id="screen"></main>`;
   on(root.querySelector('.top'), {
     chat: () => app.openChat(currentJobId()),
-    me: () => { if (confirm('Log out of Job Wizard?')) call('auth.logout').then(() => app.go('#/login')); },
+    me: () => { if (confirm('Log out of Margot?')) call('auth.logout').then(() => app.go('#/login')); },
   });
 }
 
@@ -54,9 +54,7 @@ function paintNav() {
     const isOn = h.slice(2) === active;
     return `<a href="${h}" class="${isOn ? 'on' : ''}" ${isOn ? 'aria-current="page"' : ''}>${n}${badge[n] ? `<span class="count">${badge[n]}</span>` : ''}${n === 'Extension' ? ' <span class="soon">soon</span>' : ''}${n === 'Claude' && !o.hasKey ? ' <span class="count">!</span>' : ''}</a>`;
   }).join('');
-  const initials = String(o.account?.name || '?').split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
-  const av = root.querySelector('.avatar');
-  av.textContent = initials; av.setAttribute('aria-label', `Account: ${o.account?.name || ''}. Log out`);
+  root.querySelector('.logout')?.setAttribute('aria-label', `Log out${o.account?.name ? ` (${o.account.name})` : ''}`);
 }
 
 async function route() {
