@@ -15,7 +15,7 @@ export const aw = bridge;
 export const call = (m, a) => bridge.call(m, a);
 
 export const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-export const sparkle = (n = 16) => `<svg width="${n}" height="${n}" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 0 Q10 10 20 10 Q10 10 10 20 Q10 10 0 10 Q10 10 10 0Z" fill="var(--lime)"></path></svg>`;
+export const sparkle = (n = 16) => `<svg width="${n}" height="${n}" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 0 Q10 10 20 10 Q10 10 10 20 Q10 10 0 10 Q10 10 10 0Z" fill="var(--lime)" stroke="var(--star-edge)" stroke-width="1.5"></path></svg>`;
 export const tag = (text, kind = 'muted') => `<span class="tag ${kind}">${esc(text)}</span>`;
 export const chip = (text, on, attrs = '') => `<button type="button" class="chip" aria-pressed="${on ? 'true' : 'false'}" ${attrs}>${esc(text)}</button>`;
 export const radio = (name, value, label, checked) => `<label class="radio"><input type="radio" name="${esc(name)}" value="${esc(value)}" ${checked ? 'checked' : ''}>${esc(label)}</label>`;

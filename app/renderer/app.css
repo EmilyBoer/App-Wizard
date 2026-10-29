@@ -35,12 +35,21 @@
 
   /* Buttons (design-system.md section 4): lime = action, the one step that moves you forward;
      pink = standard, everything else you can press. Both: plum night text and outline. */
-  --act: var(--lime);
-  --std: var(--pink);
+  --action: var(--lime);
+  --standard: var(--pink);
   --on-act: var(--plum-night);
-  --act-hover-edge: var(--lime);   /* inverse hover on dark: plum night fill, colored edge */
-  --std-hover-edge: var(--pink);
-  --tab-on: var(--pink);           /* current tab underline: pink on dark, plum night on light */
+  --action-hover-edge: var(--lime);   /* inverse hover on dark: plum night fill, colored edge */
+  --standard-hover-edge: var(--pink);
+  --tab-active: var(--pink);           /* current tab underline: pink on dark, plum night on light */
+  /* Theme roles (design-system.md section 9). Dark values here; a light theme would swap these only.
+     Light mode is PROPOSED: don't add [data-theme="light"] values until Emily approves. */
+  --card: var(--eggshell);         /* light cards on the dark ground */
+  --card-edge: transparent;        /* light mode: mist outline */
+  --text: var(--eggshell);         /* text on the ground */
+  --text-on-panel: var(--eggshell);
+  --quiet: var(--mist);            /* neutral tags, info notes */
+  --forms: var(--mist);            /* field outlines, fields to fill in */
+  --star-edge: transparent;        /* light mode: plum night outline so the star shows on eggshell */
   /* NOTE: a custom property that points at another (--good: var(--ink)) is resolved where it is declared.
      Any alias of a surface role must be re-declared in the light-surface block below. */
   --good-fill: var(--lime);        /* lime means good news */
@@ -51,7 +60,7 @@
   --on-fill: var(--plum-night);    /* text on any filled tag, note or button */
 
   /* old names kept for inline styles in screens; they now point at roles */
-  --spark: var(--lime); --spark-deep: var(--std); --spark-soft: var(--needs-fill); --on-deep: var(--on-act);
+  --spark: var(--lime); --spark-deep: var(--standard); --spark-soft: var(--needs-fill); --on-deep: var(--on-act);
   --good: var(--ink); --good-soft: var(--good-fill); --info: var(--ink); --info-soft: var(--quiet-fill);
   --attention: var(--ink); --attention-soft: var(--needs-fill); --alert: var(--ink); --alert-soft: var(--needs-fill);
 
@@ -72,9 +81,10 @@
   --ink-2: var(--plum-night);
   --ink-muted: var(--plum-night);  /* no faded text: all text on light is plum night */
   --link: var(--plum-night);
-  --act-hover-edge: var(--plum-night);
-  --std-hover-edge: var(--plum-night);
-  --tab-on: var(--plum-night);
+  --action-hover-edge: var(--plum-night);
+  --standard-hover-edge: var(--plum-night);
+  --tab-active: var(--plum-night);
+  --text: var(--plum-night);
   --spark: var(--plum-night);
   /* aliases resolve where they're declared, so re-point them for light surfaces */
   --good: var(--plum-night); --info: var(--plum-night); --attention: var(--plum-night); --alert: var(--plum-night);
@@ -114,9 +124,9 @@ p { margin: 0; }
 .nav { display: flex; flex-wrap: wrap; gap: var(--s5); flex-grow: 1; }
 .nav a { padding: 10px 0; color: var(--ink); text-decoration: none; font-weight: 500; font-size: 15px; display: inline-flex; align-items: center; gap: 6px; border-bottom: 3px solid transparent; white-space: nowrap; }
 .nav a:hover { border-bottom-color: var(--plum); }
-.nav a.on { border-bottom-color: var(--tab-on); font-weight: 600; }
+.nav a.on { border-bottom-color: var(--tab-active); font-weight: 600; }
 .nav .count { font-size: 11px; line-height: 16px; font-weight: 700; background: var(--lime); color: var(--on-fill); border-radius: 999px; padding: 0 6px; } /* count badge: lime pill */
-.ask { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 7px 16px; border-radius: 999px; border: 1.5px solid var(--plum-night); color: var(--plum-night); background: var(--std); font-weight: 600; font-size: 15px; cursor: pointer; }
+.ask { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 7px 16px; border-radius: 999px; border: 1.5px solid var(--plum-night); color: var(--plum-night); background: var(--standard); font-weight: 600; font-size: 15px; cursor: pointer; }
 .ask:hover { background: var(--plum-night); color: var(--pink); border-color: var(--pink); }
 .logout { font-size: 14px; }
 
@@ -169,10 +179,10 @@ p { margin: 0; }
 .btn.small { min-height: 36px; font-size: 14px; padding: 4px 6px; }
 .btn.link { min-height: 0; padding: 0; color: var(--link); }
 .btn.secondary, .btn.primary { text-decoration: none; border-radius: 999px; border: 1.5px solid var(--plum-night); padding: 8px 20px; color: var(--on-act); font-weight: 600; transition: background .12s, color .12s, border-color .12s; }
-.btn.secondary { background: var(--std); }
-.btn.secondary:hover { background: var(--plum-night); color: var(--pink); border-color: var(--std-hover-edge); }
-.btn.primary { background: var(--act); }
-.btn.primary:hover { background: var(--plum-night); color: var(--lime); border-color: var(--act-hover-edge); }
+.btn.secondary { background: var(--standard); }
+.btn.secondary:hover { background: var(--plum-night); color: var(--pink); border-color: var(--standard-hover-edge); }
+.btn.primary { background: var(--action); }
+.btn.primary:hover { background: var(--plum-night); color: var(--lime); border-color: var(--action-hover-edge); }
 .btn.big { min-height: 52px; padding: 12px 28px; font-size: 16px; }
 .btn.small.secondary, .btn.small.primary { padding: 4px 14px; }
 .btn.danger { color: var(--ink); }
@@ -365,7 +375,7 @@ details.fold[open] > summary::before { transform: rotate(90deg); }
 .tabs { display: flex; flex-wrap: wrap; gap: var(--s5); border-bottom: 1px solid var(--line); margin-top: calc(var(--s5) * -1); }
 .tabs .tab { padding: var(--s3) 0; margin-bottom: -1px; color: var(--ink); text-decoration: none; font-weight: 500; font-size: 15px; border-bottom: 3px solid transparent; white-space: nowrap; }
 .tabs .tab:hover { border-bottom-color: var(--line); }
-.tabs .tab.on { font-weight: 600; border-bottom-color: var(--tab-on); }
+.tabs .tab.on { font-weight: 600; border-bottom-color: var(--tab-active); }
 
 /* ---- Keep your own design ---- */
 .own-choice { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: var(--s4); }

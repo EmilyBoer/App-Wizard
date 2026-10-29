@@ -22,6 +22,8 @@ Rebrand checklist:
 
 **One trap:** a role that points at another role (`--good: var(--ink)`) is fixed where it's declared. Any alias of a surface role must be re-declared in the light-surface block, or it shows the dark-ground color on a light card.
 
+**Theme roles (ready for light mode, design-system.md section 9):** `--ground`, `--card`, `--card-edge`, `--panel`, `--text`, `--text-on-panel`, `--action`, `--standard`, `--quiet`, `--forms`, `--tab-active`, `--star-edge`. Dark values live on `:root`. Light mode is PROPOSED, so there are no light values yet; when it's approved, add them under `[data-theme="light"]` and the device-setting media query, and only these tokens change.
+
 Old token names (`--spark`, `--good-soft`, `--info`, `--attention`, etc.) are kept as aliases because screens use them in inline styles. New code should use the role names.
 
 ## Principles
