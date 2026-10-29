@@ -63,7 +63,7 @@ export function fakeClaude(overrides = {}) {
       return { greeting: 'Dear Hiring Team,', paragraphs: ['Your post about growing the website caught my eye.', 'At Meridian I moved about 400 pages to a new system on schedule.', 'I am passionate about this.'], closing: 'Thank you,', factsUsed: [bid] };
     }
     if (system.includes('interview cheat sheet')) return { company: { about: 'A public radio station.', recent: [], values: [] }, role: { focus: 'Run the website', theyNeed: [] }, pitch: 'I run websites.', questions: [{ q: 'Tell me about a migration.', answer: 'The 400 page move.', from: ['b_nope'] }], askThem: ['What does success look like?'], watchOuts: [] };
-    if (system.includes('Margot helper')) return { reply: 'Nice. Want me to add that?', proposals: [{ type: 'add_bullet', company: 'Meridian Parks Foundation', text: 'Built a monthly analytics report in Looker Studio.' }] };
+    if (system.includes('Margo helper')) return { reply: 'Nice. Want me to add that?', proposals: [{ type: 'add_bullet', company: 'Meridian Parks Foundation', text: 'Built a monthly analytics report in Looker Studio.' }] };
     if (system.includes('preference rules')) return { rules: [{ text: "We'll rank public media jobs higher.", kind: 'boost', pattern: 'public radio', evidence: 3 }] };
     if (system.includes('resume design')) return { columns: 2, sidebar: 'left', fonts: ['Brice', 'Open Sans'], accent: '#1f4e79', sections: [], decorations: ['skill bars'], looksLike: 'modern' };
     if (system.includes('application question')) return { needsYou: true, why: 'This is personal.' };

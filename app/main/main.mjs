@@ -1,4 +1,4 @@
-// Margot desktop app (Electron).
+// Margo desktop app (Electron).
 import { app, BrowserWindow, ipcMain, dialog, shell, Menu, Tray, nativeImage, protocol, net } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -18,8 +18,8 @@ let quitting = false;
 // Screens load from app://wizard/ so modern JavaScript modules work everywhere.
 protocol.registerSchemesAsPrivileged([{ scheme: 'app', privileges: { standard: true, secure: true, supportFetchAPI: true } }]);
 
-// Renamed from Job Wizard to Margot (2026-10-28). Keep using the old data folder if it exists, so nobody loses their setup.
-app.setName('Margot');
+// Renamed from Job Wizard to Margo (2026-10-28). Keep using the old data folder if it exists, so nobody loses their setup.
+app.setName('Margo');
 {
   const old = path.join(app.getPath('appData'), 'Job Wizard');
   if (fs.existsSync(path.join(old, 'data'))) app.setPath('userData', old);
@@ -28,7 +28,7 @@ const api = createApi({ base: path.join(app.getPath('userData'), 'data'), onEven
 
 function createWindow() {
   win = new BrowserWindow({
-    width: 1360, height: 900, minWidth: 900, minHeight: 640, title: 'Margot', backgroundColor: '#261B2A',
+    width: 1360, height: 900, minWidth: 900, minHeight: 640, title: 'Margo', backgroundColor: '#261B2A',
     icon: path.resolve(here, '../assets/icon.png'),
     webPreferences: { preload: path.join(here, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true, plugins: true },
   });
@@ -61,7 +61,7 @@ ipcMain.handle('aw:pdf', async (_e, { html, fileName, paper, ask }) => {
     const text = await off.webContents.executeJavaScript('document.body.innerText');
     const pdf = await off.webContents.printToPDF({ pageSize: paper === 'a4' ? 'A4' : 'Letter', printBackground: true, preferCSSPageSize: true });
     const pages = (pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) || []).length;
-    const folder = path.join(app.getPath('documents'), 'Margot');
+    const folder = path.join(app.getPath('documents'), 'Margo');
     fs.mkdirSync(folder, { recursive: true });
     let file = path.join(folder, `${fileName}.pdf`);
     if (ask) {
@@ -116,14 +116,14 @@ app.whenReady().then(async () => {
   });
   Menu.setApplicationMenu(Menu.buildFromTemplate([
     ...(process.platform === 'darwin' ? [{ role: 'appMenu' }] : []),
-    { label: 'File', submenu: [{ label: 'Get applications ready now', click: () => api.call('batch.run', { reason: 'manual' }).catch(() => {}) }, { type: 'separator' }, { label: 'Quit Margot', accelerator: 'CmdOrCtrl+Q', click: () => { quitting = true; app.quit(); } }] },
+    { label: 'File', submenu: [{ label: 'Get applications ready now', click: () => api.call('batch.run', { reason: 'manual' }).catch(() => {}) }, { type: 'separator' }, { label: 'Quit Margo', accelerator: 'CmdOrCtrl+Q', click: () => { quitting = true; app.quit(); } }] },
     { role: 'editMenu' }, { role: 'viewMenu' }, { role: 'windowMenu' },
   ]));
   const icon = nativeImage.createFromPath(path.resolve(here, '../assets/icon.png')).resize({ width: 18, height: 18 });
   tray = new Tray(icon);
-  tray.setToolTip('Margot');
+  tray.setToolTip('Margo');
   tray.setContextMenu(Menu.buildFromTemplate([
-    { label: 'Open Margot', click: show },
+    { label: 'Open Margo', click: show },
     { label: 'Get applications ready now', click: () => api.call('batch.run', { reason: 'manual' }).catch(() => {}) },
     { type: 'separator' },
     { label: 'Quit', click: () => { quitting = true; app.quit(); } },

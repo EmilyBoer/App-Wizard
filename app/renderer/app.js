@@ -23,20 +23,20 @@ export const app = {
   go(hash) { if (location.hash === hash) route(); else location.hash = hash; },
   openChat(jobId, starter) { chat.open({ jobId, app, starter }); },
 };
-window.margot = app; window.appWizard = app; // old name kept for the extension and tests
+window.margo = app; window.margot = app; window.appWizard = app; // old names kept for the extension and tests
 
 function shell() {
   root.innerHTML = `
 <header class="top"><div class="top-in">
-  <a class="brand" href="#/journey" aria-label="Margot, home">${sparkle(18)}margot</a>
+  <a class="brand" href="#/journey" aria-label="Margo, home">${sparkle(18)}margo</a>
   <nav class="nav" aria-label="Main"></nav>
-  <button class="ask" data-act="chat">${sparkle(12)}Ask Margot</button>
+  <button class="ask" data-act="chat">${sparkle(12)}Ask Margo</button>
   <button class="btn small logout" data-act="me">Log out</button>
 </div></header>
 <main id="screen"></main>`;
   on(root.querySelector('.top'), {
     chat: () => app.openChat(currentJobId()),
-    me: () => { if (confirm('Log out of Margot?')) call('auth.logout').then(() => app.go('#/login')); },
+    me: () => { if (confirm('Log out of Margo?')) call('auth.logout').then(() => app.go('#/login')); },
   });
 }
 

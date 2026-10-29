@@ -1,4 +1,4 @@
-// Run Margot in your browser: npm run web, then open the address shown.
+// Run Margo in your browser: npm run web, then open the address shown.
 // Same app as the desktop version, minus saving PDFs straight to a folder
 // (the browser's print dialog is used instead) and the background morning run.
 
@@ -16,4 +16,4 @@ const api = createApi({ base, onEvent: (e) => emit(e) });
 const port = Number(process.env.PORT || 4321);
 const started = await startServer(api, { port, full: true });
 emit = started.emit;
-console.log(`Margot is running at http://127.0.0.1:${started.port}  (data in ${base})`);
+console.log(`Margo is running at http://127.0.0.1:${started.port}  (data in ${base})`);

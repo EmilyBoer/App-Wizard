@@ -1,8 +1,8 @@
-# Margot app style guide
+# Margo app style guide
 
 How the app looks and behaves. Tokens live in `renderer/app.css`. This file lists every element we use, what it's for and how it looks today. The automatic checks at the bottom run in `test/ui-crawl.mjs`.
 
-**Status (2026-10-28):** the app uses the October 28 Margot look (plum, pink and lime). Branding may still change. The system is built so that a rebrand changes **layer 1** (and sometimes **layer 2**) in `app.css`, not the screens.
+**Status (2026-10-28, late):** the app follows `shared/design-system.md` in the Margo project: six colors, lime = action, pink = standard, no disabled buttons, Bricolage only. That doc is the source of truth; this file must match it. The system is built so that a rebrand changes **layer 1** (and sometimes **layer 2**) in `app.css`, not the screens.
 
 ## How a rebrand works
 
@@ -10,7 +10,7 @@ How the app looks and behaves. Tokens live in `renderer/app.css`. This file list
 
 | Layer | What's in it | Change it when |
 |---|---|---|
-| 1. Brand | 8 colors, 3 fonts. The only place hex codes and font names appear. | The palette or fonts change. Also update the font link in `renderer/index.html`. |
+| 1. Brand | 6 colors plus paper white, 1 font. The only place hex codes and font names appear. | The palette or fonts change. Also update the font link in `renderer/index.html`. |
 | 2. Roles | What each color is *for*: ground, surface, text, muted text, act, good news, quiet, needs you, closed. Defined twice: once for the dark ground, once for light surfaces. | What a color *means* changes (for example, light ground instead of dark, or disabled becomes mist). |
 | 3. Components | Buttons, tags, notes, cards and the rest. They use roles only. | An element changes shape (corners, outline, size). |
 
@@ -39,7 +39,6 @@ Old token names (`--spark`, `--good-soft`, `--info`, `--attention`, etc.) are ke
 **Brand (layer 1):**
 - plum night #261B2A
 - plum #372839
-- plum line #4A3750
 - mist #CBB8CC
 - pink lilac #F3C1EA
 - soft lime #D8EBAE
@@ -54,17 +53,18 @@ Old token names (`--spark`, `--good-soft`, `--info`, `--attention`, etc.) are ke
 | Raised panel | plum | Quiet cards, kanban lanes, empty states, the area behind documents |
 | Surface | eggshell | Cards, lists, job cards, overlays, chat, form fields |
 | Text | eggshell on dark, plum night on light | |
-| Muted text | mist on dark, plum line on light | Help text and captions only |
-| Act | pink | Main buttons, "New", "needs you", active tab underline |
-| Good news | lime | Done, Interviewing, Offer, the star, the disabled button (Emily's call) |
-| Quiet | mist | Neutral tags, info notes, field outlines |
-| Closed | plum night | Closed, Rejected, Skipped tags |
+| Muted text | mist on dark, plum night on light (no faded text) | Help text and captions only |
+| Dividers | plum on dark, mist on light | Hairlines. Line #4A3750 is retired. |
+| Action | lime | The one button that moves you forward, New status, count badges, the star |
+| Standard | pink | Every other button, Applied status, news notes, active tab underline on dark |
+| Quiet | mist | Neutral tags, info notes, field outlines, Closed status |
+| Needs you | mist with a 2px plum night edge | Notes and fields that need the person |
 
-No red anywhere. A problem is shown as "needs you" (pink) with a plain instruction.
+No red anywhere. A problem is shown as "needs you" (mist with a plum edge) with a plain instruction.
 
 ## Type
 
-Bricolage Grotesque for everything. Instrument Serif italic for one emphasized word at a time (`.accent-word`, as on the login screen). DM Mono for small labels (eyebrows, table heads, "or").
+Bricolage Grotesque for everything. No italics and no second typeface. The login hero underlines "your" in pink (the one emphasized word, as on the landing page); nothing else in the app is emphasized.
 
 | Role | Size / line height | Weight |
 |---|---|---|
@@ -74,7 +74,7 @@ Bricolage Grotesque for everything. Instrument Serif italic for one emphasized w
 | Body | 16 / 26 | 400 |
 | Small | 14 / 21 | 400 |
 | Tiny (hints only) | 13 / 19 | 400 |
-| Eyebrow | 13 / 20, mono, capitals | 500 |
+| Eyebrow | 13 / 20, capitals | 500 |
 | Tags | 12.5 / 18 | 600 |
 
 Allowed sizes: 10, 11, 12, 12.5, 13, 14, 15, 16, 17, 18, 20, 21, 22, 30, 36 px.
@@ -91,19 +91,19 @@ These are the building blocks every screen is made from. Their *job* stays fixed
 
 | Element | Class | Job | Looks like today |
 |---|---|---|---|
-| Main button | `.btn.primary` (`.big` in setup footers, `.small` for repeated row actions) | The one action that moves the person forward | Pink pill, plum night text and 1.5px outline. Hover: plum night fill, pink text. |
-| Also button | `.btn.secondary` | A real action that isn't the main one | Outline pill in the text color. Hover: filled. |
+| Action button | `.btn.primary` (`.big` in setup footers, `.small` for repeated row actions) | The one step that moves the person forward | Lime pill, plum night text and 1.5px outline. Hover: plum night fill, lime text. |
+| Standard button | `.btn.secondary` | Every other thing you can press | Pink pill, plum night text and 1.5px outline. Hover: plum night fill, pink text. |
 | Quiet button | `.btn`, `.btn.small`, `.btn.link` | Back, Cancel, Change, Remove, Skip | Underlined text |
-| Disabled button | `[disabled]` on any `.btn` | "Not available yet" | Lime fill, plum night outline |
+| No disabled buttons | — | — | Never show a greyed-out button. If a step is missing, the button does that step first ("Connect Claude to write one"). Reorder arrows that can't move are hidden. |
 | Busy | `act()` in `lib.js` | While saving | Only the label changes ("Saving…") |
-| Tag | `tag(text, kind)` | A one- or two-word label, never clickable | 6px corners. `muted`/`info` = mist, `good` = lime, `att`/`alert`/`spark` = pink, `closed` = plum night |
-| Note | `.note.info / good / att / alert` | One sentence of status | Solid fill, plum night text. Mist info, lime done, pink needs you |
+| Tag | `tag(text, kind)` | A one- or two-word label, never clickable | 6px corners. Status (`STATUS_TAG` in `lib.js`): `new` = lime, `applied` = pink, `interview` = plum night, `closed` = mist. Others: `muted`/`info` = mist, `good` = lime, `att`/`alert`/`spark` = pink |
+| Note | `.note.info / good / att / alert` | One sentence of status | Solid fill, plum night text. `info` = mist, `good` = pink (news), `att`/`alert` = mist with a plum night edge (needs you) |
 | Card | `.card` (`.featured`, `.quiet`, `.tight`) | A group of related things | Eggshell. Featured gets a plum night edge. Quiet is a plum panel. |
 | List | `.list > .item` | Rows of things | Eggshell, hairline dividers |
 | Job card | `.job` | One job | Eggshell. Title, company line, one sentence on why it fits, "Draft my application" |
 | Stat | `.stat` | A number on Journey | Eggshell tile, big number |
 | Profile row | `.choice-list > .choice` | Label · value · "Change" | Eggshell list |
-| Tabs | `.tabs .tab` | Sections inside a page | Words with a 3px pink underline. Scroll sideways on phones. |
+| Tabs | `.tabs .tab` | Sections inside a page | Words with a 3px underline: pink on dark, plum night on light. Scroll sideways on phones. |
 | Menu | `.nav` | Main sections | Same as tabs. On phones it gets its own row and scrolls sideways. |
 | Chip | `.chip` | A choice you can toggle | Outline pill. Pressed: filled in the text color. |
 | Option | `.radio`, `.pick`, `.choice-card` | Pick one or several | Outlined box; selected gets a strong edge |
@@ -114,13 +114,13 @@ These are the building blocks every screen is made from. Their *job* stays fixed
 | Numbered step | `.dot` | Step numbers | Always the same plum night circle |
 | Progress | `.progress` | How far along | Lime yes, mist maybe, pink no, eggshell current |
 | Overlay | `modal()` in `lib.js` | Anything that edits or confirms | Eggshell, X in the corner, Esc closes. Don't build overlays by hand. |
-| Toast | `toast()` | "Saved." | Plum with a lime star. Errors are pink. |
-| Empty state | `.empty` | Nothing here yet | Raised panel, star, one line and what to do |
-| Chat | `.drawer` | Ask Margot | Eggshell drawer; your messages plum night, ours mist |
-| Logo | `sparkle()` + "margot" | Brand | Lime four-point star (slow twinkle, off under reduced motion), lowercase wordmark |
+| Toast | `toast()` | "Saved." | Plum with a lime star. Errors are mist with a plum edge. |
+| Empty state | `.empty` | Nothing here yet | Raised panel, star, one line and what to do. Today with nothing new: "A quiet morning" (locked copy). |
+| Chat | `.drawer` | Ask Margo | Eggshell drawer; your messages plum night, ours mist |
+| Logo | `sparkle()` + "margo" | Brand | Lime four-point star (slow twinkle, off under reduced motion), lowercase wordmark |
 | Documents | `.paper-wrap`, `.dz-stage` | Resumes and letters | White paper on a plum panel. On phones the paper shrinks to fit. |
 
-**Retired:** fit labels ("Strong match", "Good match", "Stretch", "Weak match"), letter avatars, the orange button with offset shadow, navy, Schibsted Grotesk and Figtree.
+**Retired:** fit labels ("Strong match", "Good match", "Stretch", "Weak match"), letter avatars, the orange button with offset shadow, navy, Schibsted Grotesk and Figtree, Instrument Serif, DM Mono, line #4A3750, the disabled button, pink main buttons.
 
 ## Overlays
 

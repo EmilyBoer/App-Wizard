@@ -123,6 +123,7 @@ export function when(iso) {
 export const VERDICT = { strong: ['Strong match', 'good'], good: ['Good match', 'info'], stretch: ['Stretch', 'att'], skip: ['Weak match', 'muted'] };
 export const BUCKET = { strong: ['Strong', 'good'], good: ['Good', 'info'], maybe: ['Maybe', 'att'], weak: ['Weak', 'muted'] };
 // Tags: mist by default, pink = needs you, lime = good news, plum night = closed.
-export const STATUS_TAG = { found: 'muted', saved: 'muted', ready: 'att', applied: 'muted', interviewing: 'good', offer: 'good', rejected: 'closed', skipped: 'closed', closed: 'closed' };
+// Status tags borrow the button colors (design-system.md): New lime, Applied pink, Interview plum night, Closed mist.
+export const STATUS_TAG = { found: 'new', saved: 'new', ready: 'new', applied: 'applied', interviewing: 'interview', offer: 'interview', rejected: 'closed', skipped: 'closed', closed: 'closed' };
 
 export function working(text) { return `<div class="working"><span class="spin"></span>${esc(text)}</div>`; }

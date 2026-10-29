@@ -32,8 +32,8 @@ export function sourceList(sources, chosen) {
 // ---------- fonts ----------
 const STATUS = {
   free: ['Ready', 'good', 'A free font. We load it for you.'],
-  uploaded: ['Uploaded', 'good', 'Your font file is saved in Margot.'],
-  here: ['On this computer', 'good', 'Works here. If you use Margot on another computer, upload the font file.'],
+  uploaded: ['Uploaded', 'good', 'Your font file is saved in Margo.'],
+  here: ['On this computer', 'good', 'Works here. If you use Margo on another computer, upload the font file.'],
   missing: ['Needs the font file', 'att', ''],
 };
 
@@ -52,7 +52,7 @@ ${needs.length ? `<details class="small"${compact ? '' : ' open'}><summary>Where
 <div><b>Mac:</b> open Font Book, find the font, right-click it and choose Show in Finder. Upload every file for it (regular, bold, italic).</div>
 <div><b>Windows:</b> open C:\\Windows\\Fonts, copy the font’s files to your desktop, then upload them.</div>
 <div><b>Canva or a paid font:</b> Canva doesn’t let you download its fonts. If you bought the font, use the files you got. Otherwise the closest match works well.</div>
-<div class="tiny muted">Only upload fonts you’re allowed to use. They stay in Margot and go into your PDFs.</div></div></details>` : ''}`;
+<div class="tiny muted">Only upload fonts you’re allowed to use. They stay in Margo and go into your PDFs.</div></div></details>` : ''}`;
   el.querySelectorAll('[data-upload]').forEach((inp) => (inp.onchange = async () => {
     const files = await readFiles(inp.files);
     let ok = 0;

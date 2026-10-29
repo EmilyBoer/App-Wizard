@@ -94,12 +94,12 @@ ${s.lastBatch ? `<p class="small muted">Last run ${esc(ago(s.lastBatch.at))}: ${
   },
   async extension(el) {
     const token = await call('ext.token');
-    el.innerHTML = `<section class="card featured"><h2>Fill applications in your browser</h2><p class="muted">The Margot extension fills in application forms with your profile and the answers you approved. You check everything and press submit yourself.</p>
+    el.innerHTML = `<section class="card featured"><h2>Fill applications in your browser</h2><p class="muted">The Margo extension fills in application forms with your profile and the answers you approved. You check everything and press submit yourself.</p>
 <ol class="stack-s" style="margin:0;padding-left:20px">
-<li>In Chrome or Edge, open <b>Extensions</b>, turn on <b>Developer mode</b>, press <b>Load unpacked</b>, and pick the <span style="font-family:var(--mono)">extension</span> folder that came with Margot. (A one-click install from the Chrome Web Store is coming.)</li>
-<li>Press the Margot icon in your browser toolbar and paste this pairing code:</li></ol>
+<li>In Chrome or Edge, open <b>Extensions</b>, turn on <b>Developer mode</b>, press <b>Load unpacked</b>, and pick the <span style="font-family:var(--mono)">extension</span> folder that came with Margo. (A one-click install from the Chrome Web Store is coming.)</li>
+<li>Press the Margo icon in your browser toolbar and paste this pairing code:</li></ol>
 <div class="row"><input type="text" readonly value="${esc(token)}" id="tok" style="font-family:var(--mono);flex:1 1 320px"><button class="btn" data-act="copy">Copy</button><button class="btn" data-act="reset">Make a new code</button></div>
-<p class="small muted">Keep Margot open while you apply; the extension talks to it on this computer only.</p></section>
+<p class="small muted">Keep Margo open while you apply; the extension talks to it on this computer only.</p></section>
 <section class="card"><h2>What it fills</h2><ul style="margin:0;padding-left:18px"><li>Name, email, phone, location, LinkedIn and website</li><li>Your current title and company</li><li>Answers you saved in Standard answers</li><li>Your resume and cover letter for that job, when we made them</li></ul><p class="small muted">It never answers personal questions you haven’t saved an answer for, and it never presses submit.</p></section>`;
     on(el, {
       copy: () => navigator.clipboard.writeText(el.querySelector('#tok').value).then(() => toast('Copied.')),

@@ -1,6 +1,6 @@
-# Margot (desktop app)
+# Margo (desktop app)
 
-Set it up once. Every morning, Margot finds jobs that fit, and has a tailored resume and cover letter ready for the best ones. You check them and press send.
+Set it up once. Every morning, Margo finds jobs that fit, and has a tailored resume and cover letter ready for the best ones. You check them and press send.
 
 ## Run it
 
@@ -9,7 +9,7 @@ You need [Node.js 20 or newer](https://nodejs.org) and a Claude API key ([consol
 ```bash
 cd app
 npm install        # installs Electron, the desktop wrapper
-npm start          # opens the Margot window
+npm start          # opens the Margo window
 ```
 
 No install? Run it in your browser instead (same app, no extra packages):
@@ -56,15 +56,15 @@ Claude drafts; code checks before anything is shown:
 ## Browser extension
 
 1. Chrome or Edge: Extensions, turn on Developer mode, Load unpacked, pick `app/extension`.
-2. In Margot: Profile, Browser extension. Copy the pairing code into the extension.
-3. On an application form, press the Margot icon, then Fill this application.
+2. In Margo: Profile, Browser extension. Copy the pairing code into the extension.
+3. On an application form, press the Margo icon, then Fill this application.
 
-It talks only to Margot on the same computer (`127.0.0.1:47321`) and only with the pairing code.
+It talks only to Margo on the same computer (`127.0.0.1:47321`) and only with the pairing code.
 
 ## Known gaps (next up)
 
 - **Packaging:** `npm run build` needs the `engine` folder copied inside `app/` first (the app imports it from `../engine`).
-- **Forwarding inbox:** a personal Margot email address for job alerts needs a small server. Until then, users paste alert emails into Add jobs.
+- **Forwarding inbox:** a personal Margo email address for job alerts needs a small server. Until then, users paste alert emails into Add jobs.
 - **Calendar connections:** Google and Outlook later; for now, add interviews by hand or drop in the invite file.
 - **Fonts offline:** resume fonts load from Google Fonts, so making a PDF needs an internet connection.
 - **Accounts:** local to one computer. Cloud accounts and sync come with the paid version.

@@ -28,7 +28,10 @@ ${o.lastBatch ? `<details class="card quiet tight"><summary class="small"><b>Mor
 ${ready.length ? `<section class="stack"><h2>Ready for you to send</h2><div class="grid">${ready.map((t) => pipeCard(t)).join('')}</div></section>` : ''}
 
 <section class="stack"><div class="row between"><h2>New matches</h2><span class="small muted">${lastFetch ? `Checked ${esc(ago(lastFetch))}` : ''}${weak ? ` · <button class="btn link" data-act="weak">Show ${weak} that fit less well</button>` : ''}${hiddenCount ? ` · <button class="btn link" data-act="hidden">${hiddenCount} hidden by your rules</button>` : ''}</span></div>
-${fresh.length ? `<div class="grid">${fresh.slice(0, 24).map((j) => jobCard(j)).join('')}</div>` : `<div class="empty">${sparkle(24)}<b>No new matches right now.</b><span class="muted small">Add jobs from a screenshot of a job alert, a link or an alert email, or watch more companies in Profile.</span></div>`}</section>
+${fresh.length ? `<div class="grid">${fresh.slice(0, 24).map((j) => jobCard(j)).join('')}</div>` : (lastFetch
+      // Locked copy (decisions log, 2026-10-28 10:17pm). "Widen my search" shows the matches that fit less well, or opens What you want.
+      ? `<div class="empty">${sparkle(24)}<b>A quiet morning</b><span class="muted small">Nothing new is worth your time. We’ll look again tomorrow, or we can widen your search.</span>${weak ? '<button class="btn secondary" data-act="weak">Widen my search</button>' : '<a class="btn secondary" href="#/setup/6">Widen my search</a>'}</div>`
+      : `<div class="empty">${sparkle(24)}<b>No new matches yet.</b><span class="muted small">Add jobs from a screenshot of a job alert, a link or an alert email, or watch more companies in Profile.</span></div>`)}</section>
 <div id="board"></div>
 </div>`;
     await tracker.render(root.querySelector('#board'), [], app, 'embedded');

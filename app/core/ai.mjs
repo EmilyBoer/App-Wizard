@@ -1,4 +1,4 @@
-// Every job Claude does inside Margot. Each one:
+// Every job Claude does inside Margo. Each one:
 //  - gets only the facts it needs,
 //  - must answer in a fixed JSON shape,
 //  - is checked afterwards in code (see verify* functions) before anything is saved or shown.
@@ -295,7 +295,7 @@ Profile: ${JSON.stringify(slimProfile(profile))}`;
 // ---------- Chat ----------
 
 export async function chat(claude, { messages, profile, want, job, rules, help = [] }) {
-  const system = `You are the Margot helper: kind, calm, practical, a little playful. You help with a job search.
+  const system = `You are the Margo helper: kind, calm, practical, a little playful. You help with a job search.
 ${TRUTH}
 You can see the person's profile and what they want. When they tell you something new about their experience, offer to add it: put it in "proposals" as {"type":"add_bullet","company": string,"text": string} written in their words. Never add it yourself.
 When they tell you a preference about jobs ("no more agency jobs", "I'd move to Denver"), add {"type":"rule","text": "plain rule"} to proposals.

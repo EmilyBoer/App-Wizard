@@ -6,8 +6,8 @@ export function open({ jobId = null, app, starter } = {}) {
   drawer?.remove();
   drawer = document.createElement('aside');
   drawer.className = 'drawer';
-  drawer.setAttribute('aria-label', 'Ask Margot');
-  drawer.innerHTML = `<header>${sparkle(16)}<span class="grow">${jobId ? 'Chat about this job' : 'Ask Margot'}</span><button class="btn small" data-x aria-label="Close">Close</button></header>
+  drawer.setAttribute('aria-label', 'Ask Margo');
+  drawer.innerHTML = `<header>${sparkle(16)}<span class="grow">${jobId ? 'Chat about this job' : 'Ask Margo'}</span><button class="btn small" data-x aria-label="Close">Close</button></header>
 <div class="msgs" aria-live="polite"></div>
 <form class="composer"><label class="sr" for="cm">Message</label><textarea id="cm" rows="2" style="min-height:48px" placeholder="Ask anything, or tell me something about your work"></textarea><button class="btn primary" type="submit">Send</button></form>`;
   document.body.append(drawer);
@@ -36,7 +36,7 @@ export function open({ jobId = null, app, starter } = {}) {
   };
   call('chat.history').then((h) => {
     const mine = h.filter((m) => (jobId ? m.jobId === jobId : !m.jobId)).slice(-20);
-    if (!mine.length) bubble({ role: 'assistant', text: jobId ? 'Ask me anything about this job: how you fit, how to talk about a gap, what to ask them.' : 'Hi! Ask me anything about your search or how Margot works. If you tell me something about your work that isn’t in your profile, I’ll offer to add it.' });
+    if (!mine.length) bubble({ role: 'assistant', text: jobId ? 'Ask me anything about this job: how you fit, how to talk about a gap, what to ask them.' : 'Hi! Ask me anything about your search or how Margo works. If you tell me something about your work that isn’t in your profile, I’ll offer to add it.' });
     mine.forEach(bubble);
     if (starter) { input.value = starter; }
   });

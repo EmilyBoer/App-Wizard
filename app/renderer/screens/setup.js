@@ -387,7 +387,7 @@ async function allSet(ctx) {
 <label class="radio" style="align-self:flex-end"><input type="checkbox" id="mon" ${s.morningOn ? 'checked' : ''}>Turned on</label></div></section>
 <div class="grid">
 <div class="card tight">${sparkle(18)}<b>Check what’s ready</b><span class="small muted">Your Journey page shows new matches and applications ready to send.</span></div>
-<div class="card tight">${sparkle(18)}<b>Apply in your browser</b><span class="small muted">The Margot extension fills in forms. You check and press submit. <a href="#/help/extension">Set it up</a></span></div>
+<div class="card tight">${sparkle(18)}<b>Apply in your browser</b><span class="small muted">The Margo extension fills in forms. You check and press submit. <a href="#/help/extension">Set it up</a></span></div>
 <div class="card tight">${sparkle(18)}<b>Keep teaching it</b><span class="small muted">Every yes, no and edit makes it smarter. ${o.learning.rules} rule${o.learning.rules === 1 ? '' : 's'} learned so far.</span></div>
 </div>
 <div class="foot"><button class="btn" data-act="back">Back</button><button class="btn primary big" data-act="finish" data-busy="Getting your first applications ready…">Go to my Journey</button><button class="btn" data-act="batch" data-busy="Working…">Get my first applications ready now</button><span data-progress class="small muted"></span></div>`;

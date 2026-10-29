@@ -152,7 +152,7 @@ ${ls.length ? `<div class="list">${ls.map((x) => `<div class="item">${tag('Cover
 
   { id: 'connect', when: (st) => !st.hasKey, ask: 'Now let’s connect Claude.', help: 'Claude is what reads your files and writes for you. During testing, you use your own Claude API key. It takes about 3 minutes, and then we’ll read everything you’ve added.',
     body: () => `<div class="stack"><a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" class="btn secondary" style="align-self:flex-start">Sign in to Claude Console to get a key</a>
-<ol class="small muted" style="margin:0;padding-left:20px"><li>Sign in, and add $5 of credit under Settings, Billing.</li><li>Press Create Key, name it Margot, and copy it.</li><li>Paste it here.</li></ol>
+<ol class="small muted" style="margin:0;padding-left:20px"><li>Sign in, and add $5 of credit under Settings, Billing.</li><li>Press Create Key, name it Margo, and copy it.</li><li>Paste it here.</li></ol>
 <input type="password" id="key" placeholder="sk-ant-…" autocomplete="off"><div class="note alert hidden" id="err" role="alert"></div></div>`,
     async next(el) { const err = el.querySelector('#err'); err.classList.add('hidden'); try { await call('settings.save', { claudeKey: el.querySelector('#key').value }); await call('settings.testKey'); toast('Claude is connected. Reading your files now.'); call('builder.prepareProfile').then(() => call('builder.prepareWants')).catch(() => {}); } catch (e) { err.textContent = e.message; err.classList.remove('hidden'); return false; } } },
 
@@ -175,7 +175,7 @@ ${(st.want.suggestedTitles || []).filter((x) => x.accepted == null).length ? `<b
     },
     next(el, st) { if (!st.want.titles.length) { toast('Keep at least one job title.', true); return false; } } },
 
-  { id: 'rate', ask: 'Now rate a few real jobs.', help: 'These are live jobs we found with your answers. Every yes and no teaches Margot what fits before your first morning batch.', skip: 'Skip for now', custom: true },
+  { id: 'rate', ask: 'Now rate a few real jobs.', help: 'These are live jobs we found with your answers. Every yes and no teaches Margo what fits before your first morning batch.', skip: 'Skip for now', custom: true },
 
   { id: 'keep', ask: 'Now, how should your resumes look?', help: 'We can rebuild your current resume’s design, fonts and all, so every resume we tailor looks like yours. Or pick one of our 8 designs, shown with your own history.',
     body: (st) => `<div class="own-choice">
@@ -338,7 +338,7 @@ ${learned.length ? `<section class="card quiet tight"><b>What we’ve learned so
     await call('builder.complete');
     await app.refresh();
     const s = await call('settings.get');
-    body.innerHTML = `<section class="card featured"><h2>Every morning at</h2><div class="row"><select id="hour" style="width:auto">${[5, 6, 7, 8, 9, 10].map((h) => `<option value="${h}" ${h === Number(s.morningHour) ? 'selected' : ''}>${h}:00 AM</option>`).join('')}</select><span class="muted">we’ll get your best</span><select id="count" style="width:auto">${[1, 2, 3, 5].map((n) => `<option ${n === Number(s.morningCount) ? 'selected' : ''}>${n}</option>`).join('')}</select><span class="muted">matches ready to apply.</span></div><p class="tiny muted">Margot needs to be open, even in the background.</p></section>`;
+    body.innerHTML = `<section class="card featured"><h2>Every morning at</h2><div class="row"><select id="hour" style="width:auto">${[5, 6, 7, 8, 9, 10].map((h) => `<option value="${h}" ${h === Number(s.morningHour) ? 'selected' : ''}>${h}:00 AM</option>`).join('')}</select><span class="muted">we’ll get your best</span><select id="count" style="width:auto">${[1, 2, 3, 5].map((n) => `<option ${n === Number(s.morningCount) ? 'selected' : ''}>${n}</option>`).join('')}</select><span class="muted">matches ready to apply.</span></div><p class="tiny muted">Margo needs to be open, even in the background.</p></section>`;
     body.querySelectorAll('select').forEach((x) => (x.onchange = () => call('settings.save', { morningHour: Number(body.querySelector('#hour').value), morningCount: Number(body.querySelector('#count').value) })));
     foot.innerHTML = `<button class="btn primary big" data-act="dash" data-busy="Getting your first matches ready…">See my matches</button><a class="btn" href="#/profile">See your choices in Profile</a>`;
     on(foot, { dash: (b) => act(b, async () => { document.body.classList.remove('building'); app.go('#/dashboard'); call('batch.run', { reason: 'setup' }).then(() => app.refresh()).catch(() => {}); }) });
@@ -371,7 +371,7 @@ export async function dashboard(root, app, { embedded = false } = {}) {
 ${st.done ? '' : '<div class="note att row between"><span>Setup isn’t finished yet.</span><a class="btn primary" href="#/build">Finish setup</a></div>'}
 ${section('About you', [
     `<div class="choice"><div class="choice-label">Contact details</div><div class="choice-value"><div class="contact-grid">${[['name', 'Full name'], ['headline', 'Headline (under your name)'], ['email', 'Email'], ['phone', 'Phone'], ['location', 'City and state'], ['linkedin', 'LinkedIn'], ['website', 'Portfolio or website']].map(([k, l]) => `<label class="field small">${l}<input type="text" data-contact="${k}" value="${esc(k === 'headline' && !('headline' in c) ? (st.profile.roles[0]?.title || '') : c[k] || '')}" placeholder="${{ linkedin: 'linkedin.com/in/…', website: 'yoursite.com', location: 'e.g. Portland, OR', headline: 'e.g. Content Strategist' }[k] || ''}"></label>`).join('')}</div><span class="tiny muted">Saved as you type. These go at the top of every resume and letter.</span></div><span></span></div>`,
-    `<div class="choice"><div class="choice-label">Summary<div class="tiny muted" style="font-weight:400">The short paragraph at the top of your resume</div></div><div class="choice-value stack-s"><textarea id="summary" rows="4" placeholder="${st.hasKey ? 'Writing one from your experience…' : 'Two or three sentences about the work you do. Once Claude is connected, we’ll write one from your experience.'}">${esc(st.profile.summary || '')}</textarea><span class="tiny muted" id="sumnote">${st.profile.summary ? 'Written from your experience, in your voice. Edit it any way you like; it saves when you click away.' : ''}</span></div><button type="button" class="btn small" data-act="rewrite" data-busy="Writing…" ${st.hasKey ? '' : 'disabled'}>Write a new one</button></div>`,
+    `<div class="choice"><div class="choice-label">Summary<div class="tiny muted" style="font-weight:400">The short paragraph at the top of your resume</div></div><div class="choice-value stack-s"><textarea id="summary" rows="4" placeholder="${st.hasKey ? 'Writing one from your experience…' : 'Two or three sentences about the work you do. Once Claude is connected, we’ll write one from your experience.'}">${esc(st.profile.summary || '')}</textarea><span class="tiny muted" id="sumnote">${st.profile.summary ? 'Written from your experience, in your voice. Edit it any way you like; it saves when you click away.' : ''}</span></div>${st.hasKey ? '<button type="button" class="btn small" data-act="rewrite" data-busy="Writing…">Write a new one</button>' : '<a class="btn small" href="#/claude">Connect Claude to write one</a>'}</div>`,
     row('LinkedIn', `${c.linkedin ? esc(c.linkedin.replace(/^https?:\/\/(www\.)?/, '')) : '<span class="muted">No link yet</span>'}<div class="small muted">${st.materials.some((m) => m.kind === 'linkedin') ? 'Profile PDF added' : 'No profile PDF yet'}</div>`, 'edit:linkedin'),
     row('Experience', `${st.profile.roles.length} roles · ${st.profile.skills.length} skills · ${st.profile.years} years${st.profile.checks ? ` · <a href="#/setup/3">${st.profile.checks} things to check</a>` : ''}<div class="small muted">From ${st.materials.length} file${st.materials.length === 1 ? '' : 's'}. <a href="#/documents">Add more in Documents</a></div>`, '#/setup/3', 'Edit'),
     row('Writing style', st.voice.samples.length ? `${st.voice.samples.length} writing sample${st.voice.samples.length === 1 ? '' : 's'}` : 'Learned from your resumes', '#/profile/style', 'Open'),
@@ -393,7 +393,7 @@ ${section('Answers for applications', [
     row('Would you move?', esc(answers.relocate), 'edit:relocate'),
     row('When you could start', esc(answers.start), 'edit:start'),
   ])}
-${section('How Margot works for you', [
+${section('How Margo works for you', [
     row('Where you look', (hosts.length ? hosts.map(([h, n]) => `${esc(h)} <span class="muted">(${n})</span>`).join(' · ') : '<span class="muted">Learned from the job links you add</span>') + `<div class="small muted">${watched} compan${watched === 1 ? 'y' : 'ies'} checked for new jobs every day</div>`, '#/setup/7'),
     row('What it’s learned', `${learning.summary.yes} yes · ${learning.summary.no} no · ${learning.summary.rules} rule${learning.summary.rules === 1 ? '' : 's'}`, '#/profile/vault', 'See'),
     row('Morning batch', `${st.schedule.on ? `Every day at ${st.schedule.hour}:00 AM, your best ${st.schedule.count} match${st.schedule.count === 1 ? '' : 'es'} made ready` : 'Turned off'}`, '#/profile/schedule'),
@@ -404,7 +404,7 @@ ${section('How Margot works for you', [
   if (sum) {
     sum.onchange = () => call('profile.setSummary', { text: sum.value.trim() }).then(() => toast('Summary saved.'));
     const write = (replace) => call('profile.writeSummary', { replace }).then((t) => { sum.value = t; root.querySelector('#sumnote').textContent = 'Written from your experience, in your voice. Edit it any way you like; it saves when you click away.'; });
-    root.querySelector('[data-act=rewrite]').onclick = (e) => act(e.currentTarget, () => write(true), { done: 'New summary written.' });
+    (root.querySelector('[data-act=rewrite]') || {}).onclick = (e) => act(e.currentTarget, () => write(true), { done: 'New summary written.' });
     // First time: write one automatically from what they've added.
     if (!sum.value.trim() && st.hasKey && st.profile.roles.length) write(false).catch(() => {});
   }

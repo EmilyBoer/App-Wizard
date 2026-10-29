@@ -7,9 +7,9 @@ export async function render(root, _params, app) {
     root.innerHTML = `
 <div class="login">
   <section class="art">
-    <div class="brand">${sparkle(22)}margot</div>
+    <div class="brand">${sparkle(22)}margo</div>
     <div class="stack" style="max-width:480px">
-      <div class="big-line">AI Apply, in <span class="accent-word" style="color:var(--pink)">your</span> voice.</div>
+      <div class="big-line">AI Apply, in <span class="accent-word" style="text-decoration:underline;text-decoration-color:var(--pink);text-decoration-thickness:4px;text-underline-offset:6px">your</span> voice.</div>
       <p style="font-size:18px;line-height:28px">An extension of you that finds the right jobs, writes in your voice, and preps you for interviews. You approve every step.</p>
     </div>
     <p class="small muted">Everything stays on this computer.</p>

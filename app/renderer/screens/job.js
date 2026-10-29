@@ -54,7 +54,7 @@ export async function render(root, [jobId, then], app) {
 
   <details class="card"><summary><b>Job description</b></summary><div class="small" style="white-space:pre-wrap;margin-top:12px">${esc(j.description)}</div><button class="btn small" data-act="edittext" style="align-self:flex-start">Edit description</button></details>` : ''}
 </section>
-<aside class="side card quiet" style="position:sticky;top:84px"><h2>Chat about this job</h2><p class="small muted">Ask anything: how you fit, what to say about a gap, what to ask them. If you mention something new about your experience, we’ll offer to add it.</p><button class="btn secondary" data-act="chat">Ask Margot</button></aside>
+<aside class="side card quiet" style="position:sticky;top:84px"><h2>Chat about this job</h2><p class="small muted">Ask anything: how you fit, what to say about a gap, what to ask them. If you mention something new about your experience, we’ll offer to add it.</p><button class="btn secondary" data-act="chat">Ask Margo</button></aside>
 </div></div>`;
   };
   on(root, {
@@ -76,7 +76,7 @@ export async function render(root, [jobId, then], app) {
       const j = await call('jobs.get', { id: jobId });
       modal(`<h2>Apply</h2><ol class="stack-s" style="padding-left:20px;margin:0">
 <li>Download your files: ${j.documents.filter((d) => d.status).slice(0, 2).map((d) => `<a href="#/doc/${d.id}" data-close>${esc(d.file)}.pdf</a>`).join(' and ')}.</li>
-<li>Open the application. With the Margot browser extension, press its button on the form to fill it in. <a href="#/help/extension" data-close>Set up the extension</a></li>
+<li>Open the application. With the Margo browser extension, press its button on the form to fill it in. <a href="#/help/extension" data-close>Set up the extension</a></li>
 <li>Check everything, answer anything marked “needs you”, and press submit yourself.</li>
 <li>Come back and press <b>I applied</b> (the extension does this for you).</li></ol>
 <div class="row"><button class="btn primary" id="open">Open the application</button><button class="btn" data-close>Close</button></div>`, { onMount: (m) => { m.querySelector('#open').onclick = () => aw.open(j.url); } });
