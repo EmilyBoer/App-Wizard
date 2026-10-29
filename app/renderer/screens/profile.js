@@ -8,7 +8,7 @@ export async function render(root, [tab = 'setup'], app) {
   if (!TAB[tab]) tab = 'setup';
   const paint = async () => {
     root.innerHTML = `<div class="page">
-<div class="head"><div><h1>Profile</h1><p class="muted">Everything Margot knows about you and your search. Change anything and your matches update.</p></div></div>
+<div class="head"><div><h1>Profile</h1><p class="muted">Everything we know about you and your search. Change anything and your matches update.</p></div></div>
 <nav class="tabs" aria-label="Profile sections">${TABS.map(([k, l]) => `<a class="tab ${k === tab ? 'on' : ''}" ${k === tab ? 'aria-current="page"' : ''} href="#/profile/${k}">${l}</a>`).join('')}</nav>
 <div id="tab" class="tab-body"></div></div>`;
     const el = root.querySelector('#tab');
@@ -23,7 +23,7 @@ const TAB = {
   async design(el, app) { await embedPage(el, 5, app); },
   async schedule(el) {
     const s = await call('settings.get');
-    el.innerHTML = `<section class="card" style="max-width:720px"><h2>Morning batch</h2><p class="muted">Every morning, Margot checks for new jobs and gets your best matches ready to apply. The app needs to be open, even in the background.</p>
+    el.innerHTML = `<section class="card" style="max-width:720px"><h2>Morning check</h2><p class="muted">Every morning, we check for new jobs and get your best matches ready to apply. The app needs to be open, even in the background.</p>
 <div class="row-l"><label class="field">Time<select id="hour" style="width:auto">${[5, 6, 7, 8, 9, 10].map((h) => `<option value="${h}" ${h === Number(s.morningHour) ? 'selected' : ''}>${h}:00 AM</option>`).join('')}</select></label><label class="field">How many to get ready<select id="count" style="width:auto">${[1, 2, 3, 5, 8].map((n) => `<option ${n === Number(s.morningCount) ? 'selected' : ''}>${n}</option>`).join('')}</select></label><label class="radio" style="align-self:flex-end"><input type="checkbox" id="mon" ${s.morningOn ? 'checked' : ''}>Turned on</label></div>
 ${s.lastBatch ? `<p class="small muted">Last run ${esc(ago(s.lastBatch.at))}: ${s.lastBatch.made} made ready.</p>` : ''}<a href="#/profile" class="small">← Back to your choices</a></section>`;
     el.querySelectorAll('select, input').forEach((i) => (i.onchange = () => call('settings.save', { morningHour: Number(el.querySelector('#hour').value), morningCount: Number(el.querySelector('#count').value), morningOn: el.querySelector('#mon').checked }).then(() => toast('Saved.'))));
@@ -83,7 +83,7 @@ ${l.edits.length ? `<section class="card"><h2>Your recent edits</h2><p class="mu
   },
   async settings(el, app, repaint) {
     const s = await call('settings.get');
-    el.innerHTML = `<section class="card"><h2>Claude</h2><p class="muted small">Margot uses Claude to read and write. <a href="#/help/api-key">Step-by-step help</a></p><div class="row"><a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" class="btn">Sign in to Claude Console to get a key</a></div>
+    el.innerHTML = `<section class="card"><h2>Claude</h2><p class="muted small">We use Claude to read and write. <a href="#/help/api-key">Step-by-step help</a></p><div class="row"><a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" class="btn">Sign in to Claude Console to get a key</a></div>
 <label class="field">API key<div class="row"><input type="password" id="key" value="${esc(s.claudeKey)}" placeholder="sk-ant-…" style="flex:1 1 300px"><button class="btn secondary" data-act="key" data-busy="Checking…">Save and test</button></div></label><div class="note alert hidden" id="keyerr" role="alert"></div>
 <div class="row-l"><label class="field">Writing model<input type="text" id="model" value="${esc(s.model)}"></label><label class="field">Fast model<input type="text" id="fast" value="${esc(s.fastModel)}"></label></div></section>
 <section class="card"><h2>Every morning</h2><div class="row-l"><label class="field">Time<select id="hour" style="width:auto">${[5, 6, 7, 8, 9, 10].map((h) => `<option value="${h}" ${h === Number(s.morningHour) ? 'selected' : ''}>${h}:00 AM</option>`).join('')}</select></label><label class="field">How many to get ready<select id="count" style="width:auto">${[1, 2, 3, 5, 8].map((n) => `<option ${n === Number(s.morningCount) ? 'selected' : ''}>${n}</option>`).join('')}</select></label><label class="radio" style="align-self:flex-end"><input type="checkbox" id="mon" ${s.morningOn ? 'checked' : ''}>Turned on</label></div>
@@ -100,7 +100,7 @@ ${s.lastBatch ? `<p class="small muted">Last run ${esc(ago(s.lastBatch.at))}: ${
 <li>Press the Margot icon in your browser toolbar and paste this pairing code:</li></ol>
 <div class="row"><input type="text" readonly value="${esc(token)}" id="tok" style="font-family:var(--mono);flex:1 1 320px"><button class="btn" data-act="copy">Copy</button><button class="btn" data-act="reset">Make a new code</button></div>
 <p class="small muted">Keep Margot open while you apply; the extension talks to it on this computer only.</p></section>
-<section class="card"><h2>What it fills</h2><ul style="margin:0;padding-left:18px"><li>Name, email, phone, location, LinkedIn and website</li><li>Your current title and company</li><li>Answers you saved in Standard answers</li><li>Your resume and cover letter for that job, when Margot made them</li></ul><p class="small muted">It never answers personal questions you haven’t saved an answer for, and it never presses submit.</p></section>`;
+<section class="card"><h2>What it fills</h2><ul style="margin:0;padding-left:18px"><li>Name, email, phone, location, LinkedIn and website</li><li>Your current title and company</li><li>Answers you saved in Standard answers</li><li>Your resume and cover letter for that job, when we made them</li></ul><p class="small muted">It never answers personal questions you haven’t saved an answer for, and it never presses submit.</p></section>`;
     on(el, {
       copy: () => navigator.clipboard.writeText(el.querySelector('#tok').value).then(() => toast('Copied.')),
       reset: async () => { if (confirm('Make a new code? You’ll need to paste it into the extension again.')) { await call('ext.token', { reset: true }); TAB.extension(el); } },

@@ -23,11 +23,11 @@ ${o.followUps.length ? `<div class="note att"><b>Follow-ups due:</b> ${o.followU
 <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">
 ${[['New matches', fresh.length, '#/journey'], ['Ready to apply', ready.length, '#/journey'], ['Applied', o.counts.applied, '#/journey'], ['Interviewing', o.counts.interviewing, '#/interviews'], ['Offers', o.counts.offer, '#/journey']].map(([l, n, h]) => `<a class="stat" href="${h}"><span class="small muted">${l}</span><b>${n || 0}</b></a>`).join('')}
 </div>
-${o.lastBatch ? `<details class="card quiet tight"><summary class="small"><b>Morning batch</b> · ${esc(ago(o.lastBatch.at))} · ${o.lastBatch.made} made ready</summary><ul class="small">${o.lastBatch.log.map((l) => `<li>${esc(l)}</li>`).join('')}</ul></details>` : ''}
+${o.lastBatch ? `<details class="card quiet tight"><summary class="small"><b>Morning check</b> · ${esc(ago(o.lastBatch.at))} · ${o.lastBatch.made} made ready</summary><ul class="small">${o.lastBatch.log.map((l) => `<li>${esc(l)}</li>`).join('')}</ul></details>` : ''}
 
 ${ready.length ? `<section class="stack"><h2>Ready for you to send</h2><div class="grid">${ready.map((t) => pipeCard(t)).join('')}</div></section>` : ''}
 
-<section class="stack"><div class="row between"><h2>New matches</h2><span class="small muted">${lastFetch ? `Checked ${esc(ago(lastFetch))}` : ''}${weak ? ` · <button class="btn link" data-act="weak">Show ${weak} weaker match${weak > 1 ? 'es' : ''}</button>` : ''}${hiddenCount ? ` · <button class="btn link" data-act="hidden">${hiddenCount} hidden by your rules</button>` : ''}</span></div>
+<section class="stack"><div class="row between"><h2>New matches</h2><span class="small muted">${lastFetch ? `Checked ${esc(ago(lastFetch))}` : ''}${weak ? ` · <button class="btn link" data-act="weak">Show ${weak} that fit less well</button>` : ''}${hiddenCount ? ` · <button class="btn link" data-act="hidden">${hiddenCount} hidden by your rules</button>` : ''}</span></div>
 ${fresh.length ? `<div class="grid">${fresh.slice(0, 24).map((j) => jobCard(j)).join('')}</div>` : `<div class="empty">${sparkle(24)}<b>No new matches right now.</b><span class="muted small">Add jobs from a screenshot of a job alert, a link or an alert email, or watch more companies in Profile.</span></div>`}</section>
 <div id="board"></div>
 </div>`;

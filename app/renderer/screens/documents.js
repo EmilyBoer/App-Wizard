@@ -11,9 +11,9 @@ export async function render(root, params, app, name) {
     const byJob = new Map();
     for (const d of docs) { if (!byJob.has(d.jobId)) byJob.set(d.jobId, []); byJob.get(d.jobId).push(d); }
     root.innerHTML = `<div class="page">
-<div class="head"><div><h1>Documents</h1><p class="muted">Every resume and cover letter Margot made for you, and every file you’ve given it.</p></div></div>
+<div class="head"><div><h1>Documents</h1><p class="muted">Every resume and cover letter we made for you, and every file you’ve given us.</p></div></div>
 <details class="fold" data-fold="made" ${isOpen('made') ? 'open' : ''}><summary><h2>Made by Margot</h2><span class="muted small">${docs.length} document${docs.length === 1 ? '' : 's'}</span></summary><div class="stack">
-${!docs.length ? '<div class="empty"><b>Nothing yet.</b><span class="muted small">Open a job and press Make my resume and letter, or let the morning batch do it.</span></div>' : `
+${!docs.length ? '<div class="empty"><b>Nothing yet.</b><span class="muted small">Open a job and press Draft my application, or we’ll get it ready in the morning.</span></div>' : `
 <div class="list">${[...byJob.entries()].map(([jobId, ds]) => `<div class="item"><div class="grow"><div>${esc(ds[0].title)} · ${esc(ds[0].company)}</div><div class="small muted">${ds.map((d) => `<a href="#/doc/${d.id}">${d.kind === 'resume' ? 'Resume' : 'Cover letter'} v${d.version}</a> ${d.status === 'final' ? tag('Final', 'good') : tag('Draft', 'att')}`).join(' · ')}</div></div><a class="btn small" href="#/job/${encodeURIComponent(jobId)}">Job</a></div>`).join('')}</div>`}
 </div></details>
 <details class="fold" data-fold="files" ${isOpen('files') ? 'open' : ''}><summary><h2>Your files</h2><span class="muted small">${st.materials.length} file${st.materials.length === 1 ? '' : 's'}</span></summary><div class="stack">

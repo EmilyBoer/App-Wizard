@@ -13,7 +13,7 @@ export const ARTICLES = [
 7. Standard answers: the questions every application asks.
 8. Rate 10 real jobs: teach us what fits.
 
-After that, Margot finds jobs every morning and has resumes and letters ready for the best ones.` },
+After that, we find jobs every morning and have resumes and letters ready for the best ones.` },
   { id: 'edit-resume', title: 'How do I edit my resume?', tags: 'edit change resume bullet wording fix', body: `Open the job, then Documents, then press Edit on the resume. Click any line to change it.
 
 When you change a line we ask if you want to save the new wording to your profile, so every future resume starts from it. Your changes also teach us how you like things written.
@@ -67,8 +67,8 @@ We rebuild your layout so hiring systems can read it. Photos, skill bars and dec
 Text never gets smaller than 10 point. If it doesn't fit, we cut the least relevant lines from your oldest roles first, then roles older than your "how far back" setting, then shorten the summary. You always see what we cut.` },
   { id: 'truth', title: 'Will Margot make things up?', tags: 'truth lie invent accurate facts honest', body: `No. Everything we write comes from your profile. We reword and reorder; we never invent jobs, dates, numbers, skills or results.
 
-After Claude writes a draft, Margot checks it in code: every resume line must come from a line in your profile, and every number must match. Anything that fails is swapped back to your own wording, and we tell you.` },
-  { id: 'morning', title: 'What happens every morning?', tags: 'morning batch automatic daily schedule', body: `At the time you pick (7 AM by default), Margot checks your job sites, finds new matches, and gets resumes and letters ready for the best few. You review and apply.
+After Claude writes a draft, we check it in code: every resume line must come from a line in your profile, and every number must match. Anything that fails is swapped back to your own wording, and we tell you.` },
+  { id: 'morning', title: 'What happens every morning?', tags: 'morning batch automatic daily schedule', body: `At the time you pick (7 AM by default), we check your job sites, find new matches, and get resumes and letters ready for the best few. You review and apply.
 
 The computer needs to be on with Margot open (it can sit in the background). Change the time or number in Profile, Morning batch.` },
   { id: 'extension', title: 'Filling applications with the browser extension', tags: 'extension chrome edge autofill fill application form browser', body: `The Margot extension fills in application forms using your profile and the answers you approved.
@@ -89,7 +89,7 @@ Company facts only come from those pages. If we couldn't read the company's site
 2. Drop in the calendar invite file (.ics). Most invites have one attached; in Gmail, open the invite and download it.
 3. Calendar connections (Google, Outlook) are coming later.` },
   { id: 'privacy', title: 'Where is my information kept?', tags: 'privacy data secure stored computer', body: `Everything is kept on your computer. To write and match, Margot sends the needed parts of your profile and the job to Claude (by Anthropic) through your API key. Nothing is sold or shared.` },
-  { id: 'api-key', title: 'Setting up your Claude API key', tags: 'api key claude anthropic setup cost console sign in', body: `Margot uses Claude to read your files and write. During testing you use your own Claude API key. It takes about 3 minutes.
+  { id: 'api-key', title: 'Setting up your Claude API key', tags: 'api key claude anthropic setup cost console sign in', body: `We use Claude to read your files and write. During testing you use your own Claude API key. It takes about 3 minutes.
 
 1. Go to https://console.anthropic.com and sign in (or create an account). This is separate from your regular Claude chat account, but you can use the same email.
 2. Add a little credit: Settings, Billing. Five dollars lasts most people a month or more.

@@ -156,7 +156,7 @@ ${ls.length ? `<div class="list">${ls.map((x) => `<div class="item">${tag('Cover
 <input type="password" id="key" placeholder="sk-ant-…" autocomplete="off"><div class="note alert hidden" id="err" role="alert"></div></div>`,
     async next(el) { const err = el.querySelector('#err'); err.classList.add('hidden'); try { await call('settings.save', { claudeKey: el.querySelector('#key').value }); await call('settings.testKey'); toast('Claude is connected. Reading your files now.'); call('builder.prepareProfile').then(() => call('builder.prepareWants')).catch(() => {}); } catch (e) { err.textContent = e.message; err.classList.remove('hidden'); return false; } } },
 
-  { id: 'found', enter: () => call('builder.analyze'), ask: 'Here’s what we pulled from your resumes.', help: 'Fill in anything that’s missing. Everything Margot writes for you comes from this, and we never make anything up.',
+  { id: 'found', enter: () => call('builder.analyze'), ask: 'Here’s what we pulled from your resumes.', help: 'Fill in anything that’s missing. Everything we write for you comes from this, and we never make anything up.',
     body: (st) => { const c = st.profile.contact || {}; return `<div class="grid">${[['name', 'Name'], ['email', 'Email'], ['phone', 'Phone'], ['location', 'City, State'], ['linkedin', 'LinkedIn link'], ['website', 'Website or portfolio']].map(([k, l]) => `<label class="field">${l}<input type="text" data-contact="${k}" value="${esc(c[k] || '')}"></label>`).join('')}</div>
 <div class="list"><div class="list-head">${st.profile.roles.length} job${st.profile.roles.length === 1 ? '' : 's'} · ${st.profile.years} years · ${st.profile.roles.reduce((n, r) => n + r.results, 0)} results in your bullet vault</div>${st.profile.roles.map((r) => `<div class="item"><div class="grow"><div>${esc(r.title)} <span class="muted">· ${esc(r.company)}</span></div><div class="small muted">${esc(r.start || '')} – ${esc(r.end || '')}</div></div></div>`).join('')}</div>
 ${st.profile.checks ? `<div class="note info">${st.profile.checks} thing${st.profile.checks > 1 ? 's' : ''} didn’t match between your files, like different dates for the same job. We’ll keep them for you to sort out after setup, in Profile.</div>` : ''}`; },
@@ -198,12 +198,12 @@ ${(st.want.suggestedTitles || []).filter((x) => x.accepted == null).length ? `<b
       await call('own.start', { id: src });
     } },
 
-  { id: 'fonts', when: (st) => st.keep === true && st.ownFonts > 0, ask: 'Your resume uses these fonts.', help: 'To match your design exactly, Margot needs each one. Upload any that are missing now, or do it later in Profile, Resume design. Until then we use the closest free match.', skip: 'Do this later',
+  { id: 'fonts', when: (st) => st.keep === true && st.ownFonts > 0, ask: 'Your resume uses these fonts.', help: 'To match your design exactly, we need each one. Upload any that are missing now, or do it later in Profile, Resume design. Until then we use the closest free match.', skip: 'Do this later',
     body: () => '<div id="fontsbox" class="stack"></div>', mount: (el) => fontsPanel(el.querySelector('#fontsbox')) },
 
   { id: 'design', ask: (st) => (st.keep ? 'Here’s your design, rebuilt.' : 'How should your resume look?'), help: (st) => (st.keep ? 'Your original is on the left, our rebuild on the right with the same words. Tell us anything that looks different and we’ll fix it.' : 'Pick a template, then make it yours: layout, sidebar, section order, color, fonts and spacing. The preview is your real resume and changes as you go.'), custom: true },
 
-  { id: 'done', ask: 'Your job search is built.', help: 'Every morning, Margot checks for new jobs that fit and gets your best matches ready to apply. Change any answer later in Profile.', custom: true },
+  { id: 'done', ask: 'Your job search is built.', help: 'Every morning, we check for new jobs that fit and get your best matches ready to apply. Change any answer later in Profile.', custom: true },
 ];
 
 // Setup sections, shown above each question (the bar shows overall progress).

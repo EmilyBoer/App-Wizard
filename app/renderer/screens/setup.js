@@ -116,7 +116,7 @@ ${ctx.foot({ next: 'Continue: build my work history' })}`;
 }
 
 function keyCard() {
-  return `<section class="card featured" id="keycard"><h2>First: connect Claude</h2><p class="muted">Margot uses Claude to read your files and write. During testing, paste your own Claude API key. <a href="#/help/api-key">How to get one</a></p>
+  return `<section class="card featured" id="keycard"><h2>First: connect Claude</h2><p class="muted">We use Claude to read your files and write. During testing, paste your own Claude API key. <a href="#/help/api-key">How to get one</a></p>
 <div class="row"><a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" class="btn">Sign in to Claude Console to get a key</a><span class="small muted">Sign in, press Create Key, copy it, and paste it here.</span></div>
 <div class="row"><input type="password" id="key" placeholder="sk-ant-…" style="flex:1 1 280px"><button class="btn secondary" data-act="savekey" data-busy="Checking…">Save and test</button></div><div class="note alert hidden" id="keyerr" role="alert"></div></section>`;
 }
@@ -136,7 +136,7 @@ async function experience(ctx) {
     const under = p.underselling.filter((u) => u.status === 'pending');
     const c = p.contact || {};
     el.innerHTML = `${ctx.head('Here’s what we found. Is it right?', 'We put your files together into one work history. Settle anything that doesn’t match, and say yes to anything we found that’s true.')}
-<div class="note good"><b>Our promise:</b> everything Margot writes for you comes from this page. We reword and reorder; we never invent jobs, dates, numbers or skills.</div>
+<div class="note good"><b>Our promise:</b> everything we write for you comes from this page. We reword and reorder; we never invent jobs, dates, numbers or skills.</div>
 ${!p.roles.length ? `<div class="empty"><h2>No work history yet</h2><p class="muted">Add files on the last step, or add your roles by hand.</p><div class="row"><a class="btn secondary" href="#/setup/2">Add files</a><button class="btn" data-act="addrole">Add a role</button><button class="btn" data-act="rebuild" data-busy="Building…">Build from my files</button></div></div>` : ''}
 ${conflicts.length ? `<section class="card featured"><h2>${conflicts.length} thing${conflicts.length > 1 ? 's' : ''} to settle</h2><p class="muted">Your files don’t agree. Pick what’s true.</p>
 ${conflicts.map((k) => `<div class="stack-s" data-conflict="${k.id}"><b class="small">${esc(k.label)}</b><div class="row">${k.options.map((o, i) => radio(k.id, o.value, `${o.value} (${srcName(o.source)})`, i === 0)).join('')}<label class="radio"><input type="radio" name="${k.id}" value="__other">Something else</label><input type="text" class="hidden" placeholder="Type it" style="width:200px"><button class="btn small secondary" data-act="settle" data-id="${k.id}">Save</button></div></div>`).join('')}</section>` : ''}
@@ -236,7 +236,7 @@ ${ctx.foot()}`;
 // ---------------- 5. Resume design ----------------
 async function design(ctx) {
   const { el } = ctx;
-  el.innerHTML = `${ctx.head('How should your resume look?', 'Pick a template, then change anything: layout, sidebar, section order, colors, fonts and spacing. Every resume Margot makes for you uses this design.')}<div id="dz"></div>${ctx.foot()}`;
+  el.innerHTML = `${ctx.head('How should your resume look?', 'Pick a template, then change anything: layout, sidebar, section order, colors, fonts and spacing. Every resume we make for you uses this design.')}<div id="dz"></div>${ctx.foot()}`;
   await renderDesigner(el.querySelector('#dz'), { dark: document.body.classList.contains('building') });
   on(el, { next: () => ctx.next() });
 }
@@ -341,7 +341,7 @@ async function rateJobs(ctx) {
     const rated = jobs.filter((j) => j.rated);
     const current = jobs.find((j) => !j.rated);
     const bar = Array.from({ length: 10 }, (_, i) => `<span class="${jobs[i]?.rated || (jobs[i] && jobs[i] === current ? 'now' : '')}"></span>`).join('');
-    el.innerHTML = `${ctx.head('Rate 10 real jobs.', 'We found these with what you’ve told us. Your yes and no answers teach us what fits before your first morning batch.')}
+    el.innerHTML = `${ctx.head('Rate 10 real jobs.', 'We found these with what you’ve told us. Your yes and no answers teach us what fits before your first morning.')}
 ${!jobs.length ? `<div class="empty"><h2>Let’s find your first jobs</h2><p class="muted">We’ll check your job sites now.</p><button class="btn primary" data-act="fetch" data-busy="Checking your job sites…">Find my jobs</button><span data-progress="jobs" class="small muted"></span></div>` : `
 <div class="stack-s"><div class="row"><b>${rated.length} of ${Math.min(10, jobs.length)}</b><span class="small muted">Every job here is live: we checked it’s open today.</span></div><div class="progress">${bar}</div></div>
 ${rated.slice(-2).map((j) => jobCard(j)).join('')}
@@ -380,17 +380,17 @@ ${askingNo ? `<b class="small">Why not? Pick any.</b><div class="row" id="reason
 async function allSet(ctx) {
   const { el, app } = ctx;
   const [s, o] = await Promise.all([call('settings.get'), call('app.overview')]);
-  el.innerHTML = `${ctx.head('You’re all set.', 'From here on, Margot does the hunting. You do the deciding.')}
+  el.innerHTML = `${ctx.head('You’re all set.', 'From here on, we do the hunting. You do the deciding.')}
 <section class="card featured"><h2>Every morning</h2><p class="muted">We check your job sites, find new matches, and get a resume and cover letter ready for the best ones. The app needs to be open (it can sit in the background).</p>
 <div class="row-l"><label class="field">Time<select id="hour" style="width:auto">${[5, 6, 7, 8, 9, 10].map((h) => `<option value="${h}" ${h === Number(s.morningHour) ? 'selected' : ''}>${h}:00 AM</option>`).join('')}</select></label>
 <label class="field">How many to get ready<select id="count" style="width:auto">${[1, 2, 3, 5, 8].map((n) => `<option ${n === Number(s.morningCount) ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
 <label class="radio" style="align-self:flex-end"><input type="checkbox" id="mon" ${s.morningOn ? 'checked' : ''}>Turned on</label></div></section>
 <div class="grid">
-<div class="card tight">${sparkle(18)}<b>Check what’s ready</b><span class="small muted">Your Dashboard shows new matches and applications ready to send.</span></div>
+<div class="card tight">${sparkle(18)}<b>Check what’s ready</b><span class="small muted">Your Journey page shows new matches and applications ready to send.</span></div>
 <div class="card tight">${sparkle(18)}<b>Apply in your browser</b><span class="small muted">The Margot extension fills in forms. You check and press submit. <a href="#/help/extension">Set it up</a></span></div>
 <div class="card tight">${sparkle(18)}<b>Keep teaching it</b><span class="small muted">Every yes, no and edit makes it smarter. ${o.learning.rules} rule${o.learning.rules === 1 ? '' : 's'} learned so far.</span></div>
 </div>
-<div class="foot"><button class="btn" data-act="back">Back</button><button class="btn primary big" data-act="finish" data-busy="Getting your first batch ready…">Go to my Dashboard</button><button class="btn" data-act="batch" data-busy="Working…">Get my first batch ready now</button><span data-progress class="small muted"></span></div>`;
+<div class="foot"><button class="btn" data-act="back">Back</button><button class="btn primary big" data-act="finish" data-busy="Getting your first applications ready…">Go to my Journey</button><button class="btn" data-act="batch" data-busy="Working…">Get my first applications ready now</button><span data-progress class="small muted"></span></div>`;
   const save = () => call('settings.save', { morningHour: Number(el.querySelector('#hour').value), morningCount: Number(el.querySelector('#count').value), morningOn: el.querySelector('#mon').checked });
   el.querySelectorAll('select, input').forEach((i) => (i.onchange = save));
   on(el, {
