@@ -8,7 +8,8 @@
     "start": "electron .",
     "web": "node server/web.mjs",
     "test": "node --test test/*.test.mjs",
-    "build": "electron-builder"
+    "build": "electron-builder",
+    "hosted": "node server/hosted.mjs"
   },
   "engines": {
     "node": ">=20"

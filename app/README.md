@@ -23,6 +23,28 @@ In the browser version, "Download PDF" opens the print window (choose Save as PD
 
 Your data lives on your computer: in the desktop app's user-data folder, or `~/.app-wizard` for the browser version (change it with `APP_WIZARD_DATA=/some/folder`).
 
+## Hosted for testers (`npm run hosted`)
+
+One server, many people. Each browser gets its own sign-in (an HttpOnly cookie) and only ever sees its own account's data. Sessions are stored hashed and survive restarts, so a redeploy doesn't sign people out.
+
+```
+MARGO_DATA=/path/to/persistent/disk ANTHROPIC_API_KEY=sk-ant-... npm run hosted
+```
+
+| Setting | What it does |
+|---|---|
+| `PORT` | Port to listen on (hosting services set this) |
+| `HOST` | Address to listen on (default `0.0.0.0`) |
+| `MARGO_DATA` | Where accounts and data live (default `./data`). Must be a persistent disk, or everyone's data disappears on redeploy. |
+| `ANTHROPIC_API_KEY` | The shared Claude key. Set it in the host's secret settings, never in GitHub. |
+| `MARGO_SECURE_COOKIES` | Set to `0` only when testing over plain http on your own machine. |
+
+Health check: `GET /healthz`.
+
+**What's different from `npm run web`:** saving PDFs to a folder on disk and the browser extension are off (they're desktop features). Job links and job sites people type in can't reach the server's own network. Sign-in attempts are limited to 10 per 15 minutes per address.
+
+**Not yet (next steps):** email verification and password reset, a per-person cap on Claude use, and deploys from GitHub to a staging and a tester address.
+
 ## What's in here
 
 | Folder | What it does |

@@ -35,11 +35,13 @@ export const STANDARD_QUESTIONS = [
   { key: 'disability', question: 'Disability status', type: 'choice', options: ['No, I do not have a disability', 'Yes, I have a disability (or previously had a disability)', 'I don’t wish to answer'], personal: true },
 ];
 
-export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude, now = () => new Date(), onEvent = () => {} }) {
+// persistSession: the desktop app remembers who's logged in between launches (session.json).
+// The hosted server turns it off and keeps one createApi per visitor instead (server/hosted.mjs).
+export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude, now = () => new Date(), onEvent = () => {}, persistSession = true }) {
   const accounts = new Accounts(base);
   let session = null; // { account, store }
   const sessionFile = path.join(base, 'session.json');
-  try { const s = JSON.parse(fs.readFileSync(sessionFile, 'utf8')); const a = accounts.list().find((x) => x.id === s.id); if (a) session = { account: accounts.public(a), store: accounts.storeFor(a.id) }; } catch {}
+  if (persistSession) try { const s = JSON.parse(fs.readFileSync(sessionFile, 'utf8')); const a = accounts.list().find((x) => x.id === s.id); if (a) session = { account: accounts.public(a), store: accounts.storeFor(a.id) }; } catch {}
 
   const busy = new Map();
   const store = () => { if (!session) throw new UserError('Please log in.'); return session.store; };
@@ -50,7 +52,7 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
     return c;
   };
   const claudeReady = () => { try { claude(); return true; } catch { return false; } };
-  const setLogin = (acct) => { session = { account: acct, store: accounts.storeFor(acct.id) }; fs.writeFileSync(sessionFile, JSON.stringify({ id: acct.id })); return acct; };
+  const setLogin = (acct) => { session = { account: acct, store: accounts.storeFor(acct.id) }; if (persistSession) fs.writeFileSync(sessionFile, JSON.stringify({ id: acct.id })); return acct; };
   const jobById = (jid) => { const j = store().get('jobs').list.find((x) => x.id === jid); if (!j) throw new UserError('That job is no longer in your list.'); return j; };
   const saveJob = (job) => store().update('jobs', (js) => { const i = js.list.findIndex((x) => x.id === job.id); if (i >= 0) js.list[i] = job; else js.list.unshift(job); });
   const progress = (task, text) => onEvent({ type: 'progress', task, text });
@@ -61,7 +63,7 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
     'auth.status': () => ({ loggedIn: Boolean(session), account: session?.account || null, hasAccounts: accounts.list().length > 0 }),
     'auth.create': (a) => { const acct = setLogin(accounts.create(a)); store().update('profile', (p) => { p.contact = { ...p.contact, name: acct.name, email: acct.email }; }); store().update('setup', (s) => { s.done = [...new Set([...s.done, 1])]; s.step = 2; }); return acct; },
     'auth.login': (a) => setLogin(accounts.login(a)),
-    'auth.logout': () => { session = null; try { fs.unlinkSync(sessionFile); } catch {} return true; },
+    'auth.logout': () => { session = null; if (persistSession) try { fs.unlinkSync(sessionFile); } catch {} return true; },
 
     // ----- overview -----
     'app.overview': () => {
@@ -911,7 +913,9 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
     if (!fn) throw new UserError(`Unknown action: ${method}`);
     return fn(args || {});
   }
-  return { call, methods, get session() { return session; }, store };
+  // restore: sign a visitor back in by account id (the hosted server uses it after a restart).
+  const restore = (accountId) => { const a = accounts.list().find((x) => x.id === accountId); if (a) setLogin(accounts.public(a)); return Boolean(a); };
+  return { call, methods, get session() { return session; }, store, restore };
 }
 
 async function inBatches(items, size, fn) {
