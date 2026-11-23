@@ -303,6 +303,7 @@ table.t td { padding: 12px 16px; border-top: 1px solid var(--line); vertical-ali
 .login .or { display: flex; align-items: center; gap: var(--s3); color: var(--ink-muted); font-size: 13px; }
 .login .or::before, .login .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .login .linkedin { text-align: center; }
+.dev-skip { margin-top: var(--s5); padding-top: var(--s3); border-top: 1px dashed var(--line); display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--s3); }
 .login .dev-skip { margin-top: var(--s4); padding-top: var(--s3); border-top: 1px dashed var(--line); display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--s3); }
 .help-body { white-space: pre-wrap; font-size: 17px; line-height: 28px; max-width: 720px; }
 @media print { .top, .drawer { display: none; } }

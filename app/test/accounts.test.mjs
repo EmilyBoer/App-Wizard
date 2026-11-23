@@ -100,6 +100,14 @@ test('LinkedIn sign-in makes an account once, and links to an existing confirmed
 
 test('developer skip works only in developer mode and lands with setup done', async () => {
   await assert.rejects(make().call('dev.skip'), /own computer/i);
+  // Inside setup, on your own account: finishes setup and keeps your answers.
+  const mine = make({ devMode: true, mailer: inbox() });
+  await mine.call('auth.create', { name: 'Emily', email: 'emily@example.com', password: 'password-one' });
+  assert.ok(!(await mine.call('app.overview')).setup.done.includes(10));
+  await mine.call('dev.finishSetup');
+  assert.ok((await mine.call('app.overview')).setup.done.includes(10));
+  assert.equal((await mine.call('profile.get')).contact.name, 'Emily');
+  await assert.rejects(make({ mailer: inbox() }).call('dev.finishSetup'), /own computer/i);
   const api = make({ devMode: true, mailer: inbox() });
   assert.equal((await api.call('auth.status')).dev, true);
   const r = await api.call('dev.skip');

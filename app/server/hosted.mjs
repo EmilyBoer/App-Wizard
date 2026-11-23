@@ -42,7 +42,7 @@ const COOKIE = 'margo_sid';
 const SESSION_DAYS = 30;
 const IDLE_MS = 2 * 60 * 60 * 1000; // drop an idle visitor's in-memory state after 2 hours (they stay signed in)
 // Actions that read or write paths on the computer running Margo, or talk to the browser extension.
-const REFUSED = new Set(['docs.pdfSaved', 'ext.token', 'ext.fill', 'ext.answer', 'ext.submitted', 'dev.skip']);
+const REFUSED = new Set(['docs.pdfSaved', 'ext.token', 'ext.fill', 'ext.answer', 'ext.submitted', 'dev.skip', 'dev.finishSetup']);
 // Sign-ins get a fresh session id. Limited ones are slowed down after 10 tries in 15 minutes.
 const AUTH = new Set(['auth.login', 'auth.create', 'auth.reset']);
 const LIMITED = new Set([...AUTH, 'auth.requestReset', 'auth.verify']);

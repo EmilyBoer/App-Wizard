@@ -217,6 +217,7 @@ export async function render(root, params, app) {
   const back = /back=1/.test(location.hash);
   let st = await call('builder.status');
   let answers = await call('builder.answers');
+  const dev = (await call('auth.status')).dev;
   const list = Q.filter((q) => !q.when || q.when(st) || q.id === qid);
   let idx = Math.max(0, list.findIndex((q) => q.id === qid));
   if (!qid) idx = Math.max(0, list.findIndex((q) => q.id === (app.overview.setup.at || list[0].id)));
@@ -247,7 +248,10 @@ export async function render(root, params, app) {
 <div style="height:8px;border-radius:999px;background:var(--line);overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--spark-deep);border-radius:999px"></div></div></div>
 <div><h1 style="margin-top:24px">${typeof q.ask === 'function' ? q.ask(st) : q.ask}</h1><p class="muted" style="font-size:18px;line-height:28px">${typeof q.help === 'function' ? q.help(st) : q.help}</p></div>
 <div id="qbody" class="stack"></div>
-<div class="foot" id="qfoot"></div></div>`;
+<div class="foot" id="qfoot"></div>
+${dev && !back ? `<div class="dev-skip"><span class="tiny muted">Developer skip:</span> <button type="button" class="btn link small" data-devnext>Skip this question</button> <button type="button" class="btn link small" data-devall>Skip the rest of setup</button></div>` : ''}</div>`;
+    root.querySelector('[data-devnext]')?.addEventListener('click', () => { dirty = false; if (idx >= list.length - 1) root.querySelector('[data-devall]').click(); else go(idx + 1); });
+    root.querySelector('[data-devall]')?.addEventListener('click', async (e) => { await act(e.currentTarget, () => call('dev.finishSetup')); dirty = false; document.body.classList.remove('building'); await app.refresh(); app.go('#/journey'); });
     const body = root.querySelector('#qbody'), foot = root.querySelector('#qfoot');
     if (q.enter && !q._entered) {
       body.innerHTML = working('Almost there: finishing reading your files…') + '<span data-progress="builder" class="small muted"></span>';

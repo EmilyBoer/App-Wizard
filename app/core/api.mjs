@@ -95,6 +95,13 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
       store().update('setup', (x) => { x.done = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; x.step = 10; });
       return { account: session.account, fresh: true };
     },
+    // Developer skip inside setup: marks setup finished for whoever is signed in. Keeps their answers.
+    'dev.finishSetup': () => {
+      if (!devMode) throw new UserError('That only works when Margo runs on your own computer.');
+      if (!session) throw new UserError('Please log in.');
+      store().update('setup', (x) => { x.done = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; x.step = 10; });
+      return true;
+    },
     'auth.create': async (a) => { const acct = setLogin(accounts.create(a)); const v = await sendVerify(acct).catch(() => ({})); store().update('profile', (p) => { p.contact = { ...p.contact, name: acct.name, email: acct.email }; }); store().update('setup', (s) => { s.done = [...new Set([...s.done, 1])]; s.step = 2; }); return { ...acct, devLink: v.devLink || null }; },
     'auth.login': (a) => setLogin(accounts.login(a)),
     'auth.logout': () => { session = null; if (persistSession) try { fs.unlinkSync(sessionFile); } catch {} return true; },
