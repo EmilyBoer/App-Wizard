@@ -113,7 +113,7 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
       const counts = Object.fromEntries(STATUSES.map((k) => [k, tracker.list.filter((t) => t.status === k).length]));
       return {
         account: session.account, setup: { ...setup, steps: SETUP_STEPS },
-        hasKey: Boolean(settings.claudeKey || process.env.ANTHROPIC_API_KEY), builtInKey: !settings.claudeKey && Boolean(process.env.ANTHROPIC_API_KEY),
+        hasKey: Boolean(settings.claudeKey || process.env.ANTHROPIC_API_KEY), builtInKey: !settings.claudeKey && Boolean(process.env.ANTHROPIC_API_KEY), sharedKey: Boolean(process.env.ANTHROPIC_API_KEY),
         counts, followUps: dueFollowUps(tracker), lastFetch: jobs.lastFetch, newJobs: ((tracked) => jobs.list.filter((j) => !j.rated && !j.hiddenBecause && !tracked.has(j.id) && (j.score == null || j.score >= 25)).length)(new Set(tracker.list.filter((t) => t.status !== 'found').map((t) => t.jobId))),
         pending: pendingCount(profile), learning: learningSummary(s.get('learning')), lastBatch: settings.lastBatch || null,
       };
