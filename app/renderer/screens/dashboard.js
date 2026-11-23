@@ -5,7 +5,9 @@ export async function render(root, _p, app) {
   let showWeak = false;
   const paint = async () => {
     const [o, { jobs, lastFetch, hiddenCount }, tr] = await Promise.all([call('app.overview'), call('jobs.list'), call('tracker.list')]);
-    const unrated = jobs.filter((j) => !j.rated);
+    // New matches are jobs you haven't acted on: not rated and not already in Your journey.
+    const tracked = new Set(tr.list.filter((t) => t.status !== 'found').map((t) => t.jobId));
+    const unrated = jobs.filter((j) => !j.rated && !tracked.has(j.id));
     const fresh = showWeak ? unrated : unrated.filter((j) => j.score == null || j.score >= 25 || j.fromAlert || j.addedBy);
     const weak = unrated.length - fresh.length;
     const ready = tr.list.filter((t) => t.status === 'ready');
@@ -38,8 +40,15 @@ ${fresh.length ? `<div class="grid">${fresh.slice(0, 24).map((j) => jobCard(j)).
   };
   const pipeCard = (t) => `<a class="job" href="${t.jobId ? `#/job/${encodeURIComponent(t.jobId)}` : '#/tracker'}"><div class="row between">${tag(tr_label(t.status), STATUS_TAG[t.status])}</div><div class="t">${esc(t.title)}</div><div class="small muted">${esc([t.company, t.salary, t.location].filter(Boolean).join(' · '))}</div>${t.status === 'ready' ? '<span class="small"><b>Resume and letter ready.</b> Check and send.</span>' : ''}</a>`;
   // No fit labels: one plain sentence about why, and the next step.
-  const jobCard = (j) => { const href = `#/job/${encodeURIComponent(j.id)}`; return `<article class="job"><div class="row between">${j.needsText ? tag(j.fromAlert ? `From ${j.fromAlert}` : 'Added by you', 'muted') : '<span></span>'}<span class="score muted">${esc(posted(j))}</span></div><a class="t" href="${href}" style="text-decoration:none">${esc(j.title)}</a><div class="small muted">${esc([j.company, j.location, j.pay].filter(Boolean).join(' · '))}</div>${j.needsText ? `<span class="why">Paste the description so we can check the fit.</span><a class="btn small secondary" href="${href}">Paste the description</a>` : `<span class="why">${esc(j.why || (j.scoreReasons || []).join(' · '))}</span><a class="btn small primary" href="${href}/draft">Draft my application</a>`}</article>`; };
+  const jobCard = (j) => { const href = `#/job/${encodeURIComponent(j.id)}`; return `<article class="job"><div class="row between">${j.needsText ? tag(j.fromAlert ? `From ${j.fromAlert}` : 'Added by you', 'muted') : '<span></span>'}<span class="score muted">${esc(posted(j))}</span></div><a class="t" href="${href}" style="text-decoration:none">${esc(j.title)}</a><div class="small muted">${esc([j.company, j.location, j.pay].filter(Boolean).join(' · '))}</div>${j.needsText ? `<span class="why">Paste the description so we can check the fit.</span><a class="btn small secondary" href="${href}">Paste the description</a>` : `<span class="why">${esc(j.why || (j.scoreReasons || []).join(' · '))}</span><div class="job-acts"><a class="btn small primary" href="${href}/draft">Draft my application</a><button type="button" class="btn link small" data-act="nope" data-id="${esc(j.id)}" data-title="${esc(j.title)}">Not for me</button></div>`}</article>`; };
   on(root, {
+    // Not for me: say why (optional), and we show fewer like it. Same reasons as on the job page.
+    nope: (b) => modal(`<h2>Not for you?</h2><p class="muted">${esc(b.dataset.title)}. Tell us why and we’ll show fewer like it.</p><div class="row" id="rs">${['Wrong kind of work', 'Too junior', 'Too senior', 'Pay too low', 'Location', 'Type of employer', 'Title was misleading', 'Something else'].map((r) => `<button class="chip" aria-pressed="false">${r}</button>`).join('')}</div><div class="row"><button class="btn primary" id="sn">Done</button><button class="btn link" data-close>Keep it</button></div>`, {
+      onMount: (m, close) => {
+        m.querySelectorAll('#rs .chip').forEach((c) => (c.onclick = () => c.setAttribute('aria-pressed', c.getAttribute('aria-pressed') === 'true' ? 'false' : 'true')));
+        m.querySelector('#sn').onclick = async () => { const reasons = [...m.querySelectorAll('#rs [aria-pressed=true]')].map((c) => c.textContent.replace(/^✓\s*/, '')); const r = await call('jobs.rate', { id: b.dataset.id, value: 'no', reasons }); close(); toast(r.newRules?.length ? `Learned: ${r.newRules[0].text}` : 'Got it. We’ll show fewer like this.'); paint(); app.refresh(); };
+      },
+    }),
     weak: () => { showWeak = true; paint(); },
     refresh: (b) => act(b, async () => { const r = await call('jobs.refresh'); toast(`${r.kept} matches, ${r.hidden} hidden by your rules.`); paint(); app.refresh(); }),
     batch: (b) => act(b, async () => { const r = await call('batch.run'); toast(`${r.made} application${r.made === 1 ? '' : 's'} ready.`); paint(); app.refresh(); }),

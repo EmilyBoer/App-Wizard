@@ -25,7 +25,7 @@ export const STANDARD_QUESTIONS = [
   { key: 'authorized', question: 'Are you legally authorized to work in the United States?', type: 'choice', options: ['Yes', 'No'] },
   { key: 'sponsorship', question: 'Will you now or in the future require visa sponsorship?', type: 'choice', options: ['No', 'Yes'] },
   { key: 'salary', question: 'What are your salary expectations?', type: 'text', personal: true },
-  { key: 'start', question: 'When can you start?', type: 'text' },
+  { key: 'start', question: 'Estimated earliest start date', type: 'text' },
   { key: 'relocate', question: 'Are you willing to relocate?', type: 'choice', options: ['No', 'Yes', 'Open to it for the right role'], personal: true },
   { key: 'leaving', question: 'Why are you leaving (or why did you leave) your current role?', type: 'text', personal: true },
   { key: 'hear', question: 'How did you hear about this job?', type: 'text' },
@@ -114,7 +114,7 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
       return {
         account: session.account, setup: { ...setup, steps: SETUP_STEPS },
         hasKey: Boolean(settings.claudeKey || process.env.ANTHROPIC_API_KEY), builtInKey: !settings.claudeKey && Boolean(process.env.ANTHROPIC_API_KEY),
-        counts, followUps: dueFollowUps(tracker), lastFetch: jobs.lastFetch, newJobs: jobs.list.filter((j) => !j.rated && !j.hiddenBecause && (j.score == null || j.score >= 25)).length,
+        counts, followUps: dueFollowUps(tracker), lastFetch: jobs.lastFetch, newJobs: ((tracked) => jobs.list.filter((j) => !j.rated && !j.hiddenBecause && !tracked.has(j.id) && (j.score == null || j.score >= 25)).length)(new Set(tracker.list.filter((t) => t.status !== 'found').map((t) => t.jobId))),
         pending: pendingCount(profile), learning: learningSummary(s.get('learning')), lastBatch: settings.lastBatch || null,
       };
     },

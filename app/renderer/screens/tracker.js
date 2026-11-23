@@ -3,18 +3,21 @@ import { call, esc, tag, toast, on, modal, STATUS_TAG } from '../lib.js';
 export async function render(root, _p, app, name) {
   const embedded = name === 'embedded';
   let view = sessionStorage.getItem('aw-tracker-view') || 'board';
-  let filter = 'active';
+  let filter = 'all';
   const paint = async () => {
     const { list, statuses, labels } = await call('tracker.list');
     const active = ['saved', 'ready', 'applied', 'interviewing', 'offer'];
-    const shown = list.filter((t) => filter === 'all' || (filter === 'active' ? active.includes(t.status) : t.status === filter));
+    // Found, skipped and closed jobs stay out of Your journey; it's the jobs you're acting on.
+    const everything = [...active, 'rejected'];
+    const shown = list.filter((t) => (filter === 'all' ? everything.includes(t.status) : filter === 'active' ? active.includes(t.status) : t.status === filter));
+    const FILTERS = ['all', 'active', 'ready', 'applied', 'interviewing', 'offer', 'rejected'];
     const today = new Date().toISOString().slice(0, 10);
     root.innerHTML = `<div class="${embedded ? 'stack' : 'page'}">
 <div class="head"><div>${embedded ? '<h2>Your journey</h2>' : '<h1>Your journey</h1>'}<p class="muted small">Every job you’ve saved, applied to or heard back from, with the exact files you sent.</p></div>
 <div class="row"><button class="btn" data-act="view">${view === 'board' ? 'Show as a table' : 'Show as a board'}</button><button class="btn" data-act="csv">Download as spreadsheet (CSV)</button><button class="btn secondary" data-act="addapplied">Add a job I applied to</button></div></div>
-<div class="row">${['active', 'all', ...statuses].map((s) => `<button class="chip" aria-pressed="${filter === s}" data-act="filter" data-s="${s}">${s === 'active' ? 'Active' : s === 'all' ? 'Everything' : labels[s]} (${s === 'all' ? list.length : s === 'active' ? list.filter((t) => active.includes(t.status)).length : list.filter((t) => t.status === s).length})</button>`).join('')}</div>
+<div class="row">${FILTERS.map((s) => `<button class="chip" aria-pressed="${filter === s}" data-act="filter" data-s="${s}">${s === 'active' ? 'Active' : s === 'all' ? 'Everything' : labels[s]} (${s === 'all' ? list.filter((t) => everything.includes(t.status)).length : s === 'active' ? list.filter((t) => active.includes(t.status)).length : list.filter((t) => t.status === s).length})</button>`).join('')}</div>
 ${!list.length ? '<div class="empty"><b>Nothing tracked yet.</b><span class="muted small">Say yes to a job, make an application, or add one you applied to elsewhere.</span></div>' : view === 'board' ? `
-<div class="kanban">${(filter === 'active' ? active : filter === 'all' ? statuses : [filter]).map((s) => { const items = shown.filter((t) => t.status === s); return `<div class="lane"><h3><span>${labels[s]}</span><span class="muted">${items.length}</span></h3>${items.map((t) => card(t, today)).join('') || '<span class="tiny muted">None</span>'}</div>`; }).join('')}</div>` : `
+<div class="kanban">${(filter === 'active' ? active : filter === 'all' ? everything : [filter]).map((s) => { const items = shown.filter((t) => t.status === s); return `<div class="lane"><h3><span>${labels[s]}</span><span class="muted">${items.length}</span></h3>${items.map((t) => card(t, today)).join('') || '<span class="tiny muted">None</span>'}</div>`; }).join('')}</div>` : `
 <div class="scrollx"><table class="t"><thead><tr><th>Job</th><th>Status</th><th>Fit</th><th>Pay</th><th>Found</th><th>Applied</th><th>Files</th><th>Next</th></tr></thead><tbody>
 ${shown.map((t) => `<tr><td><b>${t.jobId ? `<a href="#/job/${encodeURIComponent(t.jobId)}">${esc(t.title)}</a>` : esc(t.title)}</b><br><span class="small muted">${esc(t.company)}${t.location ? ` · ${esc(t.location)}` : ''}</span></td>
 <td><select data-status="${t.id}" style="width:auto;padding:4px 8px">${statuses.map((s) => `<option value="${s}" ${s === t.status ? 'selected' : ''}>${labels[s]}</option>`).join('')}</select></td>

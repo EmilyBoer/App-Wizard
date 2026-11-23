@@ -99,9 +99,9 @@ ${li.length ? `<div class="list">${li.map((m) => `<div class="item">${tag('Linke
     body: (st) => { const v = st.want.maxAgeDays ?? 14; return `<div class="row">${[[3, 'Past 3 days'], [7, 'Past week'], [14, 'Past 2 weeks'], [30, 'Past month'], [0, 'Any time']].map(([n, l]) => radio('age', String(n), l, Number(v) === n)).join('')}</div>`; },
     next: (el) => call('want.save', { maxAgeDays: Number(el.querySelector('input[name=age]:checked')?.value ?? 14) }) },
 
-  { id: 'relocate', ask: 'Would you move for the right job?', help: 'Applications often ask. We’ll answer the same way every time.',
-    body: (st, ui) => `<div class="row">${['No', 'Yes', 'Possibly, for the right role'].map((o) => radio('rel', o, o, String(ui.answers.relocate || '').split(':')[0] === o || (o.startsWith('Possibly') && /^Open to it/.test(ui.answers.relocate || '')))).join('')}</div><label class="field" id="citiesbox">Which cities or regions?<input type="text" id="cities" value="${esc(ui.answers.relocateCities)}" placeholder="e.g. Seattle, Denver, anywhere on the West Coast"></label>`,
-    mount(el) { const box = el.querySelector('#citiesbox'); const sync = () => box.classList.toggle('hidden', !['Yes', 'Possibly, for the right role'].includes(el.querySelector('input[name=rel]:checked')?.value)); el.querySelectorAll('input[name=rel]').forEach((r) => (r.onchange = sync)); sync(); },
+  { id: 'relocate', ask: 'Relocation', help: 'Are you open to moving for a job? Applications often ask, and we’ll answer the same way every time.',
+    body: (st, ui) => `<div class="row">${['Yes', 'No'].map((o) => radio('rel', o, o, String(ui.answers.relocate || '').split(':')[0] === o || (o === 'Yes' && /^(Possibly|Open to it)/.test(ui.answers.relocate || '')))).join('')}</div><label class="field" id="citiesbox">Which cities or regions?<input type="text" id="cities" value="${esc(ui.answers.relocateCities)}" placeholder="e.g. Seattle, Denver, anywhere on the West Coast"></label>`,
+    mount(el) { const box = el.querySelector('#citiesbox'); const sync = () => box.classList.toggle('hidden', !['Yes'].includes(el.querySelector('input[name=rel]:checked')?.value)); el.querySelectorAll('input[name=rel]').forEach((r) => (r.onchange = sync)); sync(); },
     async next(el) {
       const v = el.querySelector('input[name=rel]:checked')?.value; if (!v) { toast('Pick one.', true); return false; }
       const cities = el.querySelector('#cities').value.trim();
@@ -109,9 +109,9 @@ ${li.length ? `<div class="list">${li.map((m) => `<div class="item">${tag('Linke
       await call('answers.save', { key: 'relocateCities', question: 'Where would you relocate?', answer: v === 'No' ? '' : cities });
     } },
 
-  { id: 'start', when: () => false, ask: 'When could you start a new job?', help: 'We’ll use this on applications that ask.',
+  { id: 'start', when: () => false, ask: 'Estimated earliest start date', help: 'We’ll use this on applications that ask.',
     body: (st, ui) => `<div class="row">${['Right away', 'With 2 weeks’ notice', 'In about a month'].map((o) => radio('start', o, o, ui.answers.start === o)).join('')}<label class="radio"><input type="radio" name="start" value="date" ${ui.answers.start && !['Right away', 'With 2 weeks’ notice', 'In about a month'].includes(ui.answers.start) ? 'checked' : ''}>A specific date</label></div><input type="date" id="sdate" style="max-width:220px">`,
-    async next(el) { let v = el.querySelector('input[name=start]:checked')?.value; if (!v) { toast('Pick one.', true); return false; } if (v === 'date') { const d = el.querySelector('#sdate').value; if (!d) { toast('Pick the date.', true); return false; } v = new Date(d + 'T12:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); } await call('answers.save', { key: 'start', question: 'When can you start?', answer: v }); } },
+    async next(el) { let v = el.querySelector('input[name=start]:checked')?.value; if (!v) { toast('Pick one.', true); return false; } if (v === 'date') { const d = el.querySelector('#sdate').value; if (!d) { toast('Pick the date.', true); return false; } v = new Date(d + 'T12:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); } await call('answers.save', { key: 'start', question: 'Estimated earliest start date', answer: v }); } },
 
   { id: 'never', when: () => false, ask: 'Anything you never want to see?', help: 'Jobs with these get hidden. You can change this any time.', skip: 'Nothing comes to mind',
     body: (st) => { const all = [...new Set(['Sales targets', 'Night or weekend shifts', 'Relocation', 'Unpaid trial work', 'On-call', ...(st.want.dealBreakers || [])])]; return `<div class="row">${all.map((d) => chip(d, (st.want.dealBreakers || []).includes(d), `data-d="${esc(d)}"`)).join('')}</div><input type="text" id="deal" placeholder="Add your own, press Enter" style="max-width:320px">`; },
@@ -400,8 +400,8 @@ ${section('What you’re looking for', [
   ])}
 ${section('Answers for applications', [
     row('Salary expectations', esc(answers.salary), 'edit:pay'),
-    row('Would you move?', esc(answers.relocate), 'edit:relocate'),
-    row('When you could start', esc(answers.start), 'edit:start'),
+    row('Relocation', esc(answers.relocate), 'edit:relocate'),
+    row('Estimated earliest start date', esc(answers.start), 'edit:start'),
   ])}
 ${section('How Margo works for you', [
     row('Where you look', (hosts.length ? hosts.map(([h, n]) => `${esc(h)} <span class="muted">(${n})</span>`).join(' · ') : '<span class="muted">Learned from the job links you add</span>') + `<div class="small muted">${watched} compan${watched === 1 ? 'y' : 'ies'} checked for new jobs every day</div>`, '#/setup/7'),
@@ -458,7 +458,7 @@ function wireAdder(el, kind, ui) {
 }
 
 // ----- Change one answer later, in an overlay (setup itself only runs the first time) -----
-const EDIT_TITLE = { sweetspot: 'Job titles we look for', interviewed: 'Where you’ve interviewed recently', fit: 'Jobs that suit you', recent: 'How recent', reach: 'Aspirational job', where: 'Where and how you want to work', pay: 'Pay', never: 'Never show me', relocate: 'Would you move?', start: 'When you could start', linkedin: 'LinkedIn' };
+const EDIT_TITLE = { sweetspot: 'Job titles we look for', interviewed: 'Where you’ve interviewed recently', fit: 'Jobs that suit you', recent: 'How recent', reach: 'Aspirational job', where: 'Where and how you want to work', pay: 'Pay', never: 'Never show me', relocate: 'Relocation', start: 'Estimated earliest start date', linkedin: 'LinkedIn' };
 export async function editAnswer(qid, onSaved) {
   const q = Q.find((x) => x.id === qid);
   if (!q) return;

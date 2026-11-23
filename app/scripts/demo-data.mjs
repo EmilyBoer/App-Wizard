@@ -104,7 +104,7 @@ export const ANSWERS = [
   ['salary', 'What are your salary expectations?', '$150,000 to $175,000 base, depending on the full package.'],
   ['relocate', 'Are you willing to relocate?', 'No'],
   ['relocateCities', 'Where would you relocate?', ''],
-  ['start', 'When can you start?', 'Two weeks after an offer'],
+  ['start', 'Estimated earliest start date', 'Two weeks after an offer'],
   ['authorized', 'Are you legally authorized to work in the United States?', 'Yes'],
   ['sponsorship', 'Will you now or in the future require visa sponsorship?', 'No'],
   ['portfolio', 'Portfolio or website', PERSON.website],
@@ -168,12 +168,46 @@ Build the content engine: founder thought leadership, customer stories, SEO and 
   },
 ];
 
+// Fresh matches Jordan hasn't acted on yet (real postings, November 2026).
+JOBS.push(
+  {
+    key: 'webflow-social', company: 'Webflow', board: 'webflow', jobId: 'social-media-lead', title: 'Social Media Lead',
+    location: 'United States (Remote)', postedAt: at('2026-11-20T17:00:00Z'),
+    url: 'https://www.builtinboston.com/job/social-media-lead/6732807',
+    description: `Social Media Lead at Webflow
+Remote, United States. Full-time. $121,000 - $219,000.
+Lead Webflow's social strategy across LinkedIn, X, Instagram, YouTube and emerging platforms: how the brand shows up, what stories it tells and how the audience grows. Drive always-on content and product and brand moments, and work across teams so the best ideas break through. 7 to 10 years in social media, brand storytelling or digital content strategy.`,
+    status: 'new',
+  },
+  {
+    key: 'zillow-social', company: 'Zillow', board: 'zillow', jobId: 'senior-specialist-corporate-social', title: 'Senior Specialist, Corporate Social Media & Content Strategy',
+    location: 'United States (Remote)', postedAt: at('2026-11-08T17:00:00Z'),
+    url: 'https://www.builtincolorado.com/job/senior-specialist-corporate-social-media/8646276',
+    description: `Senior Specialist, Corporate Social Media & Content Strategy at Zillow
+Remote, United States. Full-time. $86,000 - $145,000.
+Shape how Zillow shows up on LinkedIn, Instagram, YouTube and emerging platforms: platform-native storytelling that connects the brand, business priorities and culture. Own day-to-day content planning, publishing and approvals on corporate channels. Sits on the Communications team. 5+ years in social media, digital communications or content strategy.`,
+    status: 'new',
+  },
+  {
+    key: 'elastic', company: 'Elastic', board: 'elastic', jobId: 'regional-content-strategist-public-sector', title: 'Regional Content Strategist, Global Public Sector',
+    location: 'United States (Remote)', postedAt: at('2026-11-21T17:00:00Z'),
+    url: 'https://stillopen.work/remote-content-and-media-jobs',
+    description: `Regional Content Strategist, Global Public Sector at Elastic
+Remote, United States. Full-time. $89,100 - $140,900.
+Plan and write content for Elastic's public sector audience: thought leadership, customer stories and campaign content for government and education buyers, working with field marketing and sales. B2B software content experience.`,
+    status: 'new',
+  },
+);
+
 // Why each job fits (what Margo's matching would say), by job key.
 export const FIT = {
   a16z: { verdict: 'good', why: 'You’ve owned social and short-form for a fast-growing brand and you work inside a content operation, which they call out. The stretch: your social work has been B2B software, not crypto or deep tech.', direction: { label: 'stretch', note: 'More social-led than your current role.' }, mission: { label: 'love', note: 'Technology and founders.' }, needs: ['Owning social for a high-growth brand', 'Short-form clips', 'Analytics', 'Adapting voice across platforms'], gaps: ['Have you posted as a brand on X, not just LinkedIn?'] },
   webflow: { verdict: 'strong', why: 'This is your job now, at a bigger brand: content strategy, the editorial calendar and writing the stories, for a B2B SaaS audience. You have the 8+ years they ask for.', direction: { label: 'core', note: '' }, mission: { label: 'love', note: 'B2B SaaS.' }, needs: ['Content strategy', 'Editorial calendar', 'Long- and short-form writing', 'B2B SaaS'], gaps: [] },
   'zillow-agents': { verdict: 'good', why: 'You’ve grown audiences and run creator-style video for B2B buyers, which maps well to agents. It pays less than you want at the top of the range.', direction: { label: 'core', note: '' }, mission: { label: 'fine', note: 'Real estate is new to you.' }, needs: ['Social-first content', 'Community building', 'Storytelling'], gaps: ['Any experience with ambassador or influencer programs?'] },
   'zillow-studio': { verdict: 'strong', why: 'You rebuilt 300 help articles around search data and grew organic traffic fivefold. They want exactly that, applied to AI-powered search.', direction: { label: 'core', note: '' }, mission: { label: 'fine', note: '' }, needs: ['SEO and GEO', 'Performance data', 'Content strategy'], gaps: [] },
+  'webflow-social': { verdict: 'good', why: 'You’ve grown LinkedIn from 9K to 52K and run a short-form series, for a B2B software audience like Webflow’s. They want 7 to 10 years focused on social; yours is broader content.', direction: { label: 'stretch', note: 'More social-led than your current role.' }, mission: { label: 'love', note: 'B2B SaaS.' }, needs: ['Social strategy across platforms', 'Audience growth', 'Brand storytelling'], gaps: [] },
+  'zillow-social': { verdict: 'good', why: 'Platform-native storytelling and owning a content calendar are what you do now. The top of the range is close to your floor.', direction: { label: 'core', note: '' }, mission: { label: 'fine', note: '' }, needs: ['Content planning and publishing', 'LinkedIn', 'Storytelling'], gaps: [] },
+  elastic: { verdict: 'good', why: 'B2B software content, customer stories and thought leadership are your core work. Public sector buyers are new to you.', direction: { label: 'core', note: '' }, mission: { label: 'fine', note: 'Government and education buyers.' }, needs: ['B2B content strategy', 'Customer stories', 'Thought leadership'], gaps: ['Have you written for government buyers before?'] },
   lightfield: { verdict: 'stretch', why: 'Strong on the work, but it’s on-site in San Francisco and you only want remote.', direction: { label: 'reach', note: 'Head of Content is a step up.' }, mission: { label: 'love', note: '' }, needs: ['Founder thought leadership', 'Customer stories', 'SEO and AEO'], gaps: [] },
 };
 

@@ -119,15 +119,20 @@ ${own ? '' : `<button type="button" class="btn small" data-reset style="align-se
     const stage = el.querySelector('#dz-stage'), scaleBox = el.querySelector('#dz-scale');
     const [pw] = PAGE_PX[d.paper === 'a4' ? 'a4' : 'letter'];
     const pad = stage.clientWidth > 600 ? 40 : 16;
-    const scale = Math.min(1, (stage.clientWidth - pad * 2) / pw);
+    const ph = parseFloat(frame.style.height) || 1056;
+    // Side by side, the whole resume fits in the window and stays put while the settings scroll past.
+    const sideBySide = window.innerWidth > 960;
+    const room = window.innerHeight - 84 - (el.querySelector('.dz-bar')?.offsetHeight || 30) - 10 - 24;
+    const scale = Math.min(1, (stage.clientWidth - pad * 2) / pw, sideBySide ? Math.max(0.3, (room - pad * 2) / ph) : 1);
     scaleBox.style.transform = `scale(${scale})`;
     scaleBox.style.width = pw + 'px';
     scaleBox.style.left = Math.max(pad, (stage.clientWidth - pw * scale) / 2) + 'px';
     scaleBox.style.top = pad + 'px';
-    stage.style.height = (parseFloat(frame.style.height) || 1056) * scale + pad * 2 + 'px';
+    stage.style.height = ph * scale + pad * 2 + 'px';
   }
   const ro = new ResizeObserver(() => fit());
   ro.observe(el.querySelector('#dz-stage'));
+  window.addEventListener('resize', fit);
 
   async function save(patch) {
     await call('design.save', patch);
