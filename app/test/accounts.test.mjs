@@ -116,7 +116,7 @@ test('hosted: the sales page is the front door, Margo is at /app/, and developer
   const s = await startHosted({ base: tmpDir(), port: 0, host: '127.0.0.1', fetchImpl: fakeFetch(), claudeFactory: fakeClaude(), secureCookies: false, guardFetch: false, mailer: inbox(), linkedin: null });
   try {
     const home = await (await fetch(`http://127.0.0.1:${s.port}/`)).text();
-    assert.match(home, /AI Apply/); assert.match(home, /\/app\/#\/signup/);
+    assert.match(home, /on autopilot/); assert.match(home, /\/app\/#\/signup/);
     const app = await (await fetch(`http://127.0.0.1:${s.port}/app/`)).text();
     assert.match(app, /app\.js/);
     const css = await fetch(`http://127.0.0.1:${s.port}/app/app.css`);
