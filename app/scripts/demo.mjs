@@ -81,7 +81,9 @@ function answer(system, content) {
   }
   if (system.includes('interview cheat sheet')) {
     const p = profileFrom(text);
-    return { ...D.CHEAT, questions: D.CHEAT.questions.map(({ match, ...q }) => ({ ...q, from: [findBullet(p, match)?.id].filter(Boolean) })) };
+    const ref = (m) => (m ? [findBullet(p, m)?.id].filter(Boolean) : []);
+    const proof = (m) => (m ? findBullet(p, m)?.text || '' : '');
+    return { ...D.CHEAT, role: { ...D.CHEAT.role, theyNeed: D.CHEAT.role.theyNeed.map(({ need, match }) => ({ need, proof: proof(match), from: ref(match) })) }, stories: D.CHEAT.stories.map(({ match, ...x }) => ({ ...x, from: ref(match) })), questions: D.CHEAT.questions.map(({ match, ...q }) => ({ ...q, from: ref(match) })) };
   }
   if (system.includes('preference rules')) return { rules: [] };
   throw new Error('demo Claude: no scripted answer for ' + system.slice(0, 60));

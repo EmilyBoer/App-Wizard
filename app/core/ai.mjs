@@ -266,33 +266,44 @@ export function verifyLetter(draft, profile, voice = {}) {
 
 // ---------- Interview cheat sheet ----------
 
-export async function cheatSheet(claude, { profile, job, interview, research, voice }) {
-  const system = `You make a one-screen interview cheat sheet.
+export async function cheatSheet(claude, { profile, job, interview, research, voice, answers = [] }) {
+  const system = `You make a thorough interview cheat sheet the person reads the night before and glances at during the call.
 ${TRUTH}
 Company facts may only come from the research text or the job posting given. If unsure, leave it out.
-Answers to likely questions use the person's real results (name bullet ids in "from").
+Everything about the person comes from their profile: answers and stories name the bullet ids they use in "from".
+Write in their voice. Plain words, short sentences.
 Shape: {
- "company": {"about": "2 sentences", "recent": ["up to 3 recent things from the research"], "values": ["up to 3"]},
- "role": {"focus": "what this job is really about, 1 sentence", "theyNeed": ["up to 4"]},
+ "talkingPoints": ["the 3 things they most want the interviewer to remember, one sentence each"],
+ "company": {"about": "2 to 3 sentences", "recent": ["up to 4 recent things from the research"], "values": ["up to 4 things they say they care about"]},
+ "role": {"focus": "what this job is really about, 1 sentence", "theyNeed": [{"need": string, "proof": "one line from the profile that shows it, or empty", "from": ["bullet id"]}]},
  "pitch": "a 3 sentence 'tell me about yourself' in their voice",
- "questions": [{"q": string, "answer": "short outline in their voice", "from": ["bullet id"]}],
- "askThem": ["4 good questions to ask"],
+ "pitchLong": "a 2 minute version: 5 to 7 sentences, past to present to why this job",
+ "stories": [{"title": "short name", "situation": string, "action": string, "result": "with the real numbers", "usefulFor": ["kinds of questions it answers"], "from": ["bullet id"]}],
+ "questions": [{"category": "About you|The role|How you work|The company", "q": string, "answer": "short outline in their voice", "from": ["bullet id"]}],
+ "tough": [{"q": "a hard or awkward question, often about a gap", "answer": "an honest way to answer"}],
+ "askThem": [{"category": "The role|The team|Success|The company", "q": string}],
+ "pay": "how to handle the pay question, using their saved answer and the posted range if any",
+ "closing": "a 2 sentence close for the end of the interview",
+ "thankYou": "a short thank-you email to send the same day, 60 to 90 words, with [Name] for the interviewer",
  "watchOuts": ["gaps or tricky spots and how to handle them honestly"]
-}`;
+}
+Give 3 talking points, 4 to 5 stories, 10 to 12 questions across the categories, 3 to 4 tough questions and 6 to 8 questions to ask.`;
   const content = `Interview: ${JSON.stringify(interview || {})}
 Job: ${job.title} at ${job.company}
 ${String(job.description || '').slice(0, 7000)}
 Research (from the company's own pages):
 ${String(research || 'none').slice(0, 8000)}
 Voice: ${(voice?.guide || []).join(' ')}
+Their saved answers: ${answers.filter((a) => a.answer && ['salary', 'start', 'relocate'].includes(a.key)).map((a) => `${a.question} ${a.answer}`).join(' | ') || 'none'}
 Profile: ${JSON.stringify(slimProfile(profile))}`;
-  const out = await claude.json({ system, content, maxTokens: 4000, temperature: 0.3 });
+  const out = await claude.json({ system, content, maxTokens: 9000, temperature: 0.3 });
   const ids = new Set(allBullets(profile).map((b) => b.id));
-  out.questions = (out.questions || []).map((q) => ({ ...q, from: (q.from || []).filter((id) => ids.has(id)) }));
+  const keep = (list) => (list || []).filter((id) => ids.has(id));
+  out.questions = (out.questions || []).map((q) => ({ ...q, from: keep(q.from) }));
+  out.stories = (out.stories || []).map((x) => ({ ...x, from: keep(x.from) }));
+  if (out.role?.theyNeed) out.role.theyNeed = out.role.theyNeed.map((n) => (typeof n === 'string' ? { need: n, proof: '', from: [] } : { ...n, from: keep(n.from) }));
   return out;
 }
-
-// ---------- Chat ----------
 
 export async function chat(claude, { messages, profile, want, job, rules, help = [] }) {
   const system = `You are the Margo helper: kind, calm, practical, a little playful. You help with a job search.

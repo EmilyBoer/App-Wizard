@@ -785,7 +785,8 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
       progress('cheat', `Reading about ${job.company}…`);
       const research = await researchCompany(job.url || '', job.company, { fetchImpl });
       progress('cheat', 'Writing your cheat sheet…');
-      const cheat = await ai.cheatSheet(claude(), { profile: s.get('profile'), job, interview: { round: iv.round, with: iv.with, format: iv.format, start: iv.start }, research: research.text, voice: s.get('voice') });
+      const cheat = await ai.cheatSheet(claude(), { profile: s.get('profile'), job, interview: { round: iv.round, with: iv.with, format: iv.format, start: iv.start }, research: research.text, voice: s.get('voice'), answers: s.get('answers').list });
+      cheat.posted = { pay: job.pay ? payLabel(job.pay) : '', url: job.url || entry?.url || '', location: job.location || '' };
       cheat.researchNote = research.note; cheat.at = now().toISOString();
       s.update('interviews', (x) => { const i = x.list.find((y) => y.id === iid); i.cheat = cheat; });
       return cheat;
