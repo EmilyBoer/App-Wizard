@@ -249,7 +249,13 @@ export async function render(root, params, app) {
 <div><h1 style="margin-top:24px">${typeof q.ask === 'function' ? q.ask(st) : q.ask}</h1><p class="muted" style="font-size:18px;line-height:28px">${typeof q.help === 'function' ? q.help(st) : q.help}</p></div>
 <div id="qbody" class="stack"></div>
 <div class="foot" id="qfoot"></div>
-${dev && !back ? `<div class="dev-skip"><span class="tiny muted">Developer skip:</span> <button type="button" class="btn link small" data-devnext>Skip this question</button> <button type="button" class="btn link small" data-devall>Skip the rest of setup</button></div>` : ''}</div>`;
+${dev && !back ? `<div class="dev-skip"><span class="tiny muted">Developer:</span>
+  ${idx > 0 ? '<button type="button" class="btn link small" data-devprev>Back</button>' : ''}
+  <button type="button" class="btn link small" data-devnext>Skip this question</button>
+  <label class="tiny muted dev-jump">Jump to <select data-devjump>${list.map((x, i) => `<option value="${i}" ${i === idx ? 'selected' : ''}>${i + 1}. ${esc(String(typeof x.ask === 'function' ? x.ask(st) : x.ask).replace(/<[^>]+>/g, '').slice(0, 48))}</option>`).join('')}</select></label>
+  <button type="button" class="btn link small" data-devall>Skip the rest of setup</button></div>` : ''}</div>`;
+    root.querySelector('[data-devprev]')?.addEventListener('click', () => { dirty = false; go(idx - 1); });
+    root.querySelector('[data-devjump]')?.addEventListener('change', (e) => { dirty = false; go(Number(e.target.value)); });
     root.querySelector('[data-devnext]')?.addEventListener('click', () => { dirty = false; if (idx >= list.length - 1) root.querySelector('[data-devall]').click(); else go(idx + 1); });
     root.querySelector('[data-devall]')?.addEventListener('click', async (e) => { await act(e.currentTarget, () => call('dev.finishSetup')); dirty = false; document.body.classList.remove('building'); await app.refresh(); app.go('#/journey'); });
     const body = root.querySelector('#qbody'), foot = root.querySelector('#qfoot');

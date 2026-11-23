@@ -91,7 +91,7 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
       for (const r of [...roles].reverse()) { methods['profile.addRole'](r); for (const b of r.bullets) methods['profile.addBullet']({ company: r.company, text: b }); }
       for (const name of ['CMS publishing', 'QA', 'Webflow', 'Adobe Experience Manager', 'HTML/CSS', 'Project coordination']) methods['profile.addSkill']({ name });
       methods['profile.addEducation']({ degree: 'BA', field: 'Communications', school: 'State University' });
-      methods['want.save']({ titles: ['Web Producer', 'CMS Manager', 'Web Operations Manager'], where: ['remote'], payFloor: 90000 });
+      methods['want.save']({ titles: ['Web Producer', 'Content Manager', 'Web Operations Manager'], where: ['remote'], payFloor: 90000 });
       store().update('setup', (x) => { x.done = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; x.step = 10; });
       return { account: session.account, fresh: true };
     },

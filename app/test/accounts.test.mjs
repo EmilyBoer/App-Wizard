@@ -124,7 +124,7 @@ test('hosted: the sales page is the front door, Margo is at /app/, and developer
   const s = await startHosted({ base: tmpDir(), port: 0, host: '127.0.0.1', fetchImpl: fakeFetch(), claudeFactory: fakeClaude(), secureCookies: false, guardFetch: false, mailer: inbox(), linkedin: null });
   try {
     const home = await (await fetch(`http://127.0.0.1:${s.port}/`)).text();
-    assert.match(home, /on autopilot/); assert.match(home, /\/app\/#\/signup/);
+    assert.match(home, /on autopilot/); assert.match(home, /Expert fit matching/); assert.match(home, /\/app\/#\/signup/);
     const app = await (await fetch(`http://127.0.0.1:${s.port}/app/`)).text();
     assert.match(app, /app\.js/);
     const css = await fetch(`http://127.0.0.1:${s.port}/app/app.css`);
@@ -174,4 +174,26 @@ test('hosted: LinkedIn sign-in checks state, signs in with a fresh cookie, and k
     const again = await fetch(`${u}/auth/linkedin/callback?code=abc&state=${go.searchParams.get('state')}`, { redirect: 'manual' });
     assert.equal(again.headers.get('location'), '/app/#/login/linkedin-failed');
   } finally { await s.close(); }
+});
+
+test('npm run demo builds a filled-in account and a blank one, offline', async () => {
+  const { execFileSync } = await import('node:child_process');
+  const base = tmpDir();
+  const out = execFileSync(process.execPath, ['scripts/demo.mjs'], { env: { ...process.env, APP_WIZARD_DATA: base }, encoding: 'utf8' });
+  assert.match(out, /jordan\.ellis@example\.com/); assert.match(out, /sam\.rivera@example\.com/);
+  const api = createApi({ base, fetchImpl: fakeFetch(), claudeFactory: fakeClaude(), persistSession: false, mailer: inbox() });
+  await api.call('auth.login', { email: 'jordan.ellis@example.com', password: 'MargoDemo2026' });
+  const o = await api.call('app.overview');
+  assert.ok(o.setup.done.includes(10));
+  const t = (await api.call('tracker.list')).list;
+  assert.ok(t.some((x) => x.company === 'Andreessen Horowitz' && x.status === 'interviewing'));
+  assert.equal((await api.call('interviews.list')).filter((i) => i.cheat).length, 1);
+  assert.ok((await api.call('docs.list')).filter((d) => d.kind === 'letter').length >= 3);
+  await api.call('auth.logout');
+  await api.call('auth.login', { email: 'sam.rivera@example.com', password: 'MargoBlank2026' });
+  assert.ok(!(await api.call('app.overview')).setup.done.includes(10));
+  // Running it again resets instead of duplicating.
+  execFileSync(process.execPath, ['scripts/demo.mjs'], { env: { ...process.env, APP_WIZARD_DATA: base }, encoding: 'utf8' });
+  const accts = JSON.parse((await import('node:fs')).readFileSync(`${base}/accounts.json`, 'utf8'));
+  assert.equal(accts.filter((a) => a.email === 'jordan.ellis@example.com').length, 1);
 });

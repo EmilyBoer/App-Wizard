@@ -47,7 +47,7 @@ export async function render(root, _params, app) {
     ${status.hosted ? '<a class="brand" href="/" style="text-decoration:none;color:inherit">' + sparkle(22) + 'margo</a>' : `<div class="brand">${sparkle(22)}margo</div>`}
     <div class="stack" style="max-width:480px">
       <div class="big-line">Apply on autopilot,<br>in <span class="accent-word" style="text-decoration:underline;text-decoration-color:var(--pink);text-decoration-thickness:4px;text-underline-offset:6px">your</span> voice.</div>
-      <p style="font-size:18px;line-height:28px">An AI extension of you that finds the right jobs, writes in your voice, and preps you for interviews. You approve every step.</p>
+      <p style="font-size:18px;line-height:28px">An AI extension of you that finds the right jobs, rewrites your application in your voice, and preps you for interviews using everything it learned along the way. All you have to do is press send.</p>
     </div>
     <p class="small muted">${status.hosted ? 'Your account and everything in it are private to you.' : 'Everything stays on this computer.'}</p>
   </section>
@@ -55,6 +55,7 @@ export async function render(root, _params, app) {
     <h1>${title[mode]}</h1>
     <p class="muted">${lede[mode]}</p>
     ${note ? `<div class="note info" role="status">${esc(note)}</div>` : ''}
+    ${status.loggedIn && mode === 'create' ? `<div class="note info" role="status">You’re logged in as ${esc(status.account.name)}. <a href="#/journey">Go back to Margo</a>, or make a new account below.</div>` : ''}
     ${devLink ? `<div class="note att" role="status">Email isn’t set up yet, so here’s the link we would have sent: <a href="${esc(devLink)}">open it</a>.</div>` : ''}
     ${withLinkedIn ? `<a class="btn secondary big linkedin" href="/auth/linkedin/start" style="justify-content:center">Continue with LinkedIn</a>
     <div class="or" aria-hidden="true"><span>or with your email</span></div>` : ''}

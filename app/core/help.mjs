@@ -88,6 +88,16 @@ Company facts only come from those pages. If we couldn't read the company's site
 1. Press Got an interview? Add it, and fill in the date and time.
 2. Drop in the calendar invite file (.ics). Most invites have one attached; in Gmail, open the invite and download it.
 3. Calendar connections (Google, Outlook) are coming later.` },
+  { id: 'account', title: 'Your account: email, password and LinkedIn', tags: 'account email password login log in sign in linkedin change', body: `Open Account in the top menu. There you can see the email you sign in with, confirm it, change your password and log out.
+
+Changing your password logs you out on every other device. The one you're using stays logged in.` },
+  { id: 'forgot-password', title: 'I forgot my password', tags: 'forgot password reset locked out cant log in', body: `On the log-in screen, press "Forgot your password?" and enter your email. We send a link that works once, for one hour. Open it, choose a new password, and you're in.
+
+No email? Check spam, and make sure it's the address you signed up with. For your privacy we say the same thing whether or not an account exists.` },
+  { id: 'confirm-email', title: 'Confirming your email', tags: 'confirm verify email link', body: `When you make an account we send a link to confirm your email. It lets you reset your password if you ever forget it. Lost the email? Open Account and press "Send the link again".` },
+  { id: 'linkedin-signin', title: 'Signing in with LinkedIn', tags: 'linkedin sign in login continue', body: `"Continue with LinkedIn" signs you in with your LinkedIn account. LinkedIn shares only your name, email and photo with us: not your work history and not your connections. To use your LinkedIn experience, add your profile in setup.
+
+If you already have a Margo account with the same, confirmed email, LinkedIn signs you into that account.` },
   { id: 'privacy', title: 'Where is my information kept?', tags: 'privacy data secure stored computer', body: `Everything is kept on your computer. To write and match, Margo sends the needed parts of your profile and the job to Claude (by Anthropic) through your API key. Nothing is sold or shared.` },
   { id: 'api-key', title: 'Setting up your Claude API key', tags: 'api key claude anthropic setup cost console sign in', body: `We use Claude to read your files and write. During testing you use your own Claude API key. It takes about 3 minutes.
 
@@ -101,10 +111,10 @@ If the test fails, the message tells you why: usually the key was copied with a 
 
 export function searchHelp(query) {
   const q = String(query || '').toLowerCase().split(/\W+/).filter((w) => w.length > 1);
-  if (!q.length) return ARTICLES.map(({ id, title }) => ({ id, title }));
+  if (!q.length) return ARTICLES.map(({ id, title, body }) => ({ id, title, body }));
   return ARTICLES.map((a) => {
     const hay = `${a.title} ${a.tags} ${a.body}`.toLowerCase();
     const score = q.reduce((s, w) => s + (a.title.toLowerCase().includes(w) ? 3 : 0) + (a.tags.includes(w) ? 2 : 0) + (hay.includes(w) ? 1 : 0), 0);
-    return { id: a.id, title: a.title, score };
+    return { id: a.id, title: a.title, body: a.body, score };
   }).filter((a) => a.score > 0).sort((a, b) => b.score - a.score);
 }

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Margo · Apply on autopilot, in your voice</title>
-<meta name="description" content="Margo finds jobs that fit, writes your resume and letters in your own voice from your real experience, and preps you for interviews. You approve every step.">
+<meta name="description" content="An AI extension of you that finds the right jobs, rewrites your application in your voice, and preps you for interviews using everything it learned along the way. All you have to do is press send.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 0 Q10 10 20 10 Q10 10 10 20 Q10 10 0 10 Q10 10 10 0Z' fill='%23D8EBAE'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -63,6 +63,8 @@ a:hover { color: var(--lime); }
 .mrow > div { flex: 1; min-width: 0; }
 .mrow b { display: block; font-weight: 600; }
 .mrow small { font-size: 14px; color: var(--plum); }
+.mrow .acts { flex: 0 0 auto; display: flex; align-items: center; gap: 14px; }
+.mrow .nope { font-size: 14px; font-weight: 600; text-decoration: underline; text-underline-offset: 4px; white-space: nowrap; }
 .mrow .pill { flex: 0 0 auto; display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; background: var(--lime); border: 1.5px solid var(--plum-night); font-size: 14px; font-weight: 600; white-space: nowrap; }
 .why { padding: 16px 18px; border-radius: 18px; background: var(--pink); font-size: 15px; line-height: 1.55; margin: 0; }
 
@@ -111,12 +113,14 @@ a:hover { color: var(--lime); }
 .steps p { margin: 0; font-size: 16px; line-height: 1.5; }
 .props { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; list-style: none; margin: 0; padding: 0; }
 .props li { border-radius: 24px; background: var(--mist); color: var(--plum-night); padding: 28px; display: flex; flex-direction: column; gap: 10px; }
+.props .ic { width: 44px; height: 44px; border-radius: 50%; background: var(--eggshell); color: var(--plum-night); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 6px; border: 1.5px solid var(--plum-night); }
 .props h3 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.01em; }
 .props p { margin: 0; font-size: 15px; line-height: 1.55; }
 
 /* Closing call to action */
 .closer { margin: 40px 0 72px; border-radius: 32px; background: var(--plum); padding: 56px; display: flex; flex-wrap: wrap; gap: 24px 40px; align-items: center; justify-content: space-between; }
 .closer h2 { margin: 0; font-size: clamp(32px, 4vw, 48px); font-weight: 500; letter-spacing: -.02em; line-height: 1.05; max-width: 620px; }
+.closer .small-note { font-size: 15px; color: var(--mist); }
 .closer p { margin: 8px 0 0; font-size: 17px; line-height: 1.5; max-width: 560px; }
 footer { border-top: 1px solid var(--plum); padding: 28px 0 40px; display: flex; flex-wrap: wrap; gap: 12px 28px; justify-content: space-between; font-size: 14px; color: var(--mist); }
 footer a { color: var(--mist); }
@@ -156,7 +160,8 @@ footer a { color: var(--mist); }
   .mcard { padding: 20px; border-radius: 24px; }
   .mcard-head b { font-size: 24px; }
   .mrow { flex-wrap: wrap; }
-  .mrow .pill { width: 100%; justify-content: center; height: 44px; }
+  .mrow .acts { width: 100%; }
+  .mrow .pill { flex: 1 1 auto; justify-content: center; height: 44px; }
   .tile { padding: 24px; border-radius: 24px; }
   .tile h2 { font-size: 30px; }
   .limet h2 { font-size: 38px; }
@@ -196,7 +201,7 @@ footer a { color: var(--mist); }
   <div class="hero-copy">
     <p class="eyebrow">An AI extension of you</p>
     <h1><span style="white-space:nowrap"><span class="w w1">Apply</span> <span class="w w2">on autopilot,</span></span><br><span class="w w3">in</span> <span class="w w4"><u>your</u></span> <span class="w w5">voice.</span></h1>
-    <p>An AI extension of you that finds the right jobs, writes in your voice, and preps you for interviews. You approve every step.</p>
+    <p>An AI extension of you that finds the right jobs, rewrites your application in your voice, and preps you for interviews using everything it learned along the way. All you have to do is press send.</p>
     <div class="ctas">
       <a class="btn primary big" href="/app/#/signup">Get started</a>
       <a class="btn secondary big" href="#how">See how it works</a>
@@ -206,9 +211,9 @@ footer a { color: var(--mist); }
     <svg class="orbit" aria-hidden="true" viewBox="0 0 520 520"><circle cx="260" cy="260" r="240" fill="none" stroke="#372839" stroke-dasharray="2 10"/><path transform="translate(490 250)" d="M10 0 Q10 10 20 10 Q10 10 10 20 Q10 10 0 10 Q10 10 10 0Z" fill="#D8EBAE"/></svg>
     <div class="mcard" aria-hidden="true">
       <div class="mcard-head"><b>Good morning.</b><span>3 new matches</span></div>
-      <div class="mrow in d1"><div><b>Web Producer</b><small>Fernway Studio · Remote · 2 days ago</small></div><span class="pill">Draft my application</span></div>
-      <div class="mrow in d2"><div><b>CMS Manager</b><small>Lumen Health · Hybrid · 5 days ago</small></div><span class="pill">Draft my application</span></div>
-      <p class="why in d3"><b>Why it fits:</b> they need someone who has run a CMS migration end to end. You have, and it’s already on your resume. Your tailored resume and letter are ready to review.</p>
+      <div class="mrow in d1"><div><b>Web Producer</b><small>Fernway Studio · Remote · 2 days ago</small></div><span class="acts"><span class="pill">Auto apply</span><span class="nope">Not for me</span></span></div>
+      <div class="mrow in d2"><div><b>Content Manager</b><small>Lumen Health · Hybrid · 5 days ago</small></div><span class="acts"><span class="pill">Auto apply</span><span class="nope">Not for me</span></span></div>
+      <div class="mrow in d3"><div><b>Front-End Engineer</b><small>Brightpath Labs · Remote · Today</small></div><span class="acts"><span class="pill">Auto apply</span><span class="nope">Not for me</span></span></div>
     </div>
   </div>
 </section>
@@ -216,23 +221,23 @@ footer a { color: var(--mist); }
 <section class="bento" aria-label="What Margo does">
   <article class="tile dark t7">
     <span class="num">01 — Targeted jobs</span>
-    <h2>It finds them. <span style="color:var(--pink)">You pick them.</span></h2>
+    <h2>It finds your ideal roles. <span style="color:var(--pink)">You press send.</span></h2>
     <p>Fewer applications into the void. More to roles that fit, each with a plain reason why.</p>
     <div class="floats" aria-hidden="true">
       <div class="fa"><b>Content Designer</b><small>Fernway Studio · Remote</small><div class="meter"><i style="width:88%"></i></div></div>
-      <div class="fb"><b>CMS Manager</b><small>Lumen Health · Hybrid</small><div class="meter"><i style="width:74%"></i></div></div>
+      <div class="fb"><b>Content Manager</b><small>Lumen Health · Hybrid</small><div class="meter"><i style="width:74%"></i></div></div>
       <div class="fc">Skipped: asks for a degree you said is a dealbreaker.</div>
     </div>
   </article>
   <article class="tile pinkt t5">
     <span class="num">02 — Your voice</span>
-    <h2>Sounds like you on your best day.</h2>
+    <h2>Sounds like you, with a suit on.</h2>
     <p>Every resume, letter and answer is written from your own writing, in your own words.</p>
     <div class="chips" aria-hidden="true"><span>short sentences</span><span>dry humor, a little</span><span>never “passionate”</span><span>starts with the work</span></div>
   </article>
   <article class="tile limet t5">
     <span class="num">03 — Truthful</span>
-    <h2>Everything it writes is true.</h2>
+    <h2>No fabrication. Only the truth, buttoned up.</h2>
     <p style="margin-top:auto">It works only from your real experience. No made-up numbers, titles or skills.</p>
   </article>
   <article class="tile light t7 split">
@@ -257,19 +262,20 @@ footer a { color: var(--mist); }
 
 <section class="section" style="padding-top:0" aria-label="More of what you get">
   <ul class="props">
-    <li><h3>Straight about fit</h3><p>Every match is marked strong, good or stretch, with a plain reason. Weak ones are skipped and we say why.</p></li>
-    <li><h3>Honest keywords</h3><p>Keywords from the job description, only where your experience backs them up.</p></li>
-    <li><h3>Interview prep in your voice</h3><p>A one-page prep from your own stories and the job, so you walk in ready to tell them your way.</p></li>
-    <li><h3>Every job, tracked</h3><p>Every job and every resume and letter you made for it, in one place. Never double-apply.</p></li>
-    <li><h3>Your design, or ours</h3><p>Keep your current resume’s look, or pick one of eight clean templates and make it yours.</p></li>
-    <li><h3>Learns from your edits</h3><p>Every yes, no and edit teaches us. The rules we learn are in plain words, and you can turn any of them off.</p></li>
+    <li><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg></span><h3>Expert fit matching</h3><p>Every match is marked strong, good or stretch, with a plain reason. Weak ones are skipped, and we say why.</p></li>
+    <li><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="12" r="4"/><path d="M12 12h9M17 12v3M20 12v2"/></svg></span><h3>Honest keywords</h3><p>Keywords from the job description, only where your experience backs them up.</p></li>
+    <li><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14v10H9l-4 4z"/><path d="M9 9h6M9 12h4"/></svg></span><h3>Customized interview prep</h3><p>A one-page prep from your own stories and the job, so you walk in ready to tell them your way.</p></li>
+    <li><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12l3 3 5-6"/></svg></span><h3>Every job tracked</h3><p>Every job and every resume and letter you made for it, in one place. Never double-apply.</p></li>
+    <li><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/></svg></span><h3>Your design, or ours</h3><p>Keep your current resume’s look, or pick one of eight clean templates and make it yours.</p></li>
+    <li><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><path d="M12 8a4 4 0 1 0 4 4"/><path d="M16 8l-2 2"/></svg></span><h3>Learns as it goes</h3><p>Every yes, no and edit teaches us. The rules we learn are in plain words, and you can turn any of them off.</p></li>
   </ul>
 </section>
 
 <section class="closer">
   <div>
     <h2>Your next job, in your own words.</h2>
-    <p>Margo is in early access. Our first testers use it free, in exchange for honest feedback.</p>
+    <p>We do the heavy lifting, in your voice, so you get your time back.</p>
+    <p class="small-note">Margo is in early access. Our first testers use it free, in exchange for honest feedback.</p>
   </div>
   <a class="btn primary big" href="/app/#/signup">Get started</a>
 </section>

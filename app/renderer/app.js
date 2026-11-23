@@ -1,5 +1,6 @@
 import { call, aw, esc, sparkle, toast, on } from './lib.js';
 import * as login from './screens/login.js';
+import * as account from './screens/account.js';
 import * as setup from './screens/setup.js';
 import * as dashboard from './screens/dashboard.js';
 import * as job from './screens/job.js';
@@ -14,8 +15,8 @@ import * as claudePage from './screens/claude.js';
 import * as extensionPage from './screens/extension.js';
 
 const root = document.getElementById('app');
-const NAV = [['Profile', '#/profile'], ['Journey', '#/journey'], ['Interviews', '#/interviews'], ['Documents', '#/documents'], ['Claude', '#/claude'], ['Extension', '#/extension'], ['Help', '#/help']];
-const ROUTES = { login, setup, build: builder, claude: claudePage, extension: extensionPage, journey: dashboard, dashboard, tracker: dashboard, job, interviews, interview: interviews, documents, doc: documents, profile, help };
+const NAV = [['Profile', '#/profile'], ['Journey', '#/journey'], ['Interviews', '#/interviews'], ['Documents', '#/documents'], ['Claude', '#/claude'], ['Extension', '#/extension'], ['Account', '#/account'], ['Help', '#/help']];
+const ROUTES = { login, account, setup, build: builder, claude: claudePage, extension: extensionPage, journey: dashboard, dashboard, tracker: dashboard, job, interviews, interview: interviews, documents, doc: documents, profile, help };
 
 export const app = {
   overview: null,
@@ -66,7 +67,8 @@ async function route() {
     history.replaceState(null, '', location.pathname + location.search + '#/');
   }
   const status = await call('auth.status').catch(() => ({ loggedIn: false }));
-  if (!status.loggedIn || name === 'reset') {
+  // Get started on the sales page always opens a new account, even when someone is signed in.
+  if (!status.loggedIn || name === 'reset' || name === 'signup') {
     if (name === 'reset' && status.loggedIn) await call('auth.logout');
     root.innerHTML = '';
     return login.render(root, [], app);
