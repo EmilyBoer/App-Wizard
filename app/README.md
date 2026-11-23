@@ -21,6 +21,12 @@ npm run web        # then open http://127.0.0.1:4321
 
 In the browser version, "Download PDF" opens the print window (choose Save as PDF) and the morning run only happens when you press "Get applications ready".
 
+**Developer skip:** on your own computer (`npm start` or `npm run web`), the sign-in screen has a small "Developer skip" link at the bottom. It opens a sample account ("Dev Tester") with setup already done, so you can get straight to the app. It never appears on the hosted site, and the server refuses it there. Turn it off locally with `MARGO_DEV=0 npm run web`.
+
+**Sales page preview:** with `npm run web` running, open http://127.0.0.1:4321/site/
+
+**Email links on your computer:** until email sending is set up, "Forgot your password?" and "confirm your email" show the link right on screen (and in the terminal) instead of emailing it.
+
 Your data lives on your computer: in the desktop app's user-data folder, or `~/.app-wizard` for the browser version (change it with `APP_WIZARD_DATA=/some/folder`).
 
 ## Hosted for testers (`npm run hosted`)
@@ -38,12 +44,19 @@ MARGO_DATA=/path/to/persistent/disk ANTHROPIC_API_KEY=sk-ant-... npm run hosted
 | `MARGO_DATA` | Where accounts and data live (default `./data`). Must be a persistent disk, or everyone's data disappears on redeploy. |
 | `ANTHROPIC_API_KEY` | The shared Claude key. Set it in the host's secret settings, never in GitHub. |
 | `MARGO_SECURE_COOKIES` | Set to `0` only when testing over plain http on your own machine. |
+| `MARGO_PUBLIC_URL` | The site's own address, like `https://margo.example.com`. Used in emailed links and for LinkedIn. |
+| `RESEND_API_KEY`, `MARGO_MAIL_FROM` | Send password-reset and confirm-email messages through [Resend](https://resend.com). Without them, links are written to the server log. |
+| `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET` | Turn on "Continue with LinkedIn". From the LinkedIn developer app's Auth tab; add `<MARGO_PUBLIC_URL>/auth/linkedin/callback` (and `http://127.0.0.1:4321/auth/linkedin/callback` for local testing) under Authorized redirect URLs. The secret goes in the host's secret settings, never in GitHub. |
+
+**Pages:** `/` is the sales page; `/app/` is Margo. "Get started" goes to `/app/#/signup`.
+
+**Accounts:** sign up with email and password or with LinkedIn (name, email and photo only; LinkedIn doesn't share work history or connections). New accounts get a confirm-email link. "Forgot your password?" sends a one-hour, one-use reset link. Changing or resetting a password signs out every other session. A LinkedIn sign-in joins an existing account only when both sides have confirmed the same email.
 
 Health check: `GET /healthz`.
 
-**What's different from `npm run web`:** saving PDFs to a folder on disk and the browser extension are off (they're desktop features). Job links and job sites people type in can't reach the server's own network. Sign-in attempts are limited to 10 per 15 minutes per address.
+**What's different from `npm run web`:** saving PDFs to a folder on disk and the browser extension are off (they're desktop features). Job links and job sites people type in can't reach the server's own network. Sign-in, reset and confirm attempts are limited to 10 per 15 minutes per address.
 
-**Not yet (next steps):** email verification and password reset, a per-person cap on Claude use, and deploys from GitHub to a staging and a tester address.
+**Not yet (next steps):** a per-person cap on Claude use, a privacy page, and deploys from GitHub to a staging and a tester address.
 
 ## What's in here
 

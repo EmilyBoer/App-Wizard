@@ -8,13 +8,16 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { linkedInRoutes } from './linkedin.mjs';
+import { staticFile } from './hosted.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../renderer');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.json': 'application/json', '.woff2': 'font/woff2' };
 const EXT_METHODS = { fill: 'ext.fill', answer: 'ext.answer', submitted: 'ext.submitted' };
 
-export function startServer(api, { port = 47321, host = '127.0.0.1', full = false } = {}) {
+export function startServer(api, { port = 47321, host = '127.0.0.1', full = false, linkedin = null } = {}) {
   const listeners = new Set();
+  const li = linkedInRoutes({ config: linkedin, publicUrl: () => `http://127.0.0.1:${server.address().port}` });
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${host}`);
     const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': 'content-type, x-app-wizard-token', 'access-control-allow-methods': 'GET, POST, OPTIONS' };
@@ -30,6 +33,18 @@ export function startServer(api, { port = 47321, host = '127.0.0.1', full = fals
         return send(res, 200, await api.call(method, await body(req)), cors);
       }
       if (!full) return send(res, 404, { error: 'Not found' }, cors);
+      // LinkedIn sign-in (local preview: the app lives at /).
+      if (url.pathname.startsWith('/auth/linkedin/')) {
+        const handled = await li(req, res, url, '/', async (_req, profile) => api.signInLinkedIn(profile));
+        if (handled !== false) return;
+      }
+      // The sales page, for previewing on this computer (the hosted site serves it at /).
+      if (url.pathname === '/site' || url.pathname.startsWith('/site/')) {
+        if (url.pathname === '/site') { res.writeHead(301, { location: '/site/' }); return res.end(); }
+        const f = staticFile(path.join(ROOT, 'site'), url.pathname.slice(5), 'index.html');
+        res.writeHead(200, { 'content-type': TYPES[path.extname(f)] || 'application/octet-stream' });
+        return fs.createReadStream(f).pipe(res);
+      }
       if (url.pathname === '/events') {
         res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache', connection: 'keep-alive' });
         res.write(': hi\n\n');
@@ -41,6 +56,8 @@ export function startServer(api, { port = 47321, host = '127.0.0.1', full = fals
         const result = await api.call(method, await body(req));
         return send(res, 200, { result: result ?? null });
       }
+      // The sales page links to /app/ (where the hosted site keeps Margo); here Margo is at /.
+      if (url.pathname === '/app' || url.pathname.startsWith('/app/')) { res.writeHead(302, { location: '/' }); return res.end(); }
       let file = path.normalize(path.join(ROOT, url.pathname === '/' ? 'index.html' : url.pathname));
       if (!file.startsWith(ROOT) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) file = path.join(ROOT, 'index.html');
       res.writeHead(200, { 'content-type': TYPES[path.extname(file)] || 'application/octet-stream' });

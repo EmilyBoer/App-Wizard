@@ -73,7 +73,7 @@ export class Accounts {
     if (!name || !email || !password) throw new Error('Name, email and password are all needed.');
     if (password.length < 8) throw new Error('Use at least 8 characters for your password.');
     const list = this.list();
-    if (list.some((a) => a.email === email)) throw new Error('There is already an account with that email on this computer. Log in instead.');
+    if (list.some((a) => a.email === email)) throw new Error('There’s already an account with that email. Log in instead.');
     const salt = crypto.randomBytes(16).toString('hex');
     const acct = { id: id('u_'), name: String(name).trim(), email, salt, hash: this.hash(password, salt), created: new Date().toISOString() };
     list.push(acct); this.save(list);
@@ -82,9 +82,84 @@ export class Accounts {
   login({ email, password }) {
     email = String(email || '').trim().toLowerCase();
     const acct = this.list().find((a) => a.email === email);
+    if (acct && !acct.salt) throw new Error('This account signs in with LinkedIn. Use "Continue with LinkedIn", or reset your password to add one.');
     if (!acct || this.hash(String(password || ''), acct.salt) !== acct.hash) throw new Error("That email and password don't match. Try again?");
     return this.public(acct);
   }
-  public(a) { return { id: a.id, name: a.name, email: a.email }; }
+  // ----- tokens for reset and verification: only a hash is kept, with an expiry -----
+  token(a, kind, hours) {
+    const raw = crypto.randomBytes(32).toString('base64url');
+    a[kind] = { hash: crypto.createHash('sha256').update(raw).digest('hex'), expires: Date.now() + hours * 3600e3 };
+    return raw;
+  }
+  takeToken(kind, raw) {
+    const h = crypto.createHash('sha256').update(String(raw || '')).digest('hex');
+    const list = this.list();
+    const a = list.find((x) => x[kind]?.hash && crypto.timingSafeEqual(Buffer.from(x[kind].hash), Buffer.from(h)));
+    if (!a || a[kind].expires < Date.now()) return { list, acct: null };
+    delete a[kind];
+    return { list, acct: a };
+  }
+  // Returns a raw token to email, or null when no account has that email (the caller says the same thing either way).
+  requestReset(email) {
+    email = String(email || '').trim().toLowerCase();
+    const list = this.list(); const a = list.find((x) => x.email === email);
+    if (!a) return null;
+    const raw = this.token(a, 'reset', 1); this.save(list);
+    return { token: raw, account: this.public(a) };
+  }
+  resetPassword(raw, password) {
+    if (String(password || '').length < 8) throw new Error('Use at least 8 characters for your password.');
+    const { list, acct } = this.takeToken('reset', raw);
+    if (!acct) throw new Error('That reset link has expired or was already used. Ask for a new one.');
+    acct.salt = crypto.randomBytes(16).toString('hex'); acct.hash = this.hash(password, acct.salt);
+    acct.verified = true; // they proved they can read that inbox
+    acct.epoch = (acct.epoch || 0) + 1; // signs out every other session
+    this.save(list);
+    return this.public(acct);
+  }
+  verifyToken(raw) {
+    const { list, acct } = this.takeToken('verify', raw);
+    if (!acct) throw new Error('That confirmation link has expired or was already used. You can send a new one from Profile.');
+    acct.verified = true; this.save(list);
+    return this.public(acct);
+  }
+  newVerifyToken(accountId) {
+    const list = this.list(); const a = list.find((x) => x.id === accountId);
+    if (!a || a.verified) return null;
+    const raw = this.token(a, 'verify', 72); this.save(list);
+    return raw;
+  }
+  changePassword(accountId, current, next) {
+    if (String(next || '').length < 8) throw new Error('Use at least 8 characters for your new password.');
+    const list = this.list(); const a = list.find((x) => x.id === accountId);
+    if (!a) throw new Error('Please log in again.');
+    if (a.salt && this.hash(String(current || ''), a.salt) !== a.hash) throw new Error("That current password doesn't match.");
+    a.salt = crypto.randomBytes(16).toString('hex'); a.hash = this.hash(next, a.salt);
+    a.epoch = (a.epoch || 0) + 1; this.save(list);
+    return this.public(a);
+  }
+  // Sign in with LinkedIn: find by LinkedIn id, then by a verified email, else create.
+  linkedIn({ sub, email, name, picture, emailVerified }) {
+    if (!sub) throw new Error('LinkedIn didn’t send an account id. Try again.');
+    email = String(email || '').trim().toLowerCase();
+    const list = this.list();
+    let a = list.find((x) => x.linkedinSub === sub);
+    let created = false;
+    // Join an existing account only when both sides have proved the email: otherwise someone could
+    // sign up with another person's address first and wait for them to arrive through LinkedIn.
+    if (!a && email && emailVerified) a = list.find((x) => x.email === email && x.verified);
+    if (a) { a.linkedinSub = sub; if (emailVerified && a.email === email) a.verified = true; if (picture) a.picture = picture; }
+    else {
+      if (!email) throw new Error('LinkedIn didn’t share an email address, so we can’t make your account. Sign up with email instead.');
+      if (list.some((x) => x.email === email)) throw new Error('There’s already an account with that email. Log in with your password.');
+      a = { id: id('u_'), name: String(name || email.split('@')[0]).trim(), email, linkedinSub: sub, picture: picture || null, verified: Boolean(emailVerified), created: new Date().toISOString() };
+      list.push(a); created = true;
+    }
+    this.save(list);
+    return { account: this.public(a), created };
+  }
+  epoch(accountId) { return this.list().find((x) => x.id === accountId)?.epoch || 0; }
+  public(a) { return { id: a.id, name: a.name, email: a.email, verified: Boolean(a.verified), linkedin: Boolean(a.linkedinSub), hasPassword: Boolean(a.salt) }; }
   storeFor(accountId) { return new Store(path.join(this.base, 'users', accountId)); }
 }

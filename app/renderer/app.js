@@ -59,8 +59,15 @@ function paintNav() {
 
 async function route() {
   const [, name = '', ...params] = location.hash.split('/');
+  // Links from emails: confirm an address (works signed in or out), or choose a new password.
+  if (name === 'verify' && params[0]) {
+    const ok = await call('auth.verify', { token: params[0] }).then(() => true, (e) => { toast(e.message); return false; });
+    if (ok) toast('Thanks, your email is confirmed.');
+    history.replaceState(null, '', location.pathname + location.search + '#/');
+  }
   const status = await call('auth.status').catch(() => ({ loggedIn: false }));
-  if (!status.loggedIn) {
+  if (!status.loggedIn || name === 'reset') {
+    if (name === 'reset' && status.loggedIn) await call('auth.logout');
     root.innerHTML = '';
     return login.render(root, [], app);
   }

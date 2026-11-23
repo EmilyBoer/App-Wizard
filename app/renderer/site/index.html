@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Margo · AI Apply, in your voice</title>
+<meta name="description" content="Margo finds jobs that fit, writes your resume and letters in your own voice from your real experience, and preps you for interviews. You approve every step.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 0 Q10 10 20 10 Q10 10 10 20 Q10 10 0 10 Q10 10 10 0Z' fill='%23D8EBAE'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap">
+<style>
+/* Margo sales page. Ported from the approved design "L · Landing page".
+   Colors and type follow shared/design-system.md: lime = the action, pink = standard, Bricolage only. */
+:root {
+  --plum-night: #261B2A; --plum: #372839; --mist: #CBB8CC; --pink: #F3C1EA; --lime: #D8EBAE; --eggshell: #F6EFEC;
+  --font: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+html, body { overflow-x: clip; }
+body { margin: 0; background: var(--plum-night); color: var(--eggshell); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+img, svg { max-width: 100%; }
+a { color: var(--pink); }
+a:hover { color: var(--lime); }
+:focus-visible { outline: 3px solid var(--lime); outline-offset: 3px; border-radius: 6px; }
+.wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+.skip { position: absolute; left: -999px; top: 8px; background: var(--lime); color: var(--plum-night); padding: 8px 14px; border-radius: 999px; z-index: 10; }
+.skip:focus { left: 8px; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 22px; border-radius: 999px; border: 1.5px solid var(--plum-night); color: var(--plum-night); text-decoration: none; font: 600 16px/1.2 var(--font); white-space: nowrap; transition: transform .2s; }
+.btn:hover { color: var(--plum-night); transform: translateY(-2px); }
+.btn.primary { background: var(--lime); }
+.btn.secondary { background: var(--pink); }
+.btn.big { min-height: 52px; padding: 14px 28px; }
+.quiet { color: var(--eggshell); text-decoration: underline; text-underline-offset: 5px; font-weight: 600; padding: 10px 0; }
+.eyebrow { display: flex; align-items: center; gap: 10px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--pink); margin: 0; }
+.eyebrow::before { content: ""; width: 28px; height: 1px; background: var(--pink); }
+
+/* Top bar */
+.topnav { display: flex; align-items: center; gap: 16px 28px; padding: 28px 0; flex-wrap: wrap; }
+.logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--eggshell); }
+.logo:hover { color: var(--eggshell); }
+.logo span { font-weight: 800; font-size: 34px; line-height: 1; letter-spacing: -.055em; }
+.navlinks { display: flex; align-items: center; gap: 28px; margin-left: auto; font-size: 15px; }
+.navlinks a:not(.btn) { color: var(--eggshell); text-decoration: none; padding: 10px 0; }
+.navlinks a:not(.btn):hover { color: var(--lime); }
+
+/* Hero */
+.hero { display: flex; flex-wrap: wrap; gap: 56px; align-items: center; padding: 72px 0 104px; }
+.hero-copy { flex: 1 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 28px; }
+.hero h1 { margin: 0; font-weight: 500; font-size: clamp(52px, 6.6vw, 92px); line-height: 1.02; letter-spacing: -.02em; }
+.hero h1 u { text-decoration-color: var(--pink); text-decoration-thickness: 5px; text-underline-offset: 10px; }
+.hero p { margin: 0; max-width: 500px; font-size: 20px; line-height: 1.55; }
+.ctas { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+.hero-card { flex: 1 1 440px; min-width: 0; position: relative; }
+.orbit { position: absolute; right: -90px; top: -70px; width: 520px; height: 520px; max-width: none; pointer-events: none; }
+.mcard { position: relative; background: var(--eggshell); color: var(--plum-night); border-radius: 28px; padding: 28px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 40px 80px -30px rgba(0,0,0,.55); }
+.mcard-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; }
+.mcard-head b { font-weight: 600; font-size: 28px; letter-spacing: -.02em; }
+.mcard-head span { font-size: 12px; color: var(--plum); }
+.mrow { display: flex; gap: 16px; align-items: center; padding: 16px; border-radius: 18px; border: 1px solid rgba(38,27,42,.14); }
+.mrow > div { flex: 1; min-width: 0; }
+.mrow b { display: block; font-weight: 600; }
+.mrow small { font-size: 14px; color: var(--plum); }
+.mrow .pill { flex: 0 0 auto; display: inline-flex; align-items: center; height: 38px; padding: 0 18px; border-radius: 999px; background: var(--lime); border: 1.5px solid var(--plum-night); font-size: 14px; font-weight: 600; white-space: nowrap; }
+.why { padding: 16px 18px; border-radius: 18px; background: var(--pink); font-size: 15px; line-height: 1.55; margin: 0; }
+
+/* Feature tiles */
+.bento { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; padding: 24px 0 16px; }
+.tile { border-radius: 32px; padding: 36px; display: flex; flex-direction: column; gap: 18px; position: relative; overflow: hidden; transition: transform .4s cubic-bezier(.16,1,.3,1); }
+.tile:hover { transform: translateY(-6px); }
+.t7 { grid-column: span 7; } .t5 { grid-column: span 5; }
+.tile .num { font-size: 13px; }
+.tile h2 { margin: 0; font-size: 40px; font-weight: 600; line-height: 1.05; letter-spacing: -.02em; }
+.tile p { margin: 0; font-size: 16px; line-height: 1.5; max-width: 460px; }
+.dark { background: var(--plum); color: var(--eggshell); }
+.pinkt { background: var(--pink); color: var(--plum-night); }
+.limet { background: var(--lime); color: var(--plum-night); }
+.light { background: var(--eggshell); color: var(--plum-night); }
+.pinkt p, .limet p, .light p { color: var(--plum); }
+.limet h2 { font-size: 52px; font-weight: 500; line-height: 1; }
+.floats { position: relative; flex: 1; min-height: 150px; }
+.floats > div { position: absolute; width: 250px; padding: 18px; border-radius: 18px; box-shadow: 0 20px 40px -18px rgba(0,0,0,.5); }
+.floats b { display: block; font-weight: 600; }
+.floats small { font-size: 14px; color: var(--plum); }
+.fa { left: 0; top: 10px; background: var(--eggshell); color: var(--plum-night); --r: -4deg; animation: float 6s ease-in-out infinite; }
+.fb { left: 230px; top: 46px; background: var(--lime); color: var(--plum-night); --r: 3deg; animation: float 7s ease-in-out .8s infinite; }
+.fc { left: 470px; top: 0; width: 180px !important; border: 1px dashed var(--eggshell); font-size: 14px; box-shadow: none !important; --r: -2deg; animation: float 6.5s ease-in-out 1.6s infinite; }
+.meter { margin-top: 10px; height: 6px; border-radius: 3px; background: rgba(38,27,42,.12); }
+.meter i { display: block; height: 6px; border-radius: 3px; background: var(--plum-night); animation: fill 1.6s cubic-bezier(.16,1,.3,1) .8s both; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
+.chips span { padding: 4px 10px; border-radius: 6px; background: var(--eggshell); font-size: 13px; font-weight: 600; }
+.split { flex-direction: row; flex-wrap: wrap; gap: 28px; }
+.split > div:first-child { flex: 1 1 240px; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.choice { display: flex; gap: 10px; flex-wrap: wrap; margin-top: auto; }
+.choice span { padding: 10px 20px; border-radius: 999px; border: 1.5px solid var(--plum-night); font-weight: 600; font-size: 15px; }
+.choice .k { background: var(--lime); } .choice .e { background: var(--pink); }
+.choice .n { border-color: transparent; padding: 10px 4px; text-decoration: underline; text-underline-offset: 5px; }
+.doc { flex: 0 0 200px; height: 250px; border-radius: 10px; background: #fff; box-shadow: 0 24px 50px -24px rgba(38,27,42,.45); padding: 18px; position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 8px; }
+.doc i { display: block; height: 6px; border-radius: 3px; background: rgba(38,27,42,.1); }
+.scan { position: absolute; left: 0; right: 0; height: 2px; background: var(--pink); box-shadow: 0 0 14px var(--pink); animation: scan 3.5s ease-in-out infinite alternate; }
+
+/* How it works */
+.section { display: flex; flex-direction: column; gap: 24px; padding: 72px 0; scroll-margin-top: 16px; }
+.section h2.big { margin: 0; font-size: clamp(36px, 4.4vw, 56px); font-weight: 500; letter-spacing: -.02em; line-height: 1.05; max-width: 760px; }
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; list-style: none; margin: 0; padding: 0; }
+.steps li { background: var(--eggshell); color: var(--plum-night); border-radius: 24px; padding: 28px; display: flex; flex-direction: column; gap: 10px; }
+.steps .n { font-size: 13px; width: 32px; height: 32px; border-radius: 50%; background: var(--plum-night); color: var(--eggshell); display: flex; align-items: center; justify-content: center; }
+.steps h3 { margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -.02em; }
+.steps p { margin: 0; font-size: 16px; line-height: 1.5; }
+.props { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; list-style: none; margin: 0; padding: 0; }
+.props li { border-radius: 24px; background: var(--mist); color: var(--plum-night); padding: 28px; display: flex; flex-direction: column; gap: 10px; }
+.props h3 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.01em; }
+.props p { margin: 0; font-size: 15px; line-height: 1.55; }
+
+/* Closing call to action */
+.closer { margin: 40px 0 72px; border-radius: 32px; background: var(--plum); padding: 56px; display: flex; flex-wrap: wrap; gap: 24px 40px; align-items: center; justify-content: space-between; }
+.closer h2 { margin: 0; font-size: clamp(32px, 4vw, 48px); font-weight: 500; letter-spacing: -.02em; line-height: 1.05; max-width: 620px; }
+.closer p { margin: 8px 0 0; font-size: 17px; line-height: 1.5; max-width: 560px; }
+footer { border-top: 1px solid var(--plum); padding: 28px 0 40px; display: flex; flex-wrap: wrap; gap: 12px 28px; justify-content: space-between; font-size: 14px; color: var(--mist); }
+footer a { color: var(--mist); }
+
+@keyframes rise { from { opacity: 0; transform: translateY(28px) rotate(2deg); } to { opacity: 1; transform: none; } }
+@keyframes slidein { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+@keyframes orbit { to { transform: rotate(360deg); } }
+@keyframes twinkle { 0%, 100% { transform: rotate(0) scale(1); } 50% { transform: rotate(45deg) scale(.82); } }
+@keyframes float { 0%, 100% { transform: translateY(0) rotate(var(--r)); } 50% { transform: translateY(-14px) rotate(var(--r)); } }
+@keyframes fill { from { width: 0; } }
+@keyframes scan { from { top: 0; } to { top: 100%; } }
+.w { display: inline-block; animation: rise .9s cubic-bezier(.2,.8,.2,1) both; }
+.w1 { animation-delay: .05s; } .w2 { animation-delay: .15s; } .w3 { animation-delay: .25s; } .w4 { animation-delay: .35s; } .w5 { animation-delay: .45s; }
+.in { animation: slidein .8s cubic-bezier(.2,.8,.2,1) both; } .d1 { animation-delay: .6s; } .d2 { animation-delay: .8s; } .d3 { animation-delay: 1s; }
+.orbit { animation: orbit 18s linear infinite; transform-origin: 50% 50%; }
+.twinkle { animation: twinkle 6s ease-in-out infinite; transform-origin: 50% 50%; }
+
+/* Tablet: side-by-side tiles stack. */
+@media (max-width: 960px) {
+  .t7, .t5 { grid-column: span 12; }
+  .props { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hero { padding: 48px 0 72px; gap: 48px; }
+}
+/* Phone: one column, 16px gutters, thumb-sized buttons. */
+@media (max-width: 720px) {
+  .wrap { padding: 0 16px; }
+  .topnav { padding: 20px 0; }
+  .navlinks { gap: 16px; }
+  .navlinks .how { display: none; }
+  .hero { padding: 24px 0 56px; gap: 40px; }
+  .hero-copy, .hero-card { flex: 1 1 100%; }
+  .hero h1 { font-size: 44px; line-height: 1.04; }
+  .hero p { font-size: 18px; }
+  .ctas .btn { flex: 1 1 auto; }
+  .orbit { width: 340px; height: 340px; right: -70px; top: -48px; }
+  .hero { overflow: hidden; margin: 0 -16px; padding-left: 16px; padding-right: 16px; }
+  .mcard { padding: 20px; border-radius: 24px; }
+  .mcard-head b { font-size: 24px; }
+  .mrow { flex-wrap: wrap; }
+  .mrow .pill { width: 100%; justify-content: center; height: 44px; }
+  .tile { padding: 24px; border-radius: 24px; }
+  .tile h2 { font-size: 30px; }
+  .limet h2 { font-size: 38px; }
+  .floats { display: flex; flex-direction: column; gap: 12px; min-height: 0; margin-top: 4px; }
+  .floats > div { position: static; width: auto !important; animation: none; transform: none; }
+  .doc { flex: 1 1 100%; height: 200px; }
+  .steps, .props { grid-template-columns: minmax(0, 1fr); }
+  .section { padding: 56px 0; }
+  .closer { padding: 28px 24px; border-radius: 24px; margin: 24px 0 48px; }
+  .closer .btn { width: 100%; }
+}
+@media (max-width: 400px) {
+  .hero h1 { font-size: 38px; }
+  .logo span { font-size: 28px; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } html { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to the page</a>
+<div class="wrap">
+
+<header class="topnav">
+  <a class="logo" href="/" aria-label="Margo home">
+    <svg class="twinkle" width="28" height="28" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 0 Q10 10 20 10 Q10 10 10 20 Q10 10 0 10 Q10 10 10 0Z" fill="#D8EBAE"/></svg>
+    <span>margo</span>
+  </a>
+  <nav class="navlinks" aria-label="Main">
+    <a class="how" href="#how">How it works</a>
+    <a href="/app/#/login">Log in</a>
+    <a class="btn primary" href="/app/#/signup">Get started</a>
+  </nav>
+</header>
+
+<main id="main">
+<section class="hero">
+  <div class="hero-copy">
+    <p class="eyebrow">An extension of you</p>
+    <h1><span class="w w1">AI</span> <span class="w w2">Apply,</span><br><span class="w w3">in</span> <span class="w w4"><u>your</u></span> <span class="w w5">voice.</span></h1>
+    <p>An extension of you that finds the right jobs, writes in your voice, and preps you for interviews. You approve every step.</p>
+    <div class="ctas">
+      <a class="btn primary big" href="/app/#/signup">Get started</a>
+      <a class="btn secondary big" href="#how">See how it works</a>
+    </div>
+  </div>
+  <div class="hero-card" aria-label="What a morning in Margo looks like" role="img">
+    <svg class="orbit" aria-hidden="true" viewBox="0 0 520 520"><circle cx="260" cy="260" r="240" fill="none" stroke="#372839" stroke-dasharray="2 10"/><path transform="translate(490 250)" d="M10 0 Q10 10 20 10 Q10 10 10 20 Q10 10 0 10 Q10 10 10 0Z" fill="#D8EBAE"/></svg>
+    <div class="mcard" aria-hidden="true">
+      <div class="mcard-head"><b>Good morning.</b><span>3 new matches</span></div>
+      <div class="mrow in d1"><div><b>Web Producer</b><small>Fernway Studio · Remote · 2 days ago</small></div><span class="pill">Draft my application</span></div>
+      <div class="mrow in d2"><div><b>CMS Manager</b><small>Lumen Health · Hybrid · 5 days ago</small></div><span class="pill">Draft my application</span></div>
+      <p class="why in d3"><b>Why it fits:</b> they need someone who has run a CMS migration end to end. You have, and it’s already on your resume. Your tailored resume and letter are ready to review.</p>
+    </div>
+  </div>
+</section>
+
+<section class="bento" aria-label="What Margo does">
+  <article class="tile dark t7">
+    <span class="num">01 — Targeted jobs</span>
+    <h2>It finds them. <span style="color:var(--pink)">You pick them.</span></h2>
+    <p>Fewer applications into the void. More to roles that fit, each with a plain reason why.</p>
+    <div class="floats" aria-hidden="true">
+      <div class="fa"><b>Content Designer</b><small>Fernway Studio · Remote</small><div class="meter"><i style="width:88%"></i></div></div>
+      <div class="fb"><b>CMS Manager</b><small>Lumen Health · Hybrid</small><div class="meter"><i style="width:74%"></i></div></div>
+      <div class="fc">Skipped: asks for a degree you said is a dealbreaker.</div>
+    </div>
+  </article>
+  <article class="tile pinkt t5">
+    <span class="num">02 — Your voice</span>
+    <h2>Sounds like you on your best day.</h2>
+    <p>Every resume, letter and answer is written from your own writing, in your own words.</p>
+    <div class="chips" aria-hidden="true"><span>short sentences</span><span>dry humor, a little</span><span>never “passionate”</span><span>starts with the work</span></div>
+  </article>
+  <article class="tile limet t5">
+    <span class="num">03 — Truthful</span>
+    <h2>Everything it writes is true.</h2>
+    <p style="margin-top:auto">It works only from your real experience. No made-up numbers, titles or skills.</p>
+  </article>
+  <article class="tile light t7 split">
+    <div>
+      <span class="num">04 — Your resume</span>
+      <h2>A tailored resume for every job.</h2>
+      <p>Without starting over every time. Bring your resume into this decade, without losing what makes it yours.</p>
+      <div class="choice" aria-hidden="true"><span class="k">Keep it</span><span class="e">Edit</span><span class="n">Not me</span></div>
+    </div>
+    <div class="doc" aria-hidden="true"><div class="scan"></div><i style="height:12px;width:60%;background:#261B2A"></i><i style="width:80%;background:#F3C1EA"></i><i style="width:92%;margin-top:10px"></i><i style="width:86%"></i><i style="width:70%"></i><i style="width:40%;background:#261B2A;margin-top:10px"></i><i style="width:90%"></i><i style="width:78%"></i><i style="width:84%"></i></div>
+  </article>
+</section>
+
+<section class="section" id="how">
+  <p class="eyebrow">How it works</p>
+  <ol class="steps">
+    <li><span class="n">1</span><h3>Set up once.</h3><p>We learn your experience and your voice.</p></li>
+    <li><span class="n">2</span><h3>We search.</h3><p>Matched jobs and tailored materials, in your voice.</p></li>
+    <li><span class="n">3</span><h3>You approve.</h3><p>Nothing goes out without your yes.</p></li>
+  </ol>
+</section>
+
+<section class="section" style="padding-top:0" aria-label="More of what you get">
+  <ul class="props">
+    <li><h3>Straight about fit</h3><p>Every match is marked strong, good or stretch, with a plain reason. Weak ones are skipped and we say why.</p></li>
+    <li><h3>Honest keywords</h3><p>Keywords from the job description, only where your experience backs them up.</p></li>
+    <li><h3>Interview prep in your voice</h3><p>A one-page prep from your own stories and the job, so you walk in ready to tell them your way.</p></li>
+    <li><h3>Every job, tracked</h3><p>Every job and every resume and letter you made for it, in one place. Never double-apply.</p></li>
+    <li><h3>Your design, or ours</h3><p>Keep your current resume’s look, or pick one of eight clean templates and make it yours.</p></li>
+    <li><h3>Learns from your edits</h3><p>Every yes, no and edit teaches us. The rules we learn are in plain words, and you can turn any of them off.</p></li>
+  </ul>
+</section>
+
+<section class="closer">
+  <div>
+    <h2>Your next job, in your own words.</h2>
+    <p>Margo is in early access. Our first testers use it free, in exchange for honest feedback.</p>
+  </div>
+  <a class="btn primary big" href="/app/#/signup">Get started</a>
+</section>
+</main>
+
+<footer>
+  <span>margo · AI Apply, in your voice.</span>
+  <span><a href="/app/#/login">Log in</a></span>
+</footer>
+</div>
+</body>
+</html>

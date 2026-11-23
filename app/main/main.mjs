@@ -24,7 +24,8 @@ app.setName('Margo');
   const old = path.join(app.getPath('appData'), 'Job Wizard');
   if (fs.existsSync(path.join(old, 'data'))) app.setPath('userData', old);
 }
-const api = createApi({ base: path.join(app.getPath('userData'), 'data'), onEvent: (e) => win?.webContents.send('aw:event', e) });
+// devMode (the Developer skip) is on only while running from source, never in a packaged build.
+const api = createApi({ base: path.join(app.getPath('userData'), 'data'), onEvent: (e) => win?.webContents.send('aw:event', e), devMode: !app.isPackaged });
 
 function createWindow() {
   win = new BrowserWindow({

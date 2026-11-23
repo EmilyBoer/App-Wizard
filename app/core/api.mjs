@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { Accounts, id } from './store.mjs';
 import { makeClaude } from './claude.mjs';
+import { makeMailer, MAIL } from './mail.mjs';
 import * as ai from './ai.mjs';
 import { prepareFile, fontInfo, mimeFor } from './files.mjs';
 import { pdfFonts, docxFonts, docxLayoutXml, fontStatus, closestFont, familyFromName } from './fonts.mjs';
@@ -37,7 +38,8 @@ export const STANDARD_QUESTIONS = [
 
 // persistSession: the desktop app remembers who's logged in between launches (session.json).
 // The hosted server turns it off and keeps one createApi per visitor instead (server/hosted.mjs).
-export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude, now = () => new Date(), onEvent = () => {}, persistSession = true }) {
+// devMode: Emily's shortcuts for testing on her own computer (the Developer skip). Never on in hosted mode.
+export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude, now = () => new Date(), onEvent = () => {}, persistSession = true, devMode = false, hosted = false, appUrl = '', linkedin = false, mailer = makeMailer({ fetchImpl }) }) {
   const accounts = new Accounts(base);
   let session = null; // { account, store }
   const sessionFile = path.join(base, 'session.json');
@@ -52,7 +54,7 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
     return c;
   };
   const claudeReady = () => { try { claude(); return true; } catch { return false; } };
-  const setLogin = (acct) => { session = { account: acct, store: accounts.storeFor(acct.id) }; if (persistSession) fs.writeFileSync(sessionFile, JSON.stringify({ id: acct.id })); return acct; };
+  const setLogin = (acct) => { session = { account: acct, store: accounts.storeFor(acct.id), epoch: accounts.epoch(acct.id) }; if (persistSession) fs.writeFileSync(sessionFile, JSON.stringify({ id: acct.id })); return acct; };
   const jobById = (jid) => { const j = store().get('jobs').list.find((x) => x.id === jid); if (!j) throw new UserError('That job is no longer in your list.'); return j; };
   const saveJob = (job) => store().update('jobs', (js) => { const i = js.list.findIndex((x) => x.id === job.id); if (i >= 0) js.list[i] = job; else js.list.unshift(job); });
   const progress = (task, text) => onEvent({ type: 'progress', task, text });
@@ -60,8 +62,40 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
 
   const methods = {
     // ----- account -----
-    'auth.status': () => ({ loggedIn: Boolean(session), account: session?.account || null, hasAccounts: accounts.list().length > 0 }),
-    'auth.create': (a) => { const acct = setLogin(accounts.create(a)); store().update('profile', (p) => { p.contact = { ...p.contact, name: acct.name, email: acct.email }; }); store().update('setup', (s) => { s.done = [...new Set([...s.done, 1])]; s.step = 2; }); return acct; },
+    'auth.status': () => ({ loggedIn: Boolean(session), account: session?.account || null, hasAccounts: !hosted && accounts.list().length > 0, dev: devMode, hosted, linkedin, mailReady: mailer.ready }),
+    'auth.requestReset': async ({ email }) => {
+      const r = accounts.requestReset(email);
+      let devLink = null;
+      if (r) { const link = `${appUrl}#/reset/${r.token}`; await mailer.send({ to: r.account.email, ...MAIL.reset({ name: r.account.name, link }) }); if (devMode && !mailer.ready) devLink = link; }
+      return { ok: true, devLink }; // the same answer whether or not the email has an account
+    },
+    'auth.reset': ({ token, password }) => setLogin(accounts.resetPassword(token, password)),
+    'auth.verify': ({ token }) => { const a = accounts.verifyToken(token); if (session?.account.id === a.id) session.account = a; return a; },
+    'auth.resendVerify': async () => { if (!session) throw new UserError('Please log in.'); return sendVerify(session.account); },
+    'auth.changePassword': ({ current, next }) => { if (!session) throw new UserError('Please log in.'); return setLogin(accounts.changePassword(session.account.id, current, next)); },
+    // Developer skip: straight into the app with a sample profile and setup marked done. Local only.
+    'dev.skip': async () => {
+      if (!devMode) throw new UserError('That only works when Margo runs on your own computer.');
+      const DEV = { name: 'Dev Tester', email: 'dev@margo.local' };
+      const existing = accounts.list().find((a) => a.email === DEV.email);
+      if (existing) { setLogin(accounts.public(existing)); return { account: session.account, fresh: false }; }
+      setLogin(accounts.create({ ...DEV, password: crypto.randomBytes(18).toString('base64url') }));
+      store().update('profile', (p) => {
+        p.contact = { name: DEV.name, email: DEV.email, location: 'San Francisco, CA', phone: '555-0100' };
+        p.summary = 'Web producer who runs CMS publishing, QA and launches, and builds the systems around the work.';
+      });
+      const roles = [
+        { company: 'Fernway Studio', title: 'Web Producer', start: '2022', end: 'present', bullets: ['Ran publishing for 200+ pages across three brands, from request to launch.', 'Cut time-to-publish by half with a QA checklist and reusable page templates.'] },
+        { company: 'Lumen Health', title: 'Content Operations Specialist', start: '2018', end: '2022', bullets: ['Owned the CMS migration of 1,200 pages without a missed launch.', 'Trained 40 editors on the new publishing workflow.'] },
+      ];
+      for (const r of [...roles].reverse()) { methods['profile.addRole'](r); for (const b of r.bullets) methods['profile.addBullet']({ company: r.company, text: b }); }
+      for (const name of ['CMS publishing', 'QA', 'Webflow', 'Adobe Experience Manager', 'HTML/CSS', 'Project coordination']) methods['profile.addSkill']({ name });
+      methods['profile.addEducation']({ degree: 'BA', field: 'Communications', school: 'State University' });
+      methods['want.save']({ titles: ['Web Producer', 'CMS Manager', 'Web Operations Manager'], where: ['remote'], payFloor: 90000 });
+      store().update('setup', (x) => { x.done = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; x.step = 10; });
+      return { account: session.account, fresh: true };
+    },
+    'auth.create': async (a) => { const acct = setLogin(accounts.create(a)); const v = await sendVerify(acct).catch(() => ({})); store().update('profile', (p) => { p.contact = { ...p.contact, name: acct.name, email: acct.email }; }); store().update('setup', (s) => { s.done = [...new Set([...s.done, 1])]; s.step = 2; }); return { ...acct, devLink: v.devLink || null }; },
     'auth.login': (a) => setLogin(accounts.login(a)),
     'auth.logout': () => { session = null; if (persistSession) try { fs.unlinkSync(sessionFile); } catch {} return true; },
 
@@ -908,14 +942,26 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
     return letterHtml(d.data, store().get('profile').contact, design, job, { date: new Date(d.created) });
   };
 
+  async function sendVerify(acct) {
+    const token = accounts.newVerifyToken(acct.id);
+    if (!token) return { ok: true, already: true };
+    const link = `${appUrl}#/verify/${token}`;
+    await mailer.send({ to: acct.email, ...MAIL.verify({ name: acct.name, link }) });
+    return { ok: true, devLink: devMode && !mailer.ready ? link : null };
+  }
+
   async function call(method, args = {}) {
+    // A password change or reset elsewhere signs this session out.
+    if (session && accounts.epoch(session.account.id) !== session.epoch) session = null;
     const fn = methods[method];
     if (!fn) throw new UserError(`Unknown action: ${method}`);
     return fn(args || {});
   }
   // restore: sign a visitor back in by account id (the hosted server uses it after a restart).
-  const restore = (accountId) => { const a = accounts.list().find((x) => x.id === accountId); if (a) setLogin(accounts.public(a)); return Boolean(a); };
-  return { call, methods, get session() { return session; }, store, restore };
+  const restore = (accountId, epoch) => { const a = accounts.list().find((x) => x.id === accountId); if (!a || (epoch !== undefined && (a.epoch || 0) !== epoch)) return false; setLogin(accounts.public(a)); return true; };
+  // Sign in with LinkedIn, after the server has checked LinkedIn's answer (server/linkedin.mjs).
+  const signInLinkedIn = (profile) => { const { account, created } = accounts.linkedIn(profile); setLogin(account); if (created) { store().update('profile', (p) => { p.contact = { ...p.contact, name: account.name, email: account.email }; }); store().update('setup', (x) => { x.done = [...new Set([...x.done, 1])]; x.step = 2; }); } return { account, created }; };
+  return { call, methods, get session() { return session; }, store, restore, signInLinkedIn };
 }
 
 async function inBatches(items, size, fn) {
