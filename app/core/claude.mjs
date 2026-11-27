@@ -41,7 +41,34 @@ export function makeClaude({ apiKey, model = 'claude-sonnet-5-5', fastModel = 'c
       return parseJson(text);
     }
   }
-  return { send, json, ready: Boolean(apiKey) };
+  /** Research with Claude's web search. Returns { text, sources }. Continues a paused turn up to 3 times. */
+  async function research({ system, content, maxUses = 8, maxTokens = 6000 }) {
+    if (!apiKey) throw new ClaudeError('Add your Claude API key in the Claude tab first.');
+    let messages = [{ role: 'user', content }];
+    const blocks = [];
+    for (let i = 0; i < 4; i++) {
+      let res;
+      try { res = await fetchImpl('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({ model, max_tokens: maxTokens, system, messages, tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: maxUses }] }),
+      }); } catch (e) { throw new ClaudeError(`Couldn't reach Claude. (${e.message})`); }
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new ClaudeError(`Claude said: ${body?.error?.message || res.statusText}`);
+      blocks.push(...(body.content || []));
+      if (body.stop_reason !== 'pause_turn') break;
+      messages = [...messages, { role: 'assistant', content: body.content }];
+    }
+    const sources = new Map();
+    for (const b of blocks) {
+      if (b.type === 'web_search_tool_result' && Array.isArray(b.content)) for (const r of b.content) if (r.url) sources.set(r.url, r.title || r.url);
+      for (const c of b.citations || []) if (c.url) sources.set(c.url, c.title || c.url);
+    }
+    const text = blocks.filter((b) => b.type === 'text').map((b) => b.text).join('');
+    return { text, sources: [...sources].map(([url, title]) => ({ url, title })) };
+  }
+
+  return { send, json, research, ready: Boolean(apiKey) };
 }
 
 export function parseJson(text) {

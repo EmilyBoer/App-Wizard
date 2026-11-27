@@ -783,11 +783,18 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
       const entry = s.get('tracker').list.find((t) => t.id === iv.trackerId);
       const job = (entry && s.get('jobs').list.find((j) => j.id === entry.jobId || (j.company === entry.company && j.title === entry.title))) || { title: iv.role || entry?.title || '', company: iv.company || entry?.company || '', description: iv.jobText || '', url: entry?.url || '' };
       progress('cheat', `Reading about ${job.company}…`);
-      const research = await researchCompany(job.url || '', job.company, { fetchImpl });
-      progress('cheat', 'Writing your cheat sheet…');
-      const cheat = await ai.cheatSheet(claude(), { profile: s.get('profile'), job, interview: { round: iv.round, with: iv.with, format: iv.format, start: iv.start }, research: research.text, voice: s.get('voice'), answers: s.get('answers').list });
+      const research = await researchCompany(iv.companySite || job.url || '', job.company, { fetchImpl });
+      // What they sent this employer (newest version of each), so the sheet can quote it back.
+      const docs = s.get('documents').list.filter((d) => d.jobId === job.id || (d.company === job.company && d.title === job.title));
+      const latest = (kind) => docs.filter((d) => d.kind === kind).sort((x, y) => (y.version || 0) - (x.version || 0))[0];
+      const r = latest('resume'), l = latest('letter');
+      const sent = [r && `Resume:\n${r.data.summary || ''}\n${(r.data.roles || []).map((ro) => `${ro.title || ''}, ${ro.company || ''}: ${(ro.bullets || []).map((b) => b.text).join(' ')}`).join('\n')}`, l && `Cover letter:\n${(l.data.paragraphs || []).join('\n')}`].filter(Boolean).join('\n\n');
+      const earlier = s.get('interviews').list.filter((x) => x.id !== iid && x.trackerId && x.trackerId === iv.trackerId && (!iv.start || !x.start || x.start < iv.start)).map((x) => ({ date: x.start ? x.start.slice(0, 10) : '', round: x.round, with: x.with, notes: x.notes }));
+      const interview = { round: iv.round, with: iv.with, about: iv.about, format: iv.format, start: iv.start, end: iv.end, theirTimezone: iv.theirTz };
+      const cheat = await ai.cheatSheet(claude(), { profile: s.get('profile'), job: { ...job, pay: job.pay ? payLabel(job.pay) : '' }, interview, research: research.text, voice: s.get('voice'), answers: s.get('answers').list, sent, earlier, want: s.get('want'), companySite: iv.companySite }, { onStep: (m) => progress('cheat', m) });
+      if (!cheat.researchNote && research.note && !cheat.sources?.length) cheat.researchNote = research.note;
       cheat.posted = { pay: job.pay ? payLabel(job.pay) : '', url: job.url || entry?.url || '', location: job.location || '' };
-      cheat.researchNote = research.note; cheat.at = now().toISOString();
+      cheat.at = now().toISOString();
       s.update('interviews', (x) => { const i = x.list.find((y) => y.id === iid); i.cheat = cheat; });
       return cheat;
     }),

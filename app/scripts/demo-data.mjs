@@ -231,69 +231,120 @@ export const LETTERS = {
     'Thank you for your time.'],
 };
 
+// Jordan's a16z cheat sheet, written the way Margo writes one. `match` picks the real profile line it rests on.
 export const CHEAT = {
-  talkingPoints: [
-    'I already work the way this role is described: inside a content operation, turning long pieces into social that travels.',
-    'I test and measure. Every piece I publish is tied to pipeline in a dashboard I built.',
-    'I can sound like someone else and keep their edge: years of ghostwriting for our CEO and CTO.',
-  ],
-  company: {
-    about: 'Andreessen Horowitz (a16z) is a venture capital firm that backs technology founders. Frontier is one of its focus areas, with its own editorial and social presence.',
-    recent: ['The posting describes an editorial content operation with podcasts, investment announcements and events to draw from.', 'Social Media Lead roles were posted across several a16z teams this fall, so social is a firm-wide push.', 'The role reports into editorial, not marketing.'],
-    values: ['Being always online and current on internet culture', 'Both strategizing and building hands-on', 'Low ego, high empathy', 'Learning constantly'],
+  brief: {
+    subtitle: 'Hiring manager interview with the Frontier editorial lead, after the recruiter screen on Nov 10. 45 minutes on video.',
+    interviewer: {
+      name: 'Frontier editorial lead', short: 'the editorial lead',
+      glance: ['Runs editorial for a16z Frontier', 'This role reports to them', 'Owns the pieces you would turn into social', 'Likely cares about: voice, speed, clips, what works'],
+      details: [
+        'Your future manager: the posting says the Social Media Lead reports into editorial, so this is the person you would work with every day.',
+        'Owns the source material: podcast appearances, investment announcements, events and editorial pieces are what social will adapt.',
+        'Name not shared yet: the recruiter called them the Frontier editorial lead. Add their name in Edit details once you have it, and make the sheet again.',
+      ],
+      caresAbout: ['Whether you can sound like Frontier on every platform', 'How fast you can turn long pieces into clips', 'How you decide what worked'],
+      meansForYou: 'They will be listening for someone who makes editorial’s work travel, not someone who competes with it. Your Tidewater series, cut from pieces you had already published, is the exact shape of this job. Lead with it.',
+    },
+    news: {
+      title: 'a16z is building out social across its teams',
+      glance: ['Social Media Lead roles posted across several a16z teams this fall', 'Frontier’s role reports into editorial', 'Pay posted: $199K–$232K + carry and bonus'],
+      details: ['Firm-wide push: the same Partner 20 Social Media Lead title was posted for more than one a16z team, so social is a priority, not an experiment.', 'Editorial-led: this role sits with editorial, which tells you social is expected to carry the firm’s ideas, not just announce news.'],
+      other: 'Check the a16z and Frontier channels the morning of the interview for anything new you can mention.',
+      howToUse: 'It looks like social is getting real investment across the firm. I’d love to hear how Frontier wants to sound compared with the other teams.',
+    },
+    land: [
+      { title: 'I turn long pieces into social that travels.', proof: 'At Tidewater I started a short-form series cut from pieces we had already published. It reached 1.2M views on LinkedIn and X.' },
+      { title: 'I can sound like someone else and keep their edge.', proof: '60+ LinkedIn posts and 12 essays ghostwritten for our CEO and CTO.' },
+      { title: 'I test, then keep what works.', proof: 'I built the Looker Studio dashboard that ties every piece to pipeline, and we cut formats that didn’t pull their weight.' },
+    ],
+    onPaper: [
+      { source: 'Cover letter', says: 'I started a short-form video series with product marketing that reached 1.2M views on LinkedIn and X, cut almost entirely from longer pieces we had already made.', youSay: 'That was a team effort with product marketing. I started it and ran the editing calendar; they owned the product angles.' },
+      { source: 'Cover letter', says: 'I work inside the content operation, not next to it.', youSay: 'I run the content program at Tidewater, so social has always been part of the operation I plan, not a separate team.' },
+    ],
+    notOnPaper: [
+      { topic: 'Running X as a brand account', youSay: 'Most of my brand work has been on LinkedIn. On X I’d start by studying what Frontier’s founders already do well, then test formats for a month before settling.' },
+      { topic: 'Crypto or deep tech', youSay: 'I haven’t worked in venture or crypto. I learned Canopy’s merchants from zero, and the skill here is distribution, which carries over.' },
+      { topic: 'Advising founders on their social', youSay: 'I’ve coached our CEO and CTO on their LinkedIn for years. I’d bring the same approach to portfolio founders: their voice, a simple rhythm, one useful thing per post.' },
+    ],
+    logistics: {
+      glance: ['Posted: $199K–$232K + carry + bonus', 'Your saved range ($150K–$175K) is below it', 'Say: comfortable within their range', 'Remote, West Coast hours, some travel', 'Authorized, no sponsorship'],
+      salary: 'a16z posted $199,000 to $232,000 base, plus carry and bonus. Your saved answer is $150,000 to $175,000, which is below their whole range. Don’t name your old number here.',
+      salaryScript: 'From the posting, I’m comfortable within your range, and I’d like to learn more about how carry and bonus work for this role.',
+      location: 'Remote in the US with West Coast hours and occasional travel for offsites and events. You’re in Portland, so the hours work.',
+      locationScript: 'I’m in Portland, so West Coast hours are easy, and I’m happy to travel for offsites and events.',
+      authorization: 'Yes, no sponsorship needed.',
+      notes: ['Who sets pay: hiring managers rarely set the number. Give the line above, then “Happy to work out details with recruiting.”', 'Levers besides base: carry, bonus, title level, start date.'],
+      yourCall: 'Update your saved salary answer before the next application. It undersells you for roles like this one.',
+    },
+    ask: {
+      glance: ['What should social do for Frontier in year one?', 'How clips get made today', 'How editorial and social decide together', 'Accounts they admire', 'Next steps'],
+      list: ['What do you want Frontier’s social to do in the first year: reach, community, or something else?', 'How do clips get made today, and what slows them down?', 'How do you and the team decide what gets made, and where would social come in?', 'Which accounts do you admire, inside or outside venture?', 'What would make you say, a year from now, that this hire worked?', 'What are the next steps?'],
+      tip: 'It’s 45 minutes. Pick three. The first two matter most.',
+    },
+    after: ['Send a thank-you the same day, with one specific thing they said.', 'Write down what you learned in Your notes. The next round’s sheet reads them.', 'Update your journey with the date and next steps.'],
+    thankYou: 'Hi [Name],\n\nThank you for the time today. I enjoyed hearing how Frontier works with editorial, and [one thing they said] has stuck with me. My first instinct would be to cut three hooks from last month’s pieces and see which one travels.\n\nHappy to share examples from the series we built at Tidewater if useful.\n\nThanks again,\nJordan',
   },
-  role: {
-    focus: 'Be Frontier’s voice online: turn what the firm already says into social that travels, and run the clips operation.',
-    theyNeed: [
-      { need: 'Owned social for a high-growth brand', match: '1.2M views' },
-      { need: 'Short-form video and clips', match: '1.2M views' },
-      { need: 'Analytics and testing', match: 'Looker Studio' },
-      { need: 'Range of voice across platforms', match: 'Ghostwrote' },
-      { need: 'Working inside a content operation', match: '6-person team' },
-      { need: 'Advising others on their social presence', match: '' },
+  groups: [
+    { title: 'Opening', questions: [
+      { q: 'Tell me about yourself.', match: '1.2M views', glance: ['Content strategist, more and more on the social end', 'Fieldnote: 5 stories a week + podcast clips', 'Canopy: LinkedIn 9K → 52K with video', 'Tidewater: run the program, 1.2M-view series', 'Good at sounding like someone else'], answer: ['I’m a content strategist who keeps ending up on the social end of things. I started at Fieldnote Media making five stories a week and cutting clips for our podcast, which is where I learned that the best social starts as something longer.', 'At Canopy Commerce I grew our LinkedIn from 9K to 52K with a weekly video series. For the last five years at Tidewater I’ve run the content program for a six-person team, and the short-form series I started there reached 1.2M views.', 'And I’m good at sounding like someone else. I’ve ghostwritten for our CEO and CTO for years.'], tips: [{ label: 'For the editorial lead specifically', text: 'End with: “Making Frontier’s ideas travel further is the part of my job I like most.”' }, { label: 'If they want more', text: 'The Ops Notes newsletter: 38,000 subscribers, 46% open rate.' }], yourStory: true },
+      { q: 'Why a16z, and why this role?', match: '', glance: ['The hard part already exists: smart people saying new things', 'The job is distribution', 'Editorial-led social = how I work', 'Founders + new technology = audience I care about'], answer: ['Frontier already has the hard part: smart people saying new things, in podcasts, essays and announcements. The job is getting those ideas to the people who should hear them, in the shape each platform rewards. That’s the work I like most.', 'I also like that it sits with editorial. That’s how I’ve always worked: social carries the best pieces further instead of running its own show.'], tips: [{ label: 'Keep it light', text: 'You don’t need to know the portfolio. Say you’re excited to learn it.' }] },
+      { q: 'Why are you looking to leave Tidewater?', match: '', glance: ['Only if asked', 'Good place, good team', 'Want to own a channel end to end', 'Want an audience of builders'], answer: ['It’s been a great five years, and I’m proud of the program we built. I’m looking for a role where I own a channel end to end, for an audience of builders and founders. This is that.'], tips: [{ label: 'Short version', text: '“I want to own a channel end to end, for this kind of audience.”' }] },
+    ] },
+    { title: 'Social and short-form', questions: [
+      { q: 'Tell us about a social program you built from scratch.', match: '1.2M views', glance: ['Problem: 3 long pieces a week, nobody saw them on social', 'Started cutting 30–60s clips from existing pieces', 'Tested hooks weekly, kept a list of what worked', 'Result: 1.2M views on LinkedIn + X'], answer: ['At Tidewater we published three long pieces a week, and almost nobody saw them on social. So with product marketing I started cutting 30 to 60 second clips from pieces we already had.', 'Every week we tested a few hooks and kept a running list of what worked: questions beat statements, faces beat slides, and the first two seconds decided everything. The series reached 1.2M views on LinkedIn and X.'], steps: ['Pick a long piece', 'Cut 3 hooks', 'Post + watch', 'Keep what works'], tips: [{ label: 'Why it lands', text: 'It’s the job description in miniature: adapt existing content, run clips, test, report.' }], flag: { label: 'The facts', text: 'Say “we” for the series results. Product marketing was part of it.' }, yourStory: true },
+      { q: 'How would you run the clips operation?', match: '1.2M views', glance: ['Weekly rhythm, not one-offs', 'Start from what editorial already made', '3 cuts per piece, different hooks', 'Friday review: keep, change, stop', 'Templates so it’s fast'], answer: ['As a weekly rhythm. On Monday we pick from what editorial already made: a podcast, an essay, an announcement. Each piece gets three cuts with different hooks. They go out through the week, and on Friday we look at what happened and decide what to keep.', 'I’d set up simple templates for captions and framing so a clip takes an hour, not a day.'], steps: ['Monday: pick pieces', 'Cut 3 hooks each', 'Post through the week', 'Friday: review'], tips: [{ label: 'Good question back', text: '“Who cuts the clips today, and what tools do they use?”' }] },
+      { q: 'How would you adapt one essay for X versus LinkedIn?', match: '', glance: ['X: the sharpest single claim', 'Thread only if the argument needs it', 'LinkedIn: the story behind it + a takeaway', 'Same idea, different shape'], answer: ['Same idea, different shape. On X I’d lead with the sharpest single claim in the essay, and only make a thread if the argument really needs the steps. On LinkedIn I’d tell the story behind it and end with a clear takeaway people can use.'], tips: [{ label: 'Plain English', text: 'A “thread” is a chain of short posts on X that reads top to bottom.' }] },
+      { q: 'How do you write as someone else?', match: 'Ghostwrote', glance: ['Interview first, 20 minutes a week', 'Keep their phrases', 'Never put words in their mouth', 'They cut anything that doesn’t sound like them', '60+ posts + 12 essays for CEO and CTO'], answer: ['I interview first, usually 20 minutes a week, and keep their actual phrases. I never put words in their mouth they wouldn’t say. Then they cut anything that doesn’t sound like them.', 'That’s how I wrote 60+ LinkedIn posts and 12 essays for our CEO and CTO without anyone noticing a second voice.'], tips: [{ label: 'Why it lands', text: 'The role advises founders and the Frontier team on social. This is that skill.' }], yourStory: true },
+    ] },
+    { title: 'Working with editorial', questions: [
+      { q: 'How would you work with me and the editorial team?', match: 'style guide', glance: ['Social carries editorial’s work further', 'In early: see pieces before they publish', 'Shared rules make speed possible', 'Style guide used by 40 people at Tidewater'], answer: ['Social should carry editorial’s work further, not compete with it. What works best is seeing pieces a few days before they publish, so the clips and posts are ready on launch day.', 'Shared rules make that fast. At Tidewater I wrote the voice and style guide used by 40 marketers, product writers and freelancers, so nobody had to guess.'], tips: [{ label: 'Tone', text: 'This is their home turf. Offer the system, then ask how they work today.' }] },
+      { q: 'What if a post we’re proud of does badly?', match: '38,000', glance: ['Look at the first two seconds or first line', 'Change the hook, not the idea', 'Ops Notes: hot takes did badly → one useful thing per issue'], answer: ['Usually the idea is fine and the hook isn’t. I’d re-cut it with a different first line or first two seconds and try again.', 'When something keeps not working, I say so with the numbers. On the Ops Notes newsletter, hot takes did badly, so we moved to one useful thing per issue. It grew to 38,000 subscribers.'] },
+      { q: 'How do you handle sign-off when many people have opinions?', match: 'style guide', glance: ['Agree who approves before we start', 'Style guide answers most questions', 'Review window with a deadline'], answer: ['Agree who approves, who reviews and who just gets told before we start. A good style guide answers most questions before they’re asked. And a short review window, after which silence counts as yes, keeps things moving.'] },
+      { q: 'How would you advise portfolio founders on social?', match: 'Ghostwrote', glance: ['Their voice, not ours', 'A simple rhythm they can keep', 'One useful thing per post', 'Same approach as CEO/CTO at Tidewater'], answer: ['Start with their voice, not ours. Then a rhythm they can actually keep, like two posts a week, and one useful thing per post. It’s the same approach I’ve used with our CEO and CTO.'] },
+    ] },
+    { title: 'Measuring what works', questions: [
+      { q: 'How do you decide what to test, and how do you know it worked?', match: 'Looker Studio', glance: ['One idea a week, one number that matters', 'Keep or stop after two weeks', 'Dashboard everyone can see', 'Looker Studio, tied to pipeline at Tidewater'], answer: ['One idea a week and one number that matters, decided before we post. After two weeks we keep it or stop it.', 'At Tidewater I built a Looker Studio dashboard that ties every piece to pipeline, so the whole team sees the same numbers. For Frontier, the number might be reach to builders or follows from founders rather than pipeline.'], steps: ['Pick one idea', 'Pick one number', 'Run 2 weeks', 'Keep or stop'], yourStory: true },
+      { q: 'What numbers would you report to me each month?', match: '', glance: ['Reach to the right people', 'Saves + shares over likes', 'Follower growth from the audience we want', 'What we’ll do differently'], answer: ['A short page: how many of the right people we reached, saves and shares (they mean more than likes), follower growth from the audience we want, and the one or two things we’ll do differently next month.'] },
+      { q: 'Tell us about a time the data changed your mind.', match: '300 help-center', glance: ['Help center: thought writing was the problem', 'Search data showed people couldn’t find answers', 'Rebuilt 300 articles around what people searched', 'Support tickets −18%'], answer: ['I thought our help center needed better writing. The search data said people simply couldn’t find the answers. So I rebuilt 300 articles around what people actually searched for, and support tickets dropped 18%.'] },
+    ] },
+    { title: 'Frontier and its audience', questions: [
+      { q: 'Who do you think Frontier is talking to?', match: '', glance: ['Founders + builders', 'People who want the idea, not the hype', 'Read the posting: technology-curious, always online'], answer: ['Founders and builders who want the idea, not the hype. People who are always online and can tell in one line whether something is worth their time. That shapes everything: lead with the idea, keep it short, never oversell.'], tips: [{ label: 'Good question back', text: '“Is that right? Who would you add?”' }] },
+      { q: 'What would you do in your first 30 days?', match: '', glance: ['Listen + audit what Frontier has made', 'What has worked, who the voices are', 'Small tests in week two', 'A plan by day 30'], answer: ['Listen and audit: everything Frontier has made, what has worked, and who the voices are. Small tests in week two, so we learn early. By day 30, a simple plan we agree on.'], steps: ['Week 1: listen', 'Week 2: small tests', 'Week 3–4: plan'] },
+      { q: 'Which accounts do you admire, and why?', match: '', glance: ['Pick two you really follow', 'One line on what each does well', 'One thing you’d borrow'], answer: ['[Pick two accounts you genuinely follow.] Say in one line what each does well, and one thing you’d borrow for Frontier.'], flag: { label: 'Your homework', text: 'Choose these the night before. Don’t name an account you don’t actually follow.' } },
+    ] },
+    { title: 'Gaps', questions: [
+      { q: 'You haven’t worked in venture or crypto.', match: '9K to 52K', glance: ['True', 'Learned Canopy’s merchants from zero', 'LinkedIn 9K → 52K there', 'The skill is distribution'], answer: ['That’s true. I learned Canopy’s merchant audience from zero and grew our LinkedIn from 9K to 52K there. The skill here is distribution, and that carries over. I’d spend my first weeks learning the space from your team.'] },
+      { q: 'Your X experience looks lighter than LinkedIn.', match: '', glance: ['True, most brand work on LinkedIn', 'Month one: study what Frontier founders do well', 'Test formats, then settle'], answer: ['It is. Most of my brand work has been on LinkedIn. In the first month I’d study what Frontier’s founders already do well on X, test a few formats and settle on what works.'] },
+      { q: 'This is more social than strategy. Is that what you want?', match: '', glance: ['Yes', 'Strategy aimed at distribution', 'Want to own a channel end to end'], answer: ['Yes. Strategy is still the job, aimed at distribution. Owning a channel end to end is what I want next.'] },
+      { q: 'Tell me about something that went wrong.', match: '38,000', glance: ['Newsletter hot takes did badly', 'Said so, showed the numbers', 'Moved to one useful thing per issue', 'Grew to 38,000 subscribers, 46% opens'], answer: ['On the Ops Notes newsletter we tried hot takes for a while, and they did badly. I said so, showed the numbers and moved us to one useful thing per issue, with a real customer example. It grew to 38,000 subscribers with a 46% open rate.'], tips: [{ label: 'Shape', text: 'What happened, what you did, what changed. About 60 seconds.' }] },
+    ] },
+  ],
+  homework: {
+    title: 'Ideas for Frontier’s social',
+    top3: [
+      { title: 'One clip per piece, three hooks each.', detail: 'Every podcast, essay and announcement gets cut three ways in its first week. Over a month that shows which hooks work for this audience.' },
+      { title: 'A founder voice program.', detail: 'Help portfolio founders post in their own voice with a simple rhythm, as the posting asks. Start with two founders who already post.' },
+      { title: 'A one-page monthly report.', detail: 'Reach to the right people, saves and shares, and what we’ll change. Short enough that people read it.' },
+    ],
+    quickWins: [
+      { title: 'Templates for clips', detail: 'Caption and framing templates so a clip takes an hour, not a day.' },
+      { title: 'A shared calendar with editorial', detail: 'See pieces a few days before they publish so social is ready on launch day.' },
+      { title: 'A voice guide for Frontier', detail: 'One page: how Frontier sounds on X versus LinkedIn, and words to avoid.' },
+    ],
+    bigPlays: [
+      { title: 'A recurring short-form series', detail: 'A named weekly format built from editorial’s best piece of the week.' },
+      { title: 'Event coverage kits', detail: 'For offsites and events: what to film, who to ask, and posts ready the same day.' },
+    ],
+    lookedAt: 'The job posting only. This is demo data, so no live research was run. Check Frontier’s channels yourself before you mention specifics.',
+    framing: 'I had a few ideas from the posting. I’d want to see what’s already working before committing to anything.',
+    edge: 'You’ve run this kind of program before, end to end, and you can show the numbers.',
+    primers: [
+      { term: 'Carry', plain: 'In venture capital, carry (carried interest) is a share of the fund’s profits. Some firms give it to team members on top of salary. It pays out years later, if the fund does well.', ifAsked: 'I’d like to understand how carry works for this role.' },
+      { term: 'Clips operation', plain: 'The work of cutting short videos from longer content, like podcasts and talks, and posting them across platforms. It includes picking moments, editing, captions and tracking what works.', ifAsked: '' },
+      { term: 'Audience development', plain: 'Growing and understanding an audience on purpose: which people you reach, where they come from, and what makes them stay. The posting mentions working with an audience development lead.', ifAsked: '' },
     ],
   },
-  pitch: 'I’m a content strategist who works more and more on the social end of things. At Tidewater I run the content program and started a short-form video series that reached 1.2M views on LinkedIn and X, mostly cut from pieces we’d already made. And I’m good at sounding like someone else: I’ve ghostwritten for our CEO and CTO for years.',
-  pitchLong: 'I started as a content producer at Fieldnote Media, making five stories a week and running clips for our podcast. That’s where I learned that the best social starts as something longer. At Canopy Commerce I grew our LinkedIn from 9K to 52K with a weekly video series and managed a bench of freelance writers. For the last five years at Tidewater I’ve run the content program for a 6-person team: the strategy, the calendar, the newsletter, and the dashboard that ties it all to pipeline. The short-form series I started there reached 1.2M views. Frontier’s role is the part of my job I like most, done for an audience I care about: founders and the people building new technology.',
-  stories: [
-    { title: 'The short-form series', match: '1.2M views', situation: 'We published 3 long pieces a week and almost nobody saw them on social.', action: 'With product marketing, I started cutting 30 to 60 second clips from pieces we already had, tested hooks each week and kept a running list of what worked.', result: 'The series reached 1.2M views on LinkedIn and X.', usefulFor: ['a program you built', 'creativity', 'working across teams'] },
-    { title: 'Ghostwriting for the founders', match: 'Ghostwrote', situation: 'Our CEO and CTO had strong opinions and no time to post.', action: 'I interviewed them for 20 minutes a week, kept their phrases, drafted, and let them cut anything that didn’t sound like them.', result: '60+ LinkedIn posts and 12 essays, all in their voices.', usefulFor: ['voice', 'working with executives', 'taking feedback'] },
-    { title: 'The dashboard that ended the argument', match: 'Looker Studio', situation: 'Leadership saw content as a cost with no clear return.', action: 'I built a Looker Studio dashboard that tied every piece to pipeline and reviewed it monthly with sales.', result: 'Every piece is now measured the same way, and we cut formats that didn’t pull their weight.', usefulFor: ['data', 'testing', 'influencing without authority'] },
-    { title: 'Growing LinkedIn from 9K to 52K', match: '9K to 52K', situation: 'Canopy’s LinkedIn was a place for press releases.', action: 'I launched a weekly video series with real merchants and a consistent format.', result: 'Followers grew from 9K to 52K.', usefulFor: ['audience growth', 'consistency', 'community'] },
-    { title: 'Help center rebuilt around search', match: '300 help-center', situation: 'Customers couldn’t find answers, so they filed tickets.', action: 'I rewrote 300 articles around what people actually searched for.', result: 'Support tickets dropped 18%.', usefulFor: ['a failure you fixed', 'research', 'clear writing'] },
-  ],
-  questions: [
-    { category: 'About you', q: 'Walk us through your background.', answer: 'Use the two-minute version: Fieldnote, Canopy, Tidewater, then why Frontier.', match: '1.2M views' },
-    { category: 'About you', q: 'Why this role, and why a16z?', answer: 'It’s the part of my job I like best, at a place that already makes great long-form. The job is distribution, and I know how to do that well.', match: '' },
-    { category: 'The role', q: 'Tell us about a social program you built from scratch.', answer: 'The short-form series: why we started, how we picked clips, what reached 1.2M views and what flopped.', match: '1.2M views' },
-    { category: 'The role', q: 'How would you run the clips operation?', answer: 'A weekly rhythm: pick from what editorial already made, cut 3 versions of each hook, post, review on Friday, keep what works.', match: '1.2M views' },
-    { category: 'The role', q: 'How would you adapt a long essay for X versus LinkedIn?', answer: 'X: the sharpest single claim, a thread only if the argument needs it. LinkedIn: the story behind it, with a clear takeaway.', match: '' },
-    { category: 'How you work', q: 'How do you decide what to test, and how do you know it worked?', answer: 'One hypothesis a week, one metric that matters, keep or kill after two weeks. The dashboard makes it visible to everyone.', match: 'Looker Studio' },
-    { category: 'How you work', q: 'How do you write as someone else?', answer: 'Interview first, keep their phrases, never put words in their mouth they wouldn’t say. Then let them cut.', match: 'Ghostwrote' },
-    { category: 'How you work', q: 'How would you work with editorial?', answer: 'Social adapts editorial’s work, it doesn’t compete with it. Shared rules make speed possible, like the style guide used by 40 people at Tidewater.', match: 'style guide' },
-    { category: 'How you work', q: 'Tell us about a time something didn’t work.', answer: 'Hot takes on the newsletter did badly. I said so, showed the numbers, and we moved to one useful thing per issue.', match: '38,000' },
-    { category: 'The company', q: 'Which accounts in tech do you admire, and why?', answer: 'Pick two you genuinely follow. Say what they do well in one line each, and one thing you’d borrow.', match: '' },
-    { category: 'The company', q: 'What would you do in your first 30 days?', answer: 'Listen and audit: what Frontier has already made, what has worked, who the voices are. Ship small tests in week two.', match: '' },
-  ],
-  tough: [
-    { q: 'You haven’t worked in venture or crypto. Why should we take that risk?', answer: 'Say it plainly: I haven’t. I learn audiences fast; at Canopy I learned merchants from zero. The skill here is distribution, and that transfers.' },
-    { q: 'Your X experience looks lighter than your LinkedIn.', answer: 'True. Name what you’d try in month one and how you’d measure it. Don’t overclaim.' },
-    { q: 'This is a step toward social and away from strategy. Is that what you want?', answer: 'Yes: strategy is still the job, just aimed at distribution. Owning a channel end to end is what I want next.' },
-    { q: 'What’s your biggest weakness?', answer: 'I can hold onto a format too long because I like it. The dashboard keeps me honest.' },
-  ],
-  askThem: [
-    { category: 'The role', q: 'What does a great first 90 days look like for Frontier’s social?' },
-    { category: 'The role', q: 'How do the clips get made today, and what slows them down?' },
-    { category: 'The team', q: 'Who would I work with most closely, day to day?' },
-    { category: 'The team', q: 'How does editorial decide what to make, and where does social come in?' },
-    { category: 'Success', q: 'How will you know, a year from now, that this hire worked?' },
-    { category: 'Success', q: 'Which accounts do you admire, inside or outside venture?' },
-    { category: 'The company', q: 'How does the team decide what to stop doing?' },
-  ],
-  pay: 'Posted range is $199,000 to $232,000 plus carry and bonus. Your saved answer is $150,000 to $175,000, which is below this range. If asked, say you’re comfortable within their posted range and want to learn more about the full package. Don’t name a number first.',
-  closing: 'Thank you. From everything we talked about, this is the work I want to be doing, and I think I can make Frontier’s ideas travel further from week one.',
-  thankYou: 'Hi [Name],\n\nThank you for the time today. I enjoyed hearing how Frontier works with editorial, and the clips question has stuck with me: I’d start by cutting three hooks from the last month’s pieces and seeing which one travels.\n\nIf it would help, I’m happy to share a few examples from the series we built at Tidewater.\n\nThanks again,\nJordan',
-  watchOuts: ['Crypto and deep tech are new to you. Say so, and show how fast you learned Canopy’s merchant audience.', 'Your X experience is lighter than LinkedIn. Be specific about what you’d try in the first month.', 'Don’t talk about Tidewater’s numbers as yours alone: say “we” for team results.'],
 };
 
 export const VOICE = {

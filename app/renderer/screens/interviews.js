@@ -49,10 +49,11 @@ async function sheet(root, id, app) {
     const i = list.find((x) => x.id === id);
     if (!i) { root.innerHTML = '<div class="page"><div class="note alert">Interview not found.</div></div>'; return; }
     const c = i.cheat;
-    root.innerHTML = cheatPage(i, c);
+    root.innerHTML = c?.v === 2 ? cheatPageV2(i, c) : cheatPage(i, c);
+    if (c?.v === 2) spy(root);
     root.querySelector('#notes').onchange = (e) => call('interviews.update', { id, notes: e.target.value }).then(() => toast('Saved.'));
     // Jump links scroll within the page (the address keeps pointing at this interview).
-    root.querySelectorAll('[data-jump]').forEach((a) => (a.onclick = (e) => { e.preventDefault(); root.querySelector(`#cs-${a.dataset.jump}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); root.querySelectorAll('.cheat-nav a').forEach((x) => x.classList.toggle('on', x === a)); }));
+    root.querySelectorAll('[data-jump]').forEach((a) => (a.onclick = (e) => { e.preventDefault(); const sel = a.dataset.jump ? `#cs-${a.dataset.jump}` : a.getAttribute('href'); root.querySelector(sel)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); if (!a.dataset.jump && window.innerWidth <= 960) root.querySelector('.cs-index')?.removeAttribute('open'); root.querySelectorAll('.cheat-nav a').forEach((x) => x.classList.toggle('on', x === a)); }));
     root.__i = i;
   };
   on(root, {
@@ -60,7 +61,25 @@ async function sheet(root, id, app) {
     print: () => window.print(),
     copyty: () => navigator.clipboard.writeText(root.__i.cheat?.thankYou || '').then(() => toast('Copied.')),
     practice: () => app.openChat(null, `Let's practice for my ${root.__i.company} interview. Ask me one likely question at a time and give me feedback.`),
-    edit: () => { const i = root.__i; modal(`<h2>Interview details</h2><div class="grid"><label class="field">Date and time<input type="datetime-local" id="d" value="${i.start ? new Date(new Date(i.start).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''}"></label><label class="field">Round<input type="text" id="r" value="${esc(i.round || '')}"></label><label class="field">With<input type="text" id="w" value="${esc(i.with || '')}"></label><label class="field">Format<input type="text" id="f" value="${esc(i.format || '')}"></label></div><div class="row"><button class="btn primary" id="s">Save</button><button class="btn" data-close>Cancel</button><button class="btn danger" id="x">Delete interview</button></div>`, { onMount: (m, close) => { m.querySelector('#s').onclick = async () => { await call('interviews.update', { id, start: m.querySelector('#d').value ? new Date(m.querySelector('#d').value).toISOString() : null, round: m.querySelector('#r').value, with: m.querySelector('#w').value, format: m.querySelector('#f').value }); close(); paint(); }; m.querySelector('#x').onclick = async () => { if (confirm('Delete this interview?')) { await call('interviews.remove', { id }); close(); app.go('#/interviews'); } }; } }); },
+    edit: () => { const i = root.__i; const f = (k, label, ph = '', type = 'text') => `<label class="field">${label}<input type="${type}" id="e-${k}" value="${esc(i[k] || '')}" placeholder="${esc(ph)}"></label>`;
+      modal(`<h2>Interview details</h2><p class="muted small">The more we know, the better the cheat sheet. Everything here is optional.</p>
+<div class="grid"><label class="field">Date and time<input type="datetime-local" id="e-start" value="${i.start ? new Date(new Date(i.start).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''}"></label><label class="field">Length (minutes)<input type="number" id="e-mins" min="5" step="5" value="${i.start && i.end ? Math.round((new Date(i.end) - new Date(i.start)) / 60000) : ''}" placeholder="30"></label></div>
+<div class="grid">${f('round', 'Round', 'Panel interview, round 4')}${f('format', 'Format', 'Video call')}</div>
+<div class="grid">${f('with', 'Who you’re meeting', 'Name, title')}${f('theirTz', 'Where they are', 'Europe/London, or a city')}</div>
+<label class="field">What you know about them<textarea id="e-about" rows="3" placeholder="Paste their LinkedIn summary, or anything the recruiter told you">${esc(i.about || '')}</textarea></label>
+<div class="grid">${f('link', 'Call link', 'https://…', 'url')}${f('scheduler', 'Scheduled by', 'Name (recruiting)')}</div>
+<div class="grid">${f('meetingId', 'Meeting ID')}${f('passcode', 'Passcode')}</div>
+${f('companySite', 'Company website', 'https://…', 'url')}
+<div class="row"><button class="btn primary" id="s">Save</button><button class="btn link" data-close>Cancel</button><button class="btn link" id="x">Delete interview</button></div>`, { onMount: (m, close) => {
+        m.querySelector('#s').onclick = async () => {
+          const v = (k) => m.querySelector(`#e-${k}`).value.trim();
+          const start = v('start') ? new Date(v('start')).toISOString() : null;
+          const end = start && Number(v('mins')) ? new Date(new Date(start).getTime() + Number(v('mins')) * 60000).toISOString() : i.end || null;
+          await call('interviews.update', { id, start, end, round: v('round'), format: v('format'), with: v('with'), theirTz: v('theirTz'), about: v('about'), link: v('link'), scheduler: v('scheduler'), meetingId: v('meetingId'), passcode: v('passcode'), companySite: v('companySite') });
+          close(); paint();
+        };
+        m.querySelector('#x').onclick = async () => { if (confirm('Delete this interview?')) { await call('interviews.remove', { id }); close(); app.go('#/interviews'); } };
+      } }); },
   });
   root.innerHTML = `<div class="page">${working('Loading…')}</div>`;
   await paint();
@@ -108,4 +127,116 @@ ${!c ? '<div class="empty"><b>No cheat sheet yet.</b><span class="muted small">W
 <nav class="cheat-nav" aria-label="On this page"><b class="tiny muted">On this page</b>${S.map((x) => `<a href="#cs-${x.id}" data-jump="${x.id}">${esc(x.title)}</a>`).join('')}</nav>
 <div class="cheat-body">${S.map((x) => `<section class="card cheat-sec" id="cs-${x.id}"><h2>${esc(x.title)}</h2>${x.html}</section>`).join('')}</div>
 </div></div>`;
+}
+
+// ----- cheat sheet, version 2: built like a prep page a friend makes the night before -----
+const P = (t) => `<p>${esc(t)}</p>`;
+const glance = (g) => (g?.length ? `<ul class="cs-glance" aria-label="At a glance">${g.map(li).join('')}</ul>` : '');
+const labelled = (t) => { const m = String(t).match(/^([^:]{2,40}):\s(.+)$/s); return m ? `<li><b>${esc(m[1])}:</b> ${esc(m[2])}</li>` : li(t); };
+const steps = (list) => (list?.length > 2 ? `<div class="cs-steps" aria-label="Steps">${list.map((x, k) => `<span class="cs-step${k === 0 ? ' first' : ''}">${esc(x)}</span>`).join('<span class="cs-arrow" aria-hidden="true">→</span>')}</div>` : '');
+const theirTime = (start, tz) => { if (!start || !tz) return ''; try { const o = { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }; const theirs = new Date(start).toLocaleTimeString([], { ...o, timeZone: tz }); return theirs === new Date(start).toLocaleTimeString([], o) ? '' : `${theirs} for them`; } catch { return `they’re in ${tz}`; } };
+
+function cheatPageV2(i, c) {
+  const nav = []; const body = [];
+  const group = (id, title, items) => nav.push({ id, title, items });
+  const name = c.interviewer?.name || i.with || 'them';
+  const first = c.interviewer?.short || String(name).split(/[ ,]/)[0];
+  // Start here
+  const mins = i.start && i.end ? Math.round((new Date(i.end) - new Date(i.start)) / 60000) : 0;
+  const facts = [
+    ['When', [i.start ? when(i.start) : 'Date not set', mins && `${mins} min`, theirTime(i.start, i.theirTz)].filter(Boolean).join(' · ')],
+    ['Where', i.link ? `<a href="${esc(i.link)}" target="_blank" rel="noopener">Join the call</a>${i.meetingId ? ` · ID <span class="mono">${esc(i.meetingId)}</span>` : ''}${i.passcode ? ` · passcode <span class="mono">${esc(i.passcode)}</span>` : ''}` : esc(i.format || 'Add the call link in Edit details')],
+    i.scheduler && ['Scheduler', esc(i.scheduler)],
+    ['The job', [c.posted?.pay, c.posted?.location].filter(Boolean).map(esc).join(' · ') + (c.posted?.url ? ` · <a href="${esc(c.posted.url)}" target="_blank" rel="noopener">Posting</a>` : '')],
+  ].filter(Boolean);
+  body.push(`<section class="cs-facts card" id="cs-top" aria-label="Meeting details">${facts.map(([k, v]) => `<div><span class="cs-label">${k}</span><p>${v.startsWith?.('<') || /<a |<span/.test(v) ? v : v}</p></div>`).join('')}</section>`);
+  const start = [['cs-top', 'Meeting details']];
+  if (c.interviewer) {
+    start.push(['cs-who', `Who ${first} is`]);
+    body.push(`<section class="cs-block" id="cs-who"><h2>Who ${esc(first)} is</h2>${glance(c.interviewer.glance)}${c.interviewer.details?.length ? `<ul>${c.interviewer.details.map(labelled).join('')}</ul>` : ''}
+${c.news ? `<div class="cs-figure"><span class="cs-label">Recent news: ${esc(c.news.title)}</span>${glance(c.news.glance)}${c.news.details?.length ? `<ul>${c.news.details.map(labelled).join('')}</ul>` : ''}${c.news.other ? `<p><b>Other recent news:</b> ${esc(c.news.other)}</p>` : ''}${c.news.howToUse ? `<p><b>How to use it:</b> <i>“${esc(c.news.howToUse)}”</i></p>` : ''}</div>` : ''}
+${c.interviewer.meansForYou ? `<p class="cs-tip"><b>What that means for you:</b> ${esc(c.interviewer.meansForYou)}</p>` : ''}</section>`);
+  }
+  if (c.land?.length) { start.push(['cs-land', 'Three things to land']); body.push(`<section class="cs-block" id="cs-land"><h2>Three things to land</h2><div class="cs-lands">${c.land.map((l) => `<div class="cs-land"><b>${esc(l.title)}</b><p>${esc(l.proof)}</p></div>`).join('')}</div></section>`); }
+  if (c.onPaper?.length || c.notOnPaper?.length) {
+    start.push(['cs-paper', `What ${first} may have in front of them`]);
+    body.push(`<section class="cs-flagbox" id="cs-paper"><h2>What ${esc(first)} may have in front of them</h2>
+${c.onPaper?.length ? `<ul>${c.onPaper.map((o) => `<li><b>${esc(o.source)} says:</b> <i>“${esc(o.says)}”</i><br><b>You say:</b> “${esc(o.youSay)}”</li>`).join('')}</ul>` : ''}
+${c.notOnPaper?.length ? `<p><b>Not on what you sent, so they may ask:</b></p><ul>${c.notOnPaper.map((o) => `<li><b>${esc(o.topic)}.</b> You say: “${esc(o.youSay)}”</li>`).join('')}</ul>` : ''}</section>`);
+  }
+  group('cs-top', 'Start here', start);
+  // Questions, by topic
+  (c.groups || []).forEach((g, gi) => {
+    const items = []; const cards = [];
+    (g.questions || []).forEach((q, qi) => {
+      const qid = `cs-q${gi}-${qi}`;
+      items.push([qid, q.q, q.yourStory]);
+      cards.push(`<article class="cs-qa card" id="${qid}"><h3>${esc(q.q)}</h3>${glance(q.glance)}<div class="cs-answer">${(q.answer || []).map(P).join('')}</div>${steps(q.steps)}
+${(q.tips || []).map((t) => `<p class="cs-tip"><b>${esc(t.label)}:</b> ${esc(t.text)}</p>`).join('')}${q.flag ? `<p class="cs-flag"><b>${esc(q.flag.label)}:</b> ${esc(q.flag.text)}</p>` : ''}
+<div class="row-l" style="justify-content:space-between">${q.from?.length ? '<span class="tiny muted">From your profile</span>' : '<span></span>'}<a class="cs-top-link small" href="#cs-top" data-jump>Back to the top</a></div></article>`);
+    });
+    group(`cs-g${gi}`, g.title, items);
+    body.push(`<h2 class="cs-section" id="cs-g${gi}">${esc(g.title)}</h2><div class="cs-stack">${cards.join('')}</div>`);
+  });
+  // Homework
+  const h = c.homework;
+  if (h && (h.top3?.length || h.quickWins?.length || h.bigPlays?.length)) {
+    const items = [];
+    let html = `<h2 class="cs-section" id="cs-ideas">${esc(h.title || 'Ideas to bring')}</h2><div class="cs-stack">`;
+    if (h.top3?.length) { items.push(['cs-top3', 'If you only mention three']); html += `<section class="cs-flagbox good" id="cs-top3"><h2>If you only mention three</h2><ol>${h.top3.map((x) => `<li><b>${esc(x.title)}</b> ${esc(x.detail)}</li>`).join('')}</ol>${h.framing ? `<p><b>How to frame it:</b> <i>${esc(h.framing)}</i></p>` : ''}</section>`; }
+    if (h.lookedAt) html += `<p class="cs-tip"><b>What we looked at:</b> ${esc(h.lookedAt)}</p>`;
+    const list = (id, title, xs) => { if (!xs?.length) return; items.push([id, title]); html += `<article class="cs-qa card" id="${id}"><h3>${esc(title)}</h3>${glance(xs.map((x) => x.title))}<ul>${xs.map((x) => `<li><b>${esc(x.title)}.</b> ${esc(x.detail)}</li>`).join('')}</ul>${id === 'cs-quick' && h.edge ? `<p class="cs-tip"><b>Your edge here:</b> ${esc(h.edge)}</p>` : ''}<a class="cs-top-link small" href="#cs-top" data-jump>Back to the top</a></article>`; };
+    list('cs-quick', 'Quick wins', h.quickWins); list('cs-big', 'Bigger plays', h.bigPlays);
+    html += '</div>'; body.push(html); group('cs-ideas', 'Ideas to bring', items);
+  }
+  if (h?.primers?.length) {
+    group('cs-primers', 'In plain English', h.primers.map((p, k) => [`cs-p${k}`, p.term]));
+    body.push(`<h2 class="cs-section" id="cs-primers">In plain English</h2><div class="cs-stack">${h.primers.map((p, k) => `<article class="cs-qa card" id="cs-p${k}"><h3>${esc(p.term)}</h3><p>${esc(p.plain)}</p>${p.ifAsked ? `<p class="cs-tip"><b>If asked:</b> <i>“${esc(p.ifAsked)}”</i></p>` : ''}</article>`).join('')}</div>`);
+  }
+  // Wrap-up
+  const wrap = [];
+  let w = `<h2 class="cs-section" id="cs-wrap">Wrap-up</h2><div class="cs-stack">`;
+  const L = c.logistics;
+  if (L) { wrap.push(['cs-logistics', 'Salary, location, start date']); w += `<article class="cs-qa card" id="cs-logistics"><h3>Salary, location, start date</h3>${glance(L.glance)}<div class="cs-answer">${L.salary ? `<p><b>Salary.</b> ${esc(L.salary)}</p>` : ''}${L.salaryScript ? `<p>What to say:</p><p><i>“${esc(L.salaryScript)}”</i></p>` : ''}${L.location ? `<p><b>Location.</b> ${esc(L.location)}</p>` : ''}${L.locationScript ? `<p><i>“${esc(L.locationScript)}”</i></p>` : ''}${L.authorization ? `<p><b>Authorization:</b> ${esc(L.authorization)}</p>` : ''}</div>${L.notes?.length ? `<div class="cs-figure"><span class="cs-label">Things to know before you answer</span><ul>${L.notes.map(labelled).join('')}</ul></div>` : ''}${L.yourCall ? `<p class="cs-flag"><b>Your call:</b> ${esc(L.yourCall)}</p>` : ''}</article>`; }
+  if (c.ask?.list?.length) { wrap.push(['cs-ask', `Questions to ask ${first}`]); w += `<article class="cs-qa card" id="cs-ask"><h3>Questions to ask ${esc(first)}</h3>${glance(c.ask.glance)}<ul>${c.ask.list.map(li).join('')}</ul>${c.ask.tip ? `<p class="cs-tip"><b>Tip:</b> ${esc(c.ask.tip)}</p>` : ''}</article>`; }
+  wrap.push(['cs-after', 'After the call']);
+  w += `<article class="cs-qa card" id="cs-after"><h3>After the call</h3>${(c.after || []).length ? `<ul>${c.after.map(li).join('')}</ul>` : ''}${c.thankYou ? `<span class="cs-label">Thank-you note</span><div class="letter">${esc(c.thankYou)}</div><div class="row"><button class="btn small" data-act="copyty">Copy the note</button></div>` : ''}</article>`;
+  wrap.push(['cs-notes', 'Your notes']);
+  w += `<article class="cs-qa card" id="cs-notes"><h3>Your notes</h3><p class="small muted">Write down what you learn. The next round’s cheat sheet reads these.</p><textarea id="notes" rows="5" placeholder="How it went, what they care about, what to follow up on">${esc(i.notes || '')}</textarea></article></div>`;
+  body.push(w); group('cs-wrap', 'Wrap-up', wrap);
+  const navHtml = nav.map((g) => `<div class="cs-group"><a class="cs-cat" href="#${g.id}" data-jump>${esc(g.title)}</a><ul>${g.items.map(([id, t, story]) => `<li><a href="#${id}" data-jump>${esc(t)}</a>${story ? '<span class="cs-story">Your story</span>' : ''}</li>`).join('')}</ul></div>`).join('');
+  return `<div class="page cheat2">
+<a href="#/interviews" class="small">← Interviews</a>
+<div class="head"><div><div class="eyebrow">${esc([i.round, i.with].filter(Boolean).join(' · ') || 'Interview')}</div><h1>${esc(i.company || '')}${i.company ? ': ' : ''}your ${mins ? `${mins} minutes` : 'interview'} with ${esc(first)}</h1>${c.subtitle ? `<p class="muted">${esc(c.subtitle)}</p>` : ''}</div>
+<div class="row"><button class="btn secondary" data-act="practice">Practice with Margo</button><button class="btn secondary" data-act="edit">Edit details</button><button class="btn link" data-act="make" data-busy="Researching and writing…">Make it again</button><button class="btn link" data-act="print">Print</button></div></div>
+<span data-progress="cheat" class="small muted"></span>
+${c.researchNote ? `<div class="note att">${esc(c.researchNote)}</div>` : ''}
+<div class="cs-layout">
+<aside class="cs-side"><details class="cs-index" open><summary>On this page</summary><nav aria-label="On this page">${navHtml}</nav></details></aside>
+<div class="cs-main">${body.join('\n')}
+<footer class="cs-foot small muted"><p>Written in your voice from your profile${c.onPaper?.length ? ', the resume and letter you sent' : ''} and the job posting${c.sources?.length ? ', plus public sources' : ''}. Made ${c.at ? esc(new Date(c.at).toLocaleDateString()) : ''}. Check anything you plan to quote.</p>${c.sources?.length ? `<p>Sources: ${c.sources.slice(0, 12).map((x) => `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a>`).join(' · ')}</p>` : ''}</footer></div>
+</div></div>`;
+}
+
+// Highlight where you are in the side menu, like a table of contents.
+function spy(root) {
+  const links = [...root.querySelectorAll('.cs-side a[href^="#cs-"]')];
+  const targets = links.map((a) => root.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const side = root.querySelector('.cs-side');
+  if (window.innerWidth <= 960) root.querySelector('.cs-index')?.removeAttribute('open');
+  let current = null;
+  const update = () => {
+    if (!root.isConnected) { window.removeEventListener('scroll', onScroll); return; }
+    const line = window.innerHeight * 0.3; let active = targets[0];
+    for (const t of targets) { if (t.getBoundingClientRect().top <= line) active = t; else break; }
+    if (!active || active === current) return; current = active;
+    links.forEach((a) => a.removeAttribute('aria-current'));
+    const a = links.find((x) => x.getAttribute('href') === `#${active.id}` && !x.classList.contains('cs-cat')) || links.find((x) => x.getAttribute('href') === `#${active.id}`);
+    if (a) { a.setAttribute('aria-current', 'true'); a.closest('.cs-group')?.querySelector('.cs-cat')?.setAttribute('aria-current', 'true'); }
+    if (a && side && getComputedStyle(side).position === 'sticky') { const r = a.getBoundingClientRect(), b = side.getBoundingClientRect(); if (r.top < b.top + 40 || r.bottom > b.bottom - 40) side.scrollTop += r.top - b.top - b.height / 3; }
+  };
+  let ticking = false;
+  const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(() => { ticking = false; update(); }); } };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  update();
 }

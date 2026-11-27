@@ -79,12 +79,12 @@ function answer(system, content) {
     const facts = ['1.2M views', '60+ LinkedIn posts', 'Looker Studio', '40K to 210K', '38,000', '1,100 pages', '9K to 52K', '24 case studies', '300 help-center', '6-person team'].map((n) => findBullet(p, n)).filter((b) => b && paras.some((x) => x.includes(b.text.match(/\d[\d,.KM+]*/)?.[0] || '@@')));
     return { greeting: 'Dear Hiring Team,', paragraphs: paras, closing: 'Thank you,', factsUsed: facts.map((b) => b.id) };
   }
-  if (system.includes('interview cheat sheet')) {
+  if (system.includes('You write the top of an interview cheat sheet')) return D.CHEAT.brief;
+  if (system.includes('You write the questions part of an interview cheat sheet')) {
     const p = profileFrom(text);
-    const ref = (m) => (m ? [findBullet(p, m)?.id].filter(Boolean) : []);
-    const proof = (m) => (m ? findBullet(p, m)?.text || '' : '');
-    return { ...D.CHEAT, role: { ...D.CHEAT.role, theyNeed: D.CHEAT.role.theyNeed.map(({ need, match }) => ({ need, proof: proof(match), from: ref(match) })) }, stories: D.CHEAT.stories.map(({ match, ...x }) => ({ ...x, from: ref(match) })), questions: D.CHEAT.questions.map(({ match, ...q }) => ({ ...q, from: ref(match) })) };
+    return { groups: D.CHEAT.groups.map((g) => ({ ...g, questions: g.questions.map(({ match, ...q }) => ({ tips: [], flag: null, steps: [], yourStory: false, ...q, from: match ? [findBullet(p, match)?.id].filter(Boolean) : [] })) })) };
   }
+  if (system.includes('You write the "homework" part')) return D.CHEAT.homework;
   if (system.includes('preference rules')) return { rules: [] };
   throw new Error('demo Claude: no scripted answer for ' + system.slice(0, 60));
 }
@@ -156,10 +156,14 @@ await call('jobs.rate', { id: jobId('lightfield'), value: 'no', reasons: ['On-si
 // Applications, with dates that make sense.
 const entry = (key) => s().get('tracker').list.find((t) => t.title === D.JOBS.find((j) => j.key === key).title);
 for (const j of D.JOBS.filter((x) => ['applied', 'interviewing'].includes(x.status))) await call('tracker.status', { id: entry(j.key).id, status: 'applied' });
-const iv = await call('interviews.forJob', { jobId: jobId('a16z') });
-await call('interviews.update', { id: iv.id, start: '2026-12-02T18:00:00.000Z', end: '2026-12-02T18:45:00.000Z', round: 'Hiring manager interview', with: 'Frontier editorial lead', format: 'Video call', notes: 'Recruiter screen went well on Nov 10. Bring 2 clip examples and the dashboard screenshot.' });
+// The recruiter screen already happened; its notes feed the next round's sheet.
+const screen = await call('interviews.forJob', { jobId: jobId('a16z') });
+await call('interviews.update', { id: screen.id, start: '2026-11-10T20:00:00.000Z', end: '2026-11-10T20:30:00.000Z', round: 'Recruiter screen', with: 'a16z recruiting', format: 'Phone', notes: 'Went well. The team cares most about clips and testing. Comp band confirmed. Next: hiring manager, Dec 2.' });
+const iv = await call('interviews.add', { trackerId: entry('a16z').id, company: 'Andreessen Horowitz', role: D.JOBS[0].title, start: '2026-12-02T18:00:00.000Z', round: 'Hiring manager interview, round 2', with: 'Frontier editorial lead', format: 'Video call' });
+await call('interviews.update', { id: iv.id, end: '2026-12-02T18:45:00.000Z', theirTz: 'America/Los_Angeles', link: 'https://zoom.us/j/81244550193', meetingId: '812 4455 0193', passcode: 'frontier', scheduler: 'a16z recruiting', about: 'Runs editorial for Frontier. The role reports to them.', notes: '' });
 await call('interviews.cheat', { id: iv.id });
-s().update('interviews', (x) => { const i = x.list.find((y) => y.id === iv.id); delete i.cheat.researchNote; });
+s().update('interviews', (x) => { const i = x.list.find((y) => y.id === iv.id); i.cheat.researchNote = ''; }); // demo: no live research
+
 
 s().update('tracker', (t) => {
   for (const j of D.JOBS) {

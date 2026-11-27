@@ -266,43 +266,114 @@ export function verifyLetter(draft, profile, voice = {}) {
 
 // ---------- Interview cheat sheet ----------
 
-export async function cheatSheet(claude, { profile, job, interview, research, voice, answers = [] }) {
-  const system = `You make a thorough interview cheat sheet the person reads the night before and glances at during the call.
-${TRUTH}
-Company facts may only come from the research text or the job posting given. If unsure, leave it out.
-Everything about the person comes from their profile: answers and stories name the bullet ids they use in "from".
-Write in their voice. Plain words, short sentences.
-Shape: {
- "talkingPoints": ["the 3 things they most want the interviewer to remember, one sentence each"],
- "company": {"about": "2 to 3 sentences", "recent": ["up to 4 recent things from the research"], "values": ["up to 4 things they say they care about"]},
- "role": {"focus": "what this job is really about, 1 sentence", "theyNeed": [{"need": string, "proof": "one line from the profile that shows it, or empty", "from": ["bullet id"]}]},
- "pitch": "a 3 sentence 'tell me about yourself' in their voice",
- "pitchLong": "a 2 minute version: 5 to 7 sentences, past to present to why this job",
- "stories": [{"title": "short name", "situation": string, "action": string, "result": "with the real numbers", "usefulFor": ["kinds of questions it answers"], "from": ["bullet id"]}],
- "questions": [{"category": "About you|The role|How you work|The company", "q": string, "answer": "short outline in their voice", "from": ["bullet id"]}],
- "tough": [{"q": "a hard or awkward question, often about a gap", "answer": "an honest way to answer"}],
- "askThem": [{"category": "The role|The team|Success|The company", "q": string}],
- "pay": "how to handle the pay question, using their saved answer and the posted range if any",
- "closing": "a 2 sentence close for the end of the interview",
- "thankYou": "a short thank-you email to send the same day, 60 to 90 words, with [Name] for the interviewer",
- "watchOuts": ["gaps or tricky spots and how to handle them honestly"]
+// ---------- Interview cheat sheet ----------
+// Built like a great prep page a friend would make the night before: researched, in the person's
+// voice, with an at-a-glance line for every answer so they can glance at it during the call.
+// Four steps: research (web search), then the brief, the questions and the homework, written in parallel.
+
+const CHEAT_RULES = `${TRUTH}
+Everything about the person comes only from their profile, their saved answers and what they sent this employer. Every answer and story lists the profile bullet ids it uses in "from".
+Facts about the company, the interviewer and the website come only from the research notes or the job posting. If something isn't there, leave it out. Never guess a person's background.
+Write answers in the first person, in the person's own voice: plain words, short sentences, warm. No buzzwords.
+"glance" lists are what they glance at during a live call: 3 to 8 very short fragments each, like "Old Navy: built Mexico + Japan sites" or "Ask what he wants first". Arrows (→) and + are fine there.
+Be honest about gaps: say what they haven't done, then what carries over.`;
+
+export async function cheatResearch(claude, { job, interview, companySite }) {
+  const system = `You research a company and a job interview so someone can prepare. Search the web. Keep only facts you found, each with its date when there is one.
+About people: only their public professional background (current role, past employers and roles, public talks or articles). Nothing personal.
+Write plain notes in these sections: COMPANY (what it does, products, size, customers), NEWS (last 6 months, dated, newest first), INTERVIEWER (one block per person), WEBSITE (observations about the pages most related to this role: what's strong, what's missing, specifics like page titles or calls to action), TERMS (terms from the posting a newcomer should understand, each in one plain sentence). Say "not found" where you found nothing.`;
+  const content = `Company: ${job.company}${companySite ? ` (${companySite})` : ''}
+Role: ${job.title}
+Interviewing with: ${interview.with || 'unknown'}${interview.about ? `\nWhat the person already knows about them: ${interview.about}` : ''}
+Job posting:
+${String(job.description || '').slice(0, 5000)}`;
+  return claude.research({ system, content, maxUses: 10, maxTokens: 6000 });
 }
-Give 3 talking points, 4 to 5 stories, 10 to 12 questions across the categories, 3 to 4 tough questions and 6 to 8 questions to ask.`;
-  const content = `Interview: ${JSON.stringify(interview || {})}
-Job: ${job.title} at ${job.company}
-${String(job.description || '').slice(0, 7000)}
-Research (from the company's own pages):
-${String(research || 'none').slice(0, 8000)}
-Voice: ${(voice?.guide || []).join(' ')}
-Their saved answers: ${answers.filter((a) => a.answer && ['salary', 'start', 'relocate'].includes(a.key)).map((a) => `${a.question} ${a.answer}`).join(' | ') || 'none'}
+
+const cheatContext = ({ profile, job, interview, research, voice, answers, sent, earlier, want }) => `Interview: ${JSON.stringify(interview)}
+Earlier rounds for this job (what they learned): ${earlier.length ? earlier.map((e) => `${e.date} ${e.round || ''} with ${e.with || '?'}: ${e.notes || 'no notes'}`).join(' | ') : 'none'}
+Job: ${job.title} at ${job.company}${job.pay ? ` · ${job.pay}` : ''}${job.location ? ` · ${job.location}` : ''}
+${String(job.description || '').slice(0, 6000)}
+Research notes:
+${String(research || 'none').slice(0, 12000)}
+What they sent this employer:
+${sent || 'nothing on file'}
+Their voice: ${(voice?.guide || []).join(' ')}
+Their saved answers: ${answers.filter((a) => a.answer).map((a) => `${a.question}: ${a.answer}`).join(' | ') || 'none'}
+Their pay floor: ${want?.payFloor || 'not set'}
 Profile: ${JSON.stringify(slimProfile(profile))}`;
-  const out = await claude.json({ system, content, maxTokens: 9000, temperature: 0.3 });
-  const ids = new Set(allBullets(profile).map((b) => b.id));
+
+export async function cheatBrief(claude, ctx) {
+  const system = `You write the top of an interview cheat sheet.
+${CHEAT_RULES}
+Shape: {
+ "subtitle": "one line: who, their role, and where this round sits among earlier rounds",
+ "interviewer": {"name": string, "short": "how to refer to them in headings: a first name, or a role like 'the hiring manager'", "glance": [..], "details": ["2 to 4 bullets of background from research, each starting with a bold-worthy short label then a colon"], "caresAbout": ["what they will likely care about, from their role"], "meansForYou": "2 to 3 sentences: what this means for how to show up, naming the person's most relevant experience"},
+ "news": {"title": "the most relevant recent item", "glance": [..], "details": ["3 to 5 bullets"], "other": "one sentence on other recent news", "howToUse": "one natural line they could say"} or null,
+ "land": [{"title": "a first-person claim", "proof": "the real facts that prove it"}] (exactly 3, chosen for this interviewer),
+ "onPaper": [{"source": "Resume" or "Cover letter", "says": "an exact quote from what they sent that could invite a follow-up or sounds stronger than the profile supports", "youSay": "how to say it out loud, accurately"}] (0 to 4; quotes must be word for word),
+ "notOnPaper": [{"topic": "something the role asks for that isn't on what they sent", "youSay": "an honest answer"}] (2 to 5),
+ "logistics": {"glance": [..], "salary": "the posted range vs their saved answer or floor, what's realistic", "salaryScript": "what to say", "location": "what to know", "locationScript": "what to say, or empty", "authorization": "from saved answers, or empty", "notes": ["things to know before answering: who sets pay, levers besides base"], "yourCall": "the decision only they can make before the call"},
+ "ask": {"glance": [..], "list": ["5 to 7 questions for this specific person, using what was learned in earlier rounds"], "tip": "how many to pick given the length"},
+ "after": ["what to do after the call"],
+ "thankYou": "a short thank-you note, 60 to 90 words, with [one thing they said] as a placeholder"
+}`;
+  return claude.json({ system, content: cheatContext(ctx), maxTokens: 7000, temperature: 0.3 });
+}
+
+export async function cheatQuestions(claude, ctx) {
+  const system = `You write the questions part of an interview cheat sheet: what this specific interviewer is likely to ask, with answers ready to say.
+${CHEAT_RULES}
+Group the questions by topic. Pick the topics from this interviewer's role and the job (for example "Working with marketing", "How you'd run the site", "The product"). Always start with "Opening" (tell me about yourself, why this company and role) and end with "Gaps" (the honest hard ones, including "tell me about something that went wrong").
+Shape: {"groups": [{"title": string, "questions": [{
+  "q": "the question as they'd ask it",
+  "glance": [..],
+  "answer": ["1 to 4 short first-person paragraphs, the way they'd say it"],
+  "tips": [{"label": "e.g. For [name] specifically, If they want more, Why it lands, Tone, Short version, Plain English", "text": string}],
+  "flag": {"label": "e.g. The facts, Don't mention", "text": string} or null,
+  "yourStory": true if this is one of their signature stories,
+  "steps": ["3 to 5 short step labels if a simple process diagram would help, otherwise empty"],
+  "from": ["bullet ids"]
+}]}]}
+Write 5 to 7 groups and 20 to 28 questions in all. Use real numbers from the profile. Each answer should take 30 to 90 seconds to say.`;
+  return claude.json({ system, content: cheatContext(ctx), maxTokens: 16000, temperature: 0.3 });
+}
+
+export async function cheatHomework(claude, ctx) {
+  const system = `You write the "homework" part of an interview cheat sheet: ideas the person could bring about this company, and plain-English explainers.
+${CHEAT_RULES}
+Ideas must come from the research notes (website observations, news) and the posting. Every idea is specific: name the page, product or detail. If the research has nothing specific, return fewer ideas, even none.
+Shape: {
+ "title": "Ideas for [company] (short)",
+ "top3": [{"title": "one-line idea", "detail": "2 to 3 sentences, specific"}],
+ "quickWins": [{"title": string, "detail": string}] (0 to 8),
+ "bigPlays": [{"title": string, "detail": string}] (0 to 6),
+ "lookedAt": "what was researched and when, and a reminder to check it themselves",
+ "framing": "one line on how to bring ideas up without sounding critical",
+ "edge": "one or two sentences on why their background makes them good at this, or empty",
+ "primers": [{"term": string, "plain": "2 to 4 plain sentences", "ifAsked": "an honest line to say about their experience with it, or empty"}] (3 to 8, for terms in the posting a newcomer needs)
+}`;
+  return claude.json({ system, content: cheatContext(ctx), maxTokens: 8000, temperature: 0.3 });
+}
+
+/** The whole sheet. Research failures never stop it; the sheet says what it couldn't check. */
+export async function cheatSheet(claude, ctx, { onStep = () => {} } = {}) {
+  let research = ctx.research || '', sources = [], researchNote = '';
+  if (claude.research) {
+    onStep(`Researching ${ctx.job.company}${ctx.interview.with ? ` and ${ctx.interview.with}` : ''}…`);
+    try { const r = await cheatResearch(claude, { job: ctx.job, interview: ctx.interview, companySite: ctx.companySite }); research = `${r.text}\n\n${research}`; sources = r.sources; }
+    catch (e) { researchNote = `We couldn't search the web this time (${e.message}), so this uses the posting and the company's own pages only.`; }
+  }
+  onStep('Writing your cheat sheet…');
+  const c = { ...ctx, research };
+  const [brief, qs, homework] = await Promise.all([cheatBrief(claude, c), cheatQuestions(claude, c), cheatHomework(claude, c).catch(() => null)]);
+  const ids = new Set(allBullets(ctx.profile).map((b) => b.id));
   const keep = (list) => (list || []).filter((id) => ids.has(id));
-  out.questions = (out.questions || []).map((q) => ({ ...q, from: keep(q.from) }));
-  out.stories = (out.stories || []).map((x) => ({ ...x, from: keep(x.from) }));
-  if (out.role?.theyNeed) out.role.theyNeed = out.role.theyNeed.map((n) => (typeof n === 'string' ? { need: n, proof: '', from: [] } : { ...n, from: keep(n.from) }));
-  return out;
+  const groups = (qs.groups || []).map((g) => ({ ...g, questions: (g.questions || []).map((q) => ({ ...q, from: keep(q.from) })) }));
+  // A quote of what they sent must really be in what they sent.
+  const sentText = String(ctx.sent || '').replace(/\s+/g, ' ');
+  if (brief.onPaper) brief.onPaper = brief.onPaper.filter((o) => o.says && sentText.includes(String(o.says).replace(/\s+/g, ' ').replace(/^["“]|["”]$/g, '')));
+  return { v: 2, ...brief, groups, homework, sources, researchNote };
 }
 
 export async function chat(claude, { messages, profile, want, job, rules, help = [] }) {

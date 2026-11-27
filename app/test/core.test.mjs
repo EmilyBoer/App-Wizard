@@ -213,7 +213,10 @@ test('interviews: from a calendar file, cheat sheet only cites real bullets', as
   const [iv] = await api.call('interviews.fromIcs', { text: 'BEGIN:VEVENT\nSUMMARY:Lumen Public Radio interview\nDTSTART:20261022T170000Z\nEND:VEVENT' });
   assert.equal(iv.company, 'Lumen Public Radio');
   const cheat = await api.call('interviews.cheat', { id: iv.id });
-  assert.deepEqual(cheat.questions[0].from, []);
+  assert.equal(cheat.v, 2);
+  assert.deepEqual(cheat.groups[0].questions[0].from, [], 'only real bullets are cited');
+  assert.deepEqual(cheat.onPaper, [], 'a quote that is not in what they sent is dropped');
+  assert.equal(cheat.homework.primers[0].term, 'CMS');
   assert.match(cheat.researchNote, /couldn't read/);
   const tr = (await api.call('tracker.list')).list[0];
   assert.equal(tr.status, 'interviewing');
