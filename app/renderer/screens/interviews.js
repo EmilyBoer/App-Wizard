@@ -121,6 +121,7 @@ function cheatPage(i, c) {
 <div class="head"><div><div class="eyebrow">${esc(when(i.start))}${i.round ? ` · ${esc(i.round)}` : ''}${i.with ? ` · ${esc(i.with)}` : ''}</div><h1>${esc(i.role || 'Interview')}${i.company ? ` · ${esc(i.company)}` : ''}</h1></div>
 <div class="row"><button class="btn" data-act="edit">Edit details</button><button class="btn" data-act="practice">Practice with Margo</button><button class="btn ${c ? '' : 'primary'}" data-act="make" data-busy="Researching and writing…">${c ? 'Make it again' : 'Make my cheat sheet'}</button><button class="btn" data-act="print">Print</button></div></div>
 <span data-progress="cheat" class="small muted"></span>
+${c ? '<div class="note info"><b>There’s a fuller cheat sheet now.</b> This one uses the older, shorter format. Press <b>Make it again</b> for the new version: research on the company and the person you’re meeting, 20+ questions with answers, and more.</div>' : ''}
 ${c?.researchNote ? `<div class="note att">${esc(c.researchNote)}</div>` : ''}
 ${!c ? '<div class="empty"><b>No cheat sheet yet.</b><span class="muted small">We’ll read the company’s own website and the job posting, then outline answers using your real results.</span></div>' : ''}
 <div class="cheat">
