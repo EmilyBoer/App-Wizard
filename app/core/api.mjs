@@ -50,7 +50,7 @@ export function createApi({ base, fetchImpl = fetch, claudeFactory = makeClaude,
   const claude = () => {
     const s = store().get('settings');
     const c = claudeFactory({ apiKey: s.claudeKey || process.env.ANTHROPIC_API_KEY, model: s.model, fastModel: s.fastModel, fetchImpl });
-    if (!c.ready) throw new UserError('Add your Claude API key in the Claude tab to use this. (Help: Setting up your Claude API key)');
+    if (!c.ready) throw new UserError('Margo can’t write right now because it isn’t connected to Claude. (For Emily: add the key to app/config/claude.json and restart.)');
     return c;
   };
   const claudeReady = () => { try { claude(); return true; } catch { return false; } };

@@ -99,14 +99,6 @@ No email? Check spam, and make sure it's the address you signed up with. For you
 
 If you already have a Margo account with the same, confirmed email, LinkedIn signs you into that account.` },
   { id: 'privacy', title: 'Where is my information kept?', tags: 'privacy data secure stored computer', body: `Everything is kept on your computer. To write and match, Margo sends the needed parts of your profile and the job to Claude (by Anthropic) through your API key. Nothing is sold or shared.` },
-  { id: 'api-key', title: 'Setting up your Claude API key', tags: 'api key claude anthropic setup cost console sign in', body: `We use Claude to read your files and write. During testing you use your own Claude API key. It takes about 3 minutes.
-
-1. Go to https://console.anthropic.com and sign in (or create an account). This is separate from your regular Claude chat account, but you can use the same email.
-2. Add a little credit: Settings, Billing. Five dollars lasts most people a month or more.
-3. Open https://console.anthropic.com/settings/keys and press Create Key. Name it "Margo".
-4. Copy the key (it starts with sk-ant-) and paste it into Margo's Claude tab, then press Save and test.
-
-If the test fails, the message tells you why: usually the key was copied with a missing piece, or the account has no credit yet.` },
 ];
 
 export function searchHelp(query) {

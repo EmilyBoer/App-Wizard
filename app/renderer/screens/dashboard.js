@@ -19,7 +19,7 @@ export async function render(root, _p, app) {
 <div class="head"><div><div class="eyebrow">${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</div><h1>Good ${hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'}${name ? `, ${esc(name)}` : ''}.</h1>
 <p class="muted">${ready.length ? `${ready.length} application${ready.length > 1 ? 's are' : ' is'} ready for you to check and send.` : fresh.length ? `${fresh.length} new match${fresh.length > 1 ? 'es' : ''} to look at.` : 'Nothing new yet. Check your job sites or add a job.'}</p></div>
 <div class="row"><button class="btn" data-act="add">Add jobs</button><button class="btn secondary" data-act="refresh" data-busy="Checking job sites…">Check for new jobs</button><button class="btn primary" data-act="batch" data-busy="Getting applications ready…">Get applications ready</button></div></div>
-${!o.hasKey ? `<div class="note att">Connect Claude in the <a href="#/claude">Claude tab</a> so we can read and write for you.</div>` : ''}
+
 ${o.pending ? `<div class="note info">${o.pending} thing${o.pending > 1 ? 's' : ''} in your experience to check. <a href="#/setup/3">Take a look</a></div>` : ''}
 ${o.followUps.length ? `<div class="note att"><b>Follow-ups due:</b> ${o.followUps.map((f) => `${esc(f.company)} (${esc(f.title)})`).join(', ')}. See them in Your journey below.</div>` : ''}
 <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">

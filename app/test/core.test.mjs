@@ -247,10 +247,10 @@ test('design: Canva import picks a layout and swaps fonts', async () => {
   assert.match(prev.html, /grid-template-columns:[0-9.]+in 1fr/);
 });
 
-test('missing API key gives a plain message', async () => {
+test('no Claude key gives a plain message', async () => {
   const { api } = newApi({ claude: () => ({ ready: false }) });
   await api.call('auth.create', { name: 'A B', email: 'a@b.co', password: 'longenough' });
-  await assert.rejects(api.call('voice.generate'), /Claude API key/);
+  await assert.rejects(api.call('voice.generate'), /isn’t connected to Claude/);
 });
 
 test('mergeProfile keeps hand-added roles', () => {

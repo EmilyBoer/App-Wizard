@@ -11,12 +11,11 @@ import * as profile from './screens/profile.js';
 import * as help from './screens/help.js';
 import * as chat from './screens/chat.js';
 import * as builder from './screens/builder.js';
-import * as claudePage from './screens/claude.js';
 import * as extensionPage from './screens/extension.js';
 
 const root = document.getElementById('app');
-const NAV = [['Profile', '#/profile'], ['Journey', '#/journey'], ['Interviews', '#/interviews'], ['Documents', '#/documents'], ['Claude', '#/claude'], ['Extension', '#/extension'], ['Account', '#/account'], ['Help', '#/help']];
-const ROUTES = { login, account, setup, build: builder, claude: claudePage, extension: extensionPage, journey: dashboard, dashboard, tracker: dashboard, job, interviews, interview: interviews, documents, doc: documents, profile, help };
+const NAV = [['Profile', '#/profile'], ['Journey', '#/journey'], ['Interviews', '#/interviews'], ['Documents', '#/documents'], ['Extension', '#/extension'], ['Account', '#/account'], ['Help', '#/help']];
+const ROUTES = { login, account, setup, build: builder, extension: extensionPage, journey: dashboard, dashboard, tracker: dashboard, job, interviews, interview: interviews, documents, doc: documents, profile, help };
 
 export const app = {
   overview: null,
@@ -51,7 +50,7 @@ function paintNav() {
   const map = { job: 'journey', dashboard: 'journey', tracker: 'journey', interview: 'interviews', doc: 'documents', setup: 'profile' };
   const active = map[here] || here;
   const badge = { Journey: o.newJobs };
-  nav.innerHTML = NAV.filter(([n]) => !(n === 'Claude' && o.sharedKey)) /* a built-in or server key: nobody needs the Claude tab */.map(([n, h]) => {
+  nav.innerHTML = NAV.map(([n, h]) => {
     const isOn = h.slice(2) === active;
     return `<a href="${h}" class="${isOn ? 'on' : ''}" ${isOn ? 'aria-current="page"' : ''}>${n}${badge[n] ? `<span class="count">${badge[n]}</span>` : ''}${n === 'Extension' ? ' <span class="soon">soon</span>' : ''}${n === 'Claude' && !o.hasKey ? ' <span class="count">!</span>' : ''}</a>`;
   }).join('');
